@@ -1,0 +1,184 @@
+erDiagram
+    %% ============================================
+    %% QWIKSHELF DATABASE SCHEMA
+    %% ============================================
+
+    %% --- 1. IDENTITY & ACCESS MANAGEMENT ---
+    roles {
+        int id PK
+        string name
+        text description
+    }
+
+    permissions {
+        int id PK
+        string slug
+        string description
+    }
+
+    role_permissions {
+        int role_id FK
+        int permission_id FK
+    }
+
+    users {
+        int id PK
+        string username
+        string password_hash
+        int role_id FK
+        boolean is_active
+        datetime created_at
+    }
+
+    %% --- 2. LOCATIONS ---
+    warehouses {
+        int id PK
+        string name
+        string type "STATIC or MOBILE"
+        string address
+    }
+
+    %% --- 3. PRODUCT CATALOG ---
+    categories {
+        int id PK
+        string name "Dairy, Bakery, etc."
+    }
+
+    product_families {
+        int id PK
+        int category_id FK
+        string name "e.g. Cow Milk, Bread"
+        text description
+    }
+
+    product_variants {
+        int id PK
+        int family_id FK
+        string name
+        string sku UK
+        string barcode UK
+        decimal cost_price
+        decimal selling_price
+        boolean is_manufactured
+    }
+
+    %% --- 4. SUPPLIERS ---
+    suppliers {
+        int id PK
+        string name
+        string phone
+        string location
+    }
+
+    supplier_variants {
+        int supplier_id FK
+        int variant_id FK
+        decimal agreed_cost
+        boolean is_preferred
+    }
+
+    %% --- 5. PROCUREMENT ---
+    procurements {
+        int id PK
+        int supplier_id FK
+        int agent_id FK "refs users.id"
+        int destination_warehouse_id FK
+        datetime collected_at
+        decimal total_cost
+        string status
+    }
+
+    procurement_items {
+        int id PK
+        int procurement_id FK
+        int variant_id FK
+        decimal quantity
+        decimal unit_cost
+    }
+
+    %% --- 6. LOGISTICS ---
+    inventory_transfers {
+        int id PK
+        int source_warehouse_id FK
+        int destination_warehouse_id FK
+        int authorized_by_user_id FK "refs users.id"
+        datetime transferred_at
+        string status
+    }
+
+    inventory_transfer_items {
+        int id PK
+        int transfer_id FK
+        int variant_id FK
+        decimal quantity
+    }
+
+    %% --- 7. CORE INVENTORY ---
+    inventory_levels {
+        int id PK
+        int warehouse_id FK
+        int variant_id FK
+        decimal quantity
+        int batch_number
+        date expiry_date
+    }
+
+    %% --- 8. PRODUCTION ---
+    production_runs {
+        int id PK
+        int warehouse_id FK
+        int staff_id FK "refs users.id"
+        string batch_code
+        datetime created_at
+    }
+
+    production_logs {
+        int id PK
+        int run_id FK
+        int input_variant_id FK
+        decimal input_qty
+        int output_variant_id FK
+        decimal output_qty
+    }
+
+    %% ============================================
+    %% RELATIONSHIPS
+    %% ============================================
+
+    %% Identity & Access
+    roles ||--o{ users : "has"
+    roles ||--o{ role_permissions : "grants"
+    permissions ||--o{ role_permissions : "assigned_via"
+
+    %% Product Catalog
+    categories ||--o{ product_families : "contains"
+    product_families ||--o{ product_variants : "has"
+
+    %% Suppliers
+    suppliers ||--o{ supplier_variants : "offers"
+    product_variants ||--o{ supplier_variants : "sourced_from"
+
+    %% Procurement
+    suppliers ||--o{ procurements : "supplies"
+    users ||--o{ procurements : "collected_by (agent)"
+    warehouses ||--o{ procurements : "receives"
+    procurements ||--|{ procurement_items : "contains"
+    product_variants ||--o{ procurement_items : "listed_in"
+
+    %% Logistics
+    warehouses ||--o{ inventory_transfers : "sends_from"
+    warehouses ||--o{ inventory_transfers : "receives_at"
+    users ||--o{ inventory_transfers : "authorized_by"
+    inventory_transfers ||--|{ inventory_transfer_items : "contains"
+    product_variants ||--o{ inventory_transfer_items : "moved_in"
+
+    %% Inventory
+    warehouses ||--o{ inventory_levels : "stores"
+    product_variants ||--o{ inventory_levels : "tracked_in"
+
+    %% Production
+    warehouses ||--o{ production_runs : "hosts"
+    users ||--o{ production_runs : "staffed_by"
+    production_runs ||--|{ production_logs : "records"
+    product_variants ||--o{ production_logs : "input_variant"
+    product_variants ||--o{ production_logs : "output_variant"

@@ -1,0 +1,23 @@
+# Git
+.git
+.gitignore
+
+# Build outputs
+bin/
+dist/
+server
+
+# Dependencies
+vendor/
+
+# Environment
+.env
+
+# UI directory (not needed for API build)
+ui/
+node_modules/
+
+# Deployment files
+deploy/
+docker-compose.yml
+Dockerfile
