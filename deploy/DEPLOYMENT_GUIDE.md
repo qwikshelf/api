@@ -24,32 +24,42 @@ Use the `SSHCommand` from your CloudFormation **Outputs** tab:
 ssh -i "your-key.pem" ubuntu@<INSTANCE_PUBLIC_IP>
 ```
 
-## 3. Clone the Codebase
-Once inside the EC2 instance:
+## 4. Clone and Launch
+Inside the EC2 instance:
 ```bash
 git clone <your-repository-url>
-cd qwikshelf-ws/api
-```
+cd qwikshelf-ws/api/deploy
 
-## 4. Configure Production Environment
-You need to create the `.env` file on the server. Use the [deploy/.env](file:///Users/oscarmild/Documents/workspack/qwikshelf-ws/api/deploy/.env) as a template.
+# Create your .env file
+nano .env
 
-```bash
-nano deploy/.env
-```
-**Required production changes:**
-- `DB_HOST=db` (keeps traffic inside the Docker network)
-- `APP_ENV=production`
-- `ALLOWED_ORIGINS=http://<YOUR_DOMAIN_OR_IP>`
-- `JWT_SECRET=your-long-secure-random-string`
-
-## 5. Launch the Stack
-Run the Docker Compose command:
-```bash
-# Ensure you are in the directory containing the docker-compose.yml
-cd deploy
+# Start the stack
 docker-compose up -d --build
 ```
+
+---
+
+## 5. SSL & HTTPS Setup (Nginx Proxy Manager)
+
+This stack uses **Nginx Proxy Manager (NPM)** to handle free Let's Encrypt SSL certificates.
+
+1.  **Access NPM Admin**: Visit `http://<INSTANCE_PUBLIC_IP>:81` (restricted to your `AllowedIP`).
+2.  **Login**:
+    - **Email**: `admin@example.com`
+    - **Password**: `changeme`
+    - *(You will be prompted to update these immediately)*.
+3.  **Add Frontend (UI) Proxy**:
+    - Click **Proxy Hosts** -> **Add Proxy Host**.
+    - **Domain Names**: `yourdomain.com`
+    - **Forward Hostname**: `ui`
+    - **Forward Port**: `80`
+    - **SSL Tab**: Select **Request a new SSL Certificate**, Agree to TOS, and enable **Force SSL**.
+4.  **Add Backend (API) Proxy**:
+    - Click **Proxy Hosts** -> **Add Proxy Host**.
+    - **Domain Names**: `api.yourdomain.com` (or use a path like `yourdomain.com/api`)
+    - **Forward Hostname**: `api`
+    - **Forward Port**: `8080`
+    - **SSL Tab**: Same as above.
 
 ---
 
@@ -59,16 +69,7 @@ docker-compose up -d --build
 ```bash
 docker ps
 ```
-You should see 4 containers: `qwikshelf-api`, `qwikshelf-ui`, `qwikshelf-db`, and `qwikshelf-adminer`.
+You should see: `qwikshelf-proxy`, `qwikshelf-api`, `qwikshelf-ui`, `qwikshelf-db`, and `qwikshelf-adminer`.
 
-### 2. Check API Health
-Visit `http://<INSTANCE_PUBLIC_IP>:8080/health` in your local browser.
-
-### 3. Access Adminer
-Visit `http://<INSTANCE_PUBLIC_IP>:8081` (restricted to your `AllowedIP`).
-- **Server**: `db`
-- **Username**: (your `.env` POSTGRES_USER)
-- **Password**: (your `.env` POSTGRES_PASSWORD)
-
-### 4. Backups
-If you want to use the S3 backup feature, ensure you create an S3 bucket named `qwikshelf-backups-<your-account-id>` in the same region.
+### 2. Check Adminer
+Visit `http://<INSTANCE_PUBLIC_IP>:81` (It is recommended to proxy Adminer through NPM as well if you need it accessible over HTTPS).
