@@ -1,0 +1,181 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'QwikShelf Full Stack: VPC, Subnet, and Ubuntu-based EC2 (t3.small) with Docker'
+
+Parameters:
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t3.small
+    AllowedValues: [t3.micro, t3.small, t3.medium]
+
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+
+  LatestAmiId:
+    Description: Ubuntu 24.04 LTS AMI ID (via SSM)
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id'
+
+  AllowedIP:
+    Description: The IP address range that can be used to access the API and Adminer (e.g., 1.2.3.4/32)
+    Type: String
+    Default: 0.0.0.0/0
+
+Resources:
+  # --- Networking: VPC & Subnets ---
+  QwikShelfVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: qwikshelf-vpc
+
+  QwikShelfSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref QwikShelfVPC
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      AvailabilityZone: !Select [ 0, !GetAZs "" ]
+      Tags:
+        - Key: Name
+          Value: qwikshelf-public-subnet
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: qwikshelf-igw
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref QwikShelfVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref QwikShelfVPC
+      Tags:
+        - Key: Name
+          Value: qwikshelf-routes
+
+  DefaultRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref QwikShelfSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  # --- Security: IAM & Firewall ---
+  EC2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: [ec2.amazonaws.com]
+            Action: ['sts:AssumeRole']
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: S3BackupPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: ['s3:PutObject', 's3:GetObject', 's3:ListBucket']
+                Resource: 
+                  - 'arn:aws:s3:::qwikshelf-backups-*'
+                  - 'arn:aws:s3:::qwikshelf-backups-*/*'
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles: [!Ref EC2InstanceRole]
+
+  WebServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTP/HTTPS and restricted Adminer/API access
+      VpcId: !Ref QwikShelfVPC
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 80, ToPort: 80, CidrIp: 0.0.0.0/0 }
+        - { IpProtocol: tcp, FromPort: 443, ToPort: 443, CidrIp: 0.0.0.0/0 }
+        - { IpProtocol: tcp, FromPort: 22, ToPort: 22, CidrIp: !Ref AllowedIP }
+        - { IpProtocol: tcp, FromPort: 8080, ToPort: 8080, CidrIp: !Ref AllowedIP }
+        - { IpProtocol: tcp, FromPort: 8081, ToPort: 8081, CidrIp: !Ref AllowedIP }
+
+  # --- Compute: Ubuntu EC2 Instance ---
+  QwikShelfInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      ImageId: !Ref LatestAmiId
+      SubnetId: !Ref QwikShelfSubnet
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroupIds: [!Ref WebServerSecurityGroup]
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs: { VolumeSize: 30, VolumeType: gp3, DeleteOnTermination: true }
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -y
+          apt-get upgrade -y
+          
+          # Install Docker
+          apt-get install -y docker.io
+          systemctl enable --now docker
+          usermod -a -G docker ubuntu
+          
+          # Install Docker Compose V2
+          mkdir -p /usr/local/lib/docker/cli-plugins
+          curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
+          chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+          ln -s /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/bin/docker-compose
+          
+          # Optimization: Create 2GB Swap for Postgres stability
+          fallocate -l 2G /swapfile
+          chmod 600 /swapfile
+          mkswap /swapfile
+          swapon /swapfile
+          echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+          
+          echo "Ubuntu Full Stack Setup Complete" > /home/ubuntu/bootstrap.txt
+
+      Tags:
+        - Key: Name
+          Value: !Sub qwikshelf-server-${AWS::StackName}
+        - Key: Environment
+          Value: production
+
+Outputs:
+  InstancePublicIp:
+    Description: Public IP of the EC2 instance
+    Value: !GetAtt QwikShelfInstance.PublicIp
+  VpcId:
+    Description: New VPC ID
+    Value: !Ref QwikShelfVPC
+  SSHCommand:
+    Description: Command to SSH into the instance
+    Value: !Sub ssh -i "${KeyName}.pem" ubuntu@${QwikShelfInstance.PublicIp}

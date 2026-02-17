@@ -1,0 +1,2353 @@
+basePath: /api/v1
+definitions:
+  github_com_qwikshelf_api_internal_application_dto.AddSupplierVariantRequest:
+    properties:
+      agreed_cost:
+        type: number
+      is_preferred:
+        type: boolean
+      variant_id:
+        type: integer
+    required:
+    - agreed_cost
+    - variant_id
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.AdjustInventoryRequest:
+    properties:
+      quantity_delta:
+        type: number
+      reason:
+        type: string
+      variant_id:
+        type: integer
+      warehouse_id:
+        type: integer
+    required:
+    - quantity_delta
+    - variant_id
+    - warehouse_id
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.CategoryResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.CreateCategoryRequest:
+    properties:
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.CreateProcurementItemRequest:
+    properties:
+      quantity:
+        type: number
+      unit_cost:
+        type: number
+      variant_id:
+        type: integer
+    required:
+    - quantity
+    - unit_cost
+    - variant_id
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.CreateProcurementRequest:
+    properties:
+      expected_delivery:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.CreateProcurementItemRequest'
+        minItems: 1
+        type: array
+      supplier_id:
+        type: integer
+      warehouse_id:
+        type: integer
+    required:
+    - items
+    - supplier_id
+    - warehouse_id
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.CreateProductFamilyRequest:
+    properties:
+      category_id:
+        type: integer
+      description:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - category_id
+    - name
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.CreateProductVariantRequest:
+    properties:
+      barcode:
+        maxLength: 50
+        type: string
+      cost_price:
+        type: number
+      family_id:
+        type: integer
+      is_manufactured:
+        type: boolean
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      selling_price:
+        type: number
+      sku:
+        maxLength: 50
+        minLength: 2
+        type: string
+      unit:
+        enum:
+        - piece
+        - kg
+        - liter
+        - box
+        - pack
+        - dozen
+        type: string
+    required:
+    - cost_price
+    - family_id
+    - name
+    - selling_price
+    - sku
+    - unit
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.CreateRoleRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      permission_ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - name
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.CreateSupplierRequest:
+    properties:
+      location:
+        maxLength: 200
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      phone:
+        maxLength: 20
+        type: string
+    required:
+    - name
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.CreateTransferRequest:
+    properties:
+      destination_warehouse_id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.TransferItemRequest'
+        minItems: 1
+        type: array
+      source_warehouse_id:
+        type: integer
+    required:
+    - destination_warehouse_id
+    - items
+    - source_warehouse_id
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.CreateUserRequest:
+    properties:
+      is_active:
+        type: boolean
+      password:
+        minLength: 6
+        type: string
+      role_id:
+        type: integer
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - password
+    - role_id
+    - username
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.CreateWarehouseRequest:
+    properties:
+      address:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/github_com_qwikshelf_api_internal_domain_entity.WarehouseType'
+        enum:
+        - store
+        - factory
+        - distribution_center
+    required:
+    - name
+    - type
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.InventoryLevelResponse:
+    properties:
+      batch_number:
+        type: integer
+      expiry_date:
+        type: string
+      id:
+        type: integer
+      quantity:
+        type: number
+      variant:
+        $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProductVariantResponse'
+      variant_id:
+        type: integer
+      warehouse:
+        $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.WarehouseResponse'
+      warehouse_id:
+        type: integer
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.LoginRequest:
+    properties:
+      password:
+        minLength: 6
+        type: string
+      username:
+        minLength: 3
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.LoginResponse:
+    properties:
+      expires_at:
+        type: string
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.UserResponse'
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.PermissionResponse:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      slug:
+        type: string
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.ProcurementItemResponse:
+    properties:
+      id:
+        type: integer
+      line_total:
+        type: number
+      quantity_ordered:
+        type: number
+      quantity_received:
+        type: number
+      unit_cost:
+        type: number
+      variant_id:
+        type: integer
+      variant_name:
+        type: string
+      variant_sku:
+        type: string
+      variant_unit:
+        type: string
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.ProcurementResponse:
+    properties:
+      created_at:
+        type: string
+      expected_delivery:
+        type: string
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProcurementItemResponse'
+        type: array
+      ordered_by_user_id:
+        type: integer
+      status:
+        type: string
+      supplier_id:
+        type: integer
+      supplier_name:
+        type: string
+      total_cost:
+        type: number
+      warehouse_id:
+        type: integer
+      warehouse_name:
+        type: string
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.ProductFamilyResponse:
+    properties:
+      category:
+        $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.CategoryResponse'
+      category_id:
+        type: integer
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.ProductVariantResponse:
+    properties:
+      barcode:
+        type: string
+      cost_price:
+        type: number
+      family:
+        $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProductFamilyResponse'
+      family_id:
+        type: integer
+      family_name:
+        type: string
+      id:
+        type: integer
+      is_manufactured:
+        type: boolean
+      name:
+        type: string
+      selling_price:
+        type: number
+      sku:
+        type: string
+      unit:
+        type: string
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.ReceiveItemRequest:
+    properties:
+      item_id:
+        type: integer
+      quantity_received:
+        type: number
+    required:
+    - item_id
+    - quantity_received
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.ReceiveProcurementItemRequest:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ReceiveItemRequest'
+        minItems: 1
+        type: array
+    required:
+    - items
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.RoleResponse:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.PermissionResponse'
+        type: array
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.SupplierResponse:
+    properties:
+      id:
+        type: integer
+      location:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.SupplierVariantResponse:
+    properties:
+      agreed_cost:
+        type: number
+      is_preferred:
+        type: boolean
+      supplier:
+        $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.SupplierResponse'
+      supplier_id:
+        type: integer
+      variant:
+        $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProductVariantResponse'
+      variant_id:
+        type: integer
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.TransferItemRequest:
+    properties:
+      quantity:
+        type: number
+      variant_id:
+        type: integer
+    required:
+    - quantity
+    - variant_id
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.TransferItemResponse:
+    properties:
+      id:
+        type: integer
+      quantity:
+        type: number
+      variant:
+        $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProductVariantResponse'
+      variant_id:
+        type: integer
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.TransferResponse:
+    properties:
+      authorized_by_user_id:
+        type: integer
+      destination_warehouse:
+        $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.WarehouseResponse'
+      destination_warehouse_id:
+        type: integer
+      id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.TransferItemResponse'
+        type: array
+      source_warehouse:
+        $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.WarehouseResponse'
+      source_warehouse_id:
+        type: integer
+      status:
+        $ref: '#/definitions/github_com_qwikshelf_api_internal_domain_entity.TransferStatus'
+      transferred_at:
+        type: string
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.UpdateCategoryRequest:
+    properties:
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - name
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.UpdateProcurementStatusRequest:
+    properties:
+      status:
+        enum:
+        - pending
+        - approved
+        - ordered
+        - partial
+        - received
+        - cancelled
+        type: string
+    required:
+    - status
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.UpdateProductFamilyRequest:
+    properties:
+      category_id:
+        type: integer
+      description:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.UpdateProductVariantRequest:
+    properties:
+      barcode:
+        maxLength: 50
+        type: string
+      cost_price:
+        type: number
+      family_id:
+        type: integer
+      is_manufactured:
+        type: boolean
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      selling_price:
+        type: number
+      sku:
+        maxLength: 50
+        minLength: 2
+        type: string
+      unit:
+        enum:
+        - piece
+        - kg
+        - liter
+        - box
+        - pack
+        - dozen
+        type: string
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.UpdateRoleRequest:
+    properties:
+      description:
+        type: string
+      name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      permission_ids:
+        items:
+          type: integer
+        type: array
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.UpdateSupplierRequest:
+    properties:
+      location:
+        maxLength: 200
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      phone:
+        maxLength: 20
+        type: string
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.UpdateUserRequest:
+    properties:
+      is_active:
+        type: boolean
+      password:
+        minLength: 6
+        type: string
+      role_id:
+        type: integer
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.UpdateWarehouseRequest:
+    properties:
+      address:
+        type: string
+      name:
+        maxLength: 100
+        minLength: 2
+        type: string
+      type:
+        allOf:
+        - $ref: '#/definitions/github_com_qwikshelf_api_internal_domain_entity.WarehouseType'
+        enum:
+        - store
+        - factory
+        - distribution_center
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.UserResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      role:
+        $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.RoleResponse'
+      role_id:
+        type: integer
+      username:
+        type: string
+    type: object
+  github_com_qwikshelf_api_internal_application_dto.WarehouseResponse:
+    properties:
+      address:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      type:
+        $ref: '#/definitions/github_com_qwikshelf_api_internal_domain_entity.WarehouseType'
+    type: object
+  github_com_qwikshelf_api_internal_domain_entity.TransferStatus:
+    enum:
+    - PENDING
+    - IN_TRANSIT
+    - COMPLETED
+    - CANCELLED
+    type: string
+    x-enum-varnames:
+    - TransferStatusPending
+    - TransferStatusInTransit
+    - TransferStatusCompleted
+    - TransferStatusCancelled
+  github_com_qwikshelf_api_internal_domain_entity.WarehouseType:
+    enum:
+    - store
+    - factory
+    - distribution_center
+    type: string
+    x-enum-varnames:
+    - WarehouseTypeStore
+    - WarehouseTypeFactory
+    - WarehouseTypeDistributionCenter
+  github_com_qwikshelf_api_pkg_response.ErrorInfo:
+    properties:
+      code:
+        type: string
+      details:
+        additionalProperties:
+          type: string
+        type: object
+      message:
+        type: string
+    type: object
+  github_com_qwikshelf_api_pkg_response.Meta:
+    properties:
+      page:
+        type: integer
+      per_page:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  github_com_qwikshelf_api_pkg_response.Response:
+    properties:
+      data: {}
+      error:
+        $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.ErrorInfo'
+      message:
+        type: string
+      meta:
+        $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Meta'
+      success:
+        type: boolean
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@qwikshelf.local
+    name: QwikShelf Support
+  description: Inventory management system API for QwikShelf
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: QwikShelf API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate with username and password to receive a JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.LoginResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      summary: User login
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      description: Logout the current user (client-side token removal)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      summary: User logout
+      tags:
+      - Auth
+  /auth/me:
+    get:
+      description: Returns the profile of the currently authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.UserResponse'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - Auth
+  /categories:
+    get:
+      description: Returns a list of all product categories
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.CategoryResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List categories
+      tags:
+      - Categories
+    post:
+      consumes:
+      - application/json
+      description: Creates a new product category
+      parameters:
+      - description: Category details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.CreateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.CategoryResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Create category
+      tags:
+      - Categories
+  /categories/{id}:
+    delete:
+      description: Deletes a category by ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete category
+      tags:
+      - Categories
+    get:
+      description: Returns a single category by ID
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.CategoryResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get category
+      tags:
+      - Categories
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing category
+      parameters:
+      - description: Category ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.UpdateCategoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.CategoryResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update category
+      tags:
+      - Categories
+  /inventory:
+    get:
+      description: Returns inventory levels, optionally filtered by warehouse
+      parameters:
+      - description: Filter by warehouse ID
+        in: query
+        name: warehouse_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.InventoryLevelResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List inventory
+      tags:
+      - Inventory
+  /inventory/adjust:
+    post:
+      consumes:
+      - application/json
+      description: Adjusts stock level for a product variant in a warehouse
+      parameters:
+      - description: Adjustment details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.AdjustInventoryRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.InventoryLevelResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Adjust inventory
+      tags:
+      - Inventory
+  /inventory/transfer:
+    post:
+      consumes:
+      - application/json
+      description: Creates an inventory transfer between warehouses
+      parameters:
+      - description: Transfer details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.CreateTransferRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.TransferResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Transfer inventory
+      tags:
+      - Inventory
+  /inventory/warehouse/{warehouseId}:
+    get:
+      description: Returns inventory levels for a specific warehouse
+      parameters:
+      - description: Warehouse ID
+        in: path
+        name: warehouseId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.InventoryLevelResponse'
+                  type: array
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: List inventory by warehouse
+      tags:
+      - Inventory
+  /procurements:
+    get:
+      description: Returns paginated list of all purchase orders
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProcurementResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: List purchase orders
+      tags:
+      - Procurements
+    post:
+      consumes:
+      - application/json
+      description: Creates a new purchase order for a supplier with line items
+      parameters:
+      - description: Purchase order details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.CreateProcurementRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProcurementResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Create purchase order
+      tags:
+      - Procurements
+  /procurements/{id}:
+    get:
+      description: Returns a purchase order with all its line items and supplier/product
+        details
+      parameters:
+      - description: Procurement ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProcurementResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get purchase order
+      tags:
+      - Procurements
+  /procurements/{id}/receive:
+    patch:
+      consumes:
+      - application/json
+      description: Records partial or full receipt of items in a purchase order
+      parameters:
+      - description: Procurement ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Items received
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ReceiveProcurementItemRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Receive items
+      tags:
+      - Procurements
+  /procurements/{id}/status:
+    patch:
+      consumes:
+      - application/json
+      description: Updates status. When set to 'received', inventory is auto-adjusted.
+      parameters:
+      - description: Procurement ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: New status
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.UpdateProcurementStatusRequest'
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update purchase order status
+      tags:
+      - Procurements
+  /procurements/supplier/{supplierId}:
+    get:
+      description: Returns all purchase orders for a specific supplier
+      parameters:
+      - description: Supplier ID
+        in: path
+        name: supplierId
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProcurementResponse'
+                  type: array
+              type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: List purchase orders by supplier
+      tags:
+      - Procurements
+  /product-families:
+    get:
+      description: Returns a paginated list of product families
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProductFamilyResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List product families
+      tags:
+      - Product Families
+    post:
+      consumes:
+      - application/json
+      description: Creates a new product family under a category
+      parameters:
+      - description: Product family details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.CreateProductFamilyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProductFamilyResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Create product family
+      tags:
+      - Product Families
+  /product-families/{id}:
+    delete:
+      description: Deletes a product family by ID
+      parameters:
+      - description: Product Family ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete product family
+      tags:
+      - Product Families
+    get:
+      description: Returns a single product family by ID
+      parameters:
+      - description: Product Family ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProductFamilyResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get product family
+      tags:
+      - Product Families
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing product family
+      parameters:
+      - description: Product Family ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.UpdateProductFamilyRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProductFamilyResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update product family
+      tags:
+      - Product Families
+  /products:
+    get:
+      description: Returns a paginated list of product variants
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProductVariantResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List products
+      tags:
+      - Products
+    post:
+      consumes:
+      - application/json
+      description: Creates a new product variant
+      parameters:
+      - description: Product details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.CreateProductVariantRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProductVariantResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Create product
+      tags:
+      - Products
+  /products/{id}:
+    delete:
+      description: Deletes a product variant by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete product
+      tags:
+      - Products
+    get:
+      description: Returns a single product variant by ID
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProductVariantResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get product
+      tags:
+      - Products
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing product variant
+      parameters:
+      - description: Product ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.UpdateProductVariantRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.ProductVariantResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update product
+      tags:
+      - Products
+  /roles:
+    get:
+      description: Returns a list of all available roles
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.RoleResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: List roles
+      tags:
+      - Roles
+    post:
+      consumes:
+      - application/json
+      description: Creates a new role with optional permissions
+      parameters:
+      - description: Role details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.CreateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.RoleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Create role
+      tags:
+      - Roles
+  /roles/{id}:
+    delete:
+      description: Deletes a role by ID
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete role
+      tags:
+      - Roles
+    get:
+      description: Returns a single role by ID with its permissions
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.RoleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get role
+      tags:
+      - Roles
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing role's details and permissions
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated role details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.UpdateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.RoleResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update role
+      tags:
+      - Roles
+  /suppliers:
+    get:
+      description: Returns a paginated list of suppliers
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.SupplierResponse'
+                  type: array
+              type: object
+      security:
+      - BearerAuth: []
+      summary: List suppliers
+      tags:
+      - Suppliers
+    post:
+      consumes:
+      - application/json
+      description: Creates a new supplier
+      parameters:
+      - description: Supplier details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.CreateSupplierRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.SupplierResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Create supplier
+      tags:
+      - Suppliers
+  /suppliers/{id}:
+    delete:
+      description: Deletes a supplier by ID
+      parameters:
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete supplier
+      tags:
+      - Suppliers
+    get:
+      description: Returns a single supplier by ID
+      parameters:
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.SupplierResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get supplier
+      tags:
+      - Suppliers
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing supplier
+      parameters:
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.UpdateSupplierRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.SupplierResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update supplier
+      tags:
+      - Suppliers
+  /suppliers/{id}/variants:
+    get:
+      description: Returns all product variants linked to this supplier, including
+        product family and location info
+      parameters:
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.SupplierVariantResponse'
+                  type: array
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: List supplier variants
+      tags:
+      - Suppliers
+    post:
+      consumes:
+      - application/json
+      description: Links a product variant to a supplier with an agreed cost
+      parameters:
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Variant details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.AddSupplierVariantRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Add variant to supplier
+      tags:
+      - Suppliers
+  /suppliers/{id}/variants/{variantId}:
+    delete:
+      description: Removes the link between a supplier and a product variant
+      parameters:
+      - description: Supplier ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Variant ID
+        in: path
+        name: variantId
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Remove variant from supplier
+      tags:
+      - Suppliers
+  /users:
+    get:
+      description: Returns a paginated list of all users
+      parameters:
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.UserResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: List users
+      tags:
+      - Users
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user with the provided details
+      parameters:
+      - description: User details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.UserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Create user
+      tags:
+      - Users
+  /users/{id}:
+    delete:
+      description: Deletes a user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete user
+      tags:
+      - Users
+    get:
+      description: Returns a single user by ID
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.UserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get user
+      tags:
+      - Users
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing user's details
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated user details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.UserResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update user
+      tags:
+      - Users
+  /warehouses:
+    get:
+      description: Returns a list of all warehouses
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.WarehouseResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: List warehouses
+      tags:
+      - Warehouses
+    post:
+      consumes:
+      - application/json
+      description: Creates a new warehouse
+      parameters:
+      - description: Warehouse details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.CreateWarehouseRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.WarehouseResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Create warehouse
+      tags:
+      - Warehouses
+  /warehouses/{id}:
+    delete:
+      description: Deletes a warehouse by ID
+      parameters:
+      - description: Warehouse ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "204":
+          description: No Content
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Delete warehouse
+      tags:
+      - Warehouses
+    get:
+      description: Returns a single warehouse by ID
+      parameters:
+      - description: Warehouse ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.WarehouseResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Get warehouse
+      tags:
+      - Warehouses
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing warehouse
+      parameters:
+      - description: Warehouse ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.UpdateWarehouseRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_qwikshelf_api_internal_application_dto.WarehouseResponse'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_qwikshelf_api_pkg_response.Response'
+      security:
+      - BearerAuth: []
+      summary: Update warehouse
+      tags:
+      - Warehouses
+securityDefinitions:
+  BearerAuth:
+    description: Enter your JWT token with the `Bearer ` prefix, e.g. `Bearer eyJhbGci...`
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
