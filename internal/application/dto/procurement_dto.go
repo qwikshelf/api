@@ -12,7 +12,7 @@ import (
 type CreateProcurementRequest struct {
 	SupplierID       int64                          `json:"supplier_id" binding:"required"`
 	WarehouseID      int64                          `json:"warehouse_id" binding:"required"`
-	ExpectedDelivery *time.Time                     `json:"expected_delivery,omitempty"`
+	ExpectedDelivery string                         `json:"expected_delivery,omitempty"`
 	Items            []CreateProcurementItemRequest `json:"items" binding:"required,min=1,dive"`
 }
 
