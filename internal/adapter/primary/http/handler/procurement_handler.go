@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/shopspring/decimal"
@@ -88,11 +89,27 @@ func (h *ProcurementHandler) Create(c *gin.Context) {
 		return
 	}
 
+	// Parse expected delivery date if provided
+	var expectedDelivery *time.Time
+	if req.ExpectedDelivery != "" {
+		// Try YYYY-MM-DD format (typical for UI date pickers)
+		t, err := time.Parse("2006-01-02", req.ExpectedDelivery)
+		if err != nil {
+			// Fallback to RFC3339
+			t, err = time.Parse(time.RFC3339, req.ExpectedDelivery)
+			if err != nil {
+				response.BadRequest(c, "Invalid expected_delivery format. Use YYYY-MM-DD or RFC3339")
+				return
+			}
+		}
+		expectedDelivery = &t
+	}
+
 	procurement := &entity.Procurement{
 		SupplierID:       req.SupplierID,
 		WarehouseID:      req.WarehouseID,
 		OrderedByUserID:  userID.(int64),
-		ExpectedDelivery: req.ExpectedDelivery,
+		ExpectedDelivery: expectedDelivery,
 	}
 
 	for _, item := range req.Items {
