@@ -223,13 +223,19 @@ func (r *ProductVariantRepository) Create(ctx context.Context, variant *entity.P
 	if variant.Unit == "" {
 		variant.Unit = "piece"
 	}
+
+	var barcode interface{} = variant.Barcode
+	if variant.Barcode == "" {
+		barcode = nil
+	}
+
 	query := `
 		INSERT INTO product_variants (family_id, name, sku, barcode, unit, cost_price, selling_price, is_manufactured)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id
 	`
 	return r.db.Pool.QueryRow(ctx, query,
-		variant.FamilyID, variant.Name, variant.SKU, variant.Barcode, variant.Unit,
+		variant.FamilyID, variant.Name, variant.SKU, barcode, variant.Unit,
 		variant.CostPrice, variant.SellingPrice, variant.IsManufactured,
 	).Scan(&variant.ID)
 }
@@ -241,10 +247,14 @@ func (r *ProductVariantRepository) GetByID(ctx context.Context, id int64) (*enti
 		FROM product_variants WHERE id = $1
 	`
 	v := &entity.ProductVariant{}
+	var barcode *string
 	err := r.db.Pool.QueryRow(ctx, query, id).Scan(
-		&v.ID, &v.FamilyID, &v.Name, &v.SKU, &v.Barcode, &v.Unit,
+		&v.ID, &v.FamilyID, &v.Name, &v.SKU, &barcode, &v.Unit,
 		&v.CostPrice, &v.SellingPrice, &v.IsManufactured,
 	)
+	if barcode != nil {
+		v.Barcode = *barcode
+	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domainErrors.ErrProductVariantNotFound
 	}
@@ -261,10 +271,14 @@ func (r *ProductVariantRepository) GetBySKU(ctx context.Context, sku string) (*e
 		FROM product_variants WHERE sku = $1
 	`
 	v := &entity.ProductVariant{}
+	var barcode *string
 	err := r.db.Pool.QueryRow(ctx, query, sku).Scan(
-		&v.ID, &v.FamilyID, &v.Name, &v.SKU, &v.Barcode, &v.Unit,
+		&v.ID, &v.FamilyID, &v.Name, &v.SKU, &barcode, &v.Unit,
 		&v.CostPrice, &v.SellingPrice, &v.IsManufactured,
 	)
+	if barcode != nil {
+		v.Barcode = *barcode
+	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domainErrors.ErrProductVariantNotFound
 	}
@@ -281,10 +295,14 @@ func (r *ProductVariantRepository) GetByBarcode(ctx context.Context, barcode str
 		FROM product_variants WHERE barcode = $1
 	`
 	v := &entity.ProductVariant{}
+	var barcodeVal *string
 	err := r.db.Pool.QueryRow(ctx, query, barcode).Scan(
-		&v.ID, &v.FamilyID, &v.Name, &v.SKU, &v.Barcode, &v.Unit,
+		&v.ID, &v.FamilyID, &v.Name, &v.SKU, &barcodeVal, &v.Unit,
 		&v.CostPrice, &v.SellingPrice, &v.IsManufactured,
 	)
+	if barcodeVal != nil {
+		v.Barcode = *barcodeVal
+	}
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domainErrors.ErrProductVariantNotFound
 	}
@@ -316,11 +334,15 @@ func (r *ProductVariantRepository) List(ctx context.Context, offset, limit int) 
 	var variants []entity.ProductVariant
 	for rows.Next() {
 		var v entity.ProductVariant
+		var barcode *string
 		if err := rows.Scan(
-			&v.ID, &v.FamilyID, &v.Name, &v.SKU, &v.Barcode, &v.Unit,
+			&v.ID, &v.FamilyID, &v.Name, &v.SKU, &barcode, &v.Unit,
 			&v.CostPrice, &v.SellingPrice, &v.IsManufactured,
 		); err != nil {
 			return nil, 0, err
+		}
+		if barcode != nil {
+			v.Barcode = *barcode
 		}
 		variants = append(variants, v)
 	}
@@ -342,11 +364,15 @@ func (r *ProductVariantRepository) ListByFamily(ctx context.Context, familyID in
 	var variants []entity.ProductVariant
 	for rows.Next() {
 		var v entity.ProductVariant
+		var barcode *string
 		if err := rows.Scan(
-			&v.ID, &v.FamilyID, &v.Name, &v.SKU, &v.Barcode, &v.Unit,
+			&v.ID, &v.FamilyID, &v.Name, &v.SKU, &barcode, &v.Unit,
 			&v.CostPrice, &v.SellingPrice, &v.IsManufactured,
 		); err != nil {
 			return nil, err
+		}
+		if barcode != nil {
+			v.Barcode = *barcode
 		}
 		variants = append(variants, v)
 	}
@@ -355,13 +381,18 @@ func (r *ProductVariantRepository) ListByFamily(ctx context.Context, familyID in
 
 // Update updates a product variant
 func (r *ProductVariantRepository) Update(ctx context.Context, variant *entity.ProductVariant) error {
+	var barcode interface{} = variant.Barcode
+	if variant.Barcode == "" {
+		barcode = nil
+	}
+
 	query := `
 		UPDATE product_variants 
 		SET family_id = $1, name = $2, sku = $3, barcode = $4, unit = $5, cost_price = $6, selling_price = $7, is_manufactured = $8 
 		WHERE id = $9
 	`
 	result, err := r.db.Pool.Exec(ctx, query,
-		variant.FamilyID, variant.Name, variant.SKU, variant.Barcode, variant.Unit,
+		variant.FamilyID, variant.Name, variant.SKU, barcode, variant.Unit,
 		variant.CostPrice, variant.SellingPrice, variant.IsManufactured, variant.ID,
 	)
 	if err != nil {

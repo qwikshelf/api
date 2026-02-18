@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-
+	"github.com/qwikshelf/api/docs"
 	"github.com/qwikshelf/api/internal/adapter/primary/http/handler"
 	"github.com/qwikshelf/api/internal/adapter/primary/http/middleware"
 	"github.com/qwikshelf/api/internal/adapter/primary/http/router"
@@ -31,6 +31,17 @@ type App struct {
 
 // NewApp creates a new application instance
 func NewApp(cfg *config.Config) (*App, error) {
+	// Configure Swagger documentation dynamically
+	if cfg.App.Env == "production" {
+		// Use the production domain
+		docs.SwaggerInfo.Host = "api.qwikshelf.store"
+		docs.SwaggerInfo.Schemes = []string{"https"}
+	} else {
+		// Use localhost for development
+		docs.SwaggerInfo.Host = fmt.Sprintf("localhost:%d", cfg.App.Port)
+		docs.SwaggerInfo.Schemes = []string{"http"}
+	}
+
 	// Initialize database connection
 	db, err := postgres.NewConnection(cfg.Database)
 	if err != nil {
