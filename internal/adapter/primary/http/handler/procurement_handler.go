@@ -123,6 +123,10 @@ func (h *ProcurementHandler) Create(c *gin.Context) {
 	if err := h.procurementService.Create(c.Request.Context(), procurement); err != nil {
 		if err == domainErrors.ErrSupplierNotFound {
 			response.NotFound(c, "Supplier not found")
+		} else if err == domainErrors.ErrWarehouseNotFound {
+			response.NotFound(c, "Warehouse not found")
+		} else if err == domainErrors.ErrProductVariantNotFound {
+			response.NotFound(c, "One or more product variants not found")
 		} else {
 			response.InternalErrorDebug(c, "Failed to create purchase order", err)
 		}

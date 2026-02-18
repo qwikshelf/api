@@ -15,6 +15,8 @@ type ProcurementService struct {
 	procurementRepo repository.ProcurementRepository
 	supplierRepo    repository.SupplierRepository
 	inventoryRepo   repository.InventoryRepository
+	warehouseRepo   repository.WarehouseRepository
+	variantRepo     repository.ProductVariantRepository
 }
 
 // NewProcurementService creates a new procurement service
@@ -22,11 +24,15 @@ func NewProcurementService(
 	procurementRepo repository.ProcurementRepository,
 	supplierRepo repository.SupplierRepository,
 	inventoryRepo repository.InventoryRepository,
+	warehouseRepo repository.WarehouseRepository,
+	variantRepo repository.ProductVariantRepository,
 ) *ProcurementService {
 	return &ProcurementService{
 		procurementRepo: procurementRepo,
 		supplierRepo:    supplierRepo,
 		inventoryRepo:   inventoryRepo,
+		warehouseRepo:   warehouseRepo,
+		variantRepo:     variantRepo,
 	}
 }
 
@@ -35,6 +41,18 @@ func (s *ProcurementService) Create(ctx context.Context, procurement *entity.Pro
 	// Verify supplier exists
 	if _, err := s.supplierRepo.GetByID(ctx, procurement.SupplierID); err != nil {
 		return domainErrors.ErrSupplierNotFound
+	}
+
+	// Verify warehouse exists
+	if _, err := s.warehouseRepo.GetByID(ctx, procurement.WarehouseID); err != nil {
+		return domainErrors.ErrWarehouseNotFound
+	}
+
+	// Verify all variants exist
+	for _, item := range procurement.Items {
+		if _, err := s.variantRepo.GetByID(ctx, item.VariantID); err != nil {
+			return domainErrors.ErrProductVariantNotFound
+		}
 	}
 
 	if procurement.Status == "" {
