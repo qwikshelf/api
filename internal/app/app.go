@@ -76,7 +76,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	productVariantService := service.NewProductVariantService(productVariantRepo, productFamilyRepo)
 	supplierService := service.NewSupplierService(supplierRepo)
 	inventoryService := service.NewInventoryService(inventoryRepo, warehouseRepo, productVariantRepo)
-	procurementService := service.NewProcurementService(procurementRepo, supplierRepo, inventoryRepo)
+	procurementService := service.NewProcurementService(procurementRepo, supplierRepo, inventoryRepo, warehouseRepo, productVariantRepo)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService)
