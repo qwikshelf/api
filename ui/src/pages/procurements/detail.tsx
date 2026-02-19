@@ -136,18 +136,6 @@ export default function ProcurementDetailPage() {
         finally { setReceiveSaving(false); }
     };
 
-    if (loading) {
-        return (
-            <div className="space-y-4">
-                <Skeleton className="h-8 w-48" />
-                <Skeleton className="h-40 w-full" />
-                <Skeleton className="h-60 w-full" />
-            </div>
-        );
-    }
-
-    if (!po) return null;
-
     const availableActions = useMemo(() => {
         if (!po) return [];
         const standardActions = WORKFLOW_ACTIONS[po.status] || [];
@@ -170,6 +158,18 @@ export default function ProcurementDetailPage() {
 
         return standardActions;
     }, [po, isAdminOrManager]);
+
+    if (loading) {
+        return (
+            <div className="space-y-4">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-60 w-full" />
+            </div>
+        );
+    }
+
+    if (!po) return null;
 
     const isTerminal = po.status === "received" || po.status === "cancelled";
 
