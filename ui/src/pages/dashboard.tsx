@@ -2,17 +2,15 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
-    Package, Warehouse, Truck, ShoppingCart, TrendingUp,
+    Package, Truck, ShoppingCart, TrendingUp,
     AlertTriangle, Clock, ArrowRight, Plus, ArrowRightLeft,
     BarChart3, BoxesIcon, Users, IndianRupee, Layers,
     PackagePlus, ClipboardList, Zap, CalendarClock,
-    Tags, ShieldCheck, Scale, Timer, Gauge, CircleDot,
+    Tags, ShieldCheck, Scale, Timer, CircleDot,
 } from "lucide-react";
 import {
-    BarChart, Bar, PieChart, Pie, Cell,
-    AreaChart, Area,
+    BarChart, Bar, AreaChart, Area,
     XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
-    RadialBarChart, RadialBar,
     LineChart, Line,
 } from "recharts";
 import { productsApi } from "@/api/products";
@@ -23,10 +21,12 @@ import { procurementsApi } from "@/api/procurements";
 import { categoriesApi } from "@/api/categories";
 import { usersApi } from "@/api/users";
 import { productFamiliesApi } from "@/api/product-families";
+import { salesApi } from "@/api/sales";
+import { collectionsApi } from "@/api/collections";
 import type {
     ProcurementResponse, InventoryLevelResponse, WarehouseResponse,
     ProductVariantResponse, CategoryResponse, ProductFamilyResponse,
-    SupplierResponse,
+    SupplierResponse, SaleResponse, CollectionResponse
 } from "@/types";
 import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -40,13 +40,11 @@ import { useAuthStore } from "@/stores/auth-store";
 const TEAL = "hsl(174, 60%, 41%)";
 const TEAL_L = "hsl(174, 60%, 55%)";
 const AMBER = "hsl(38, 92%, 50%)";
-const ROSE = "hsl(0, 72%, 51%)";
 const INDIGO = "#6366f1";
 const VIOLET = "#8b5cf6";
 const EMERALD = "#10b981";
 const SKY = "#0ea5e9";
-const PINK = "#ec4899";
-const PIE_COLORS = [TEAL, TEAL_L, AMBER, ROSE, INDIGO, VIOLET, EMERALD, SKY, PINK];
+
 
 const tooltipStyle = {
     borderRadius: "10px",
@@ -89,6 +87,11 @@ interface DashboardStats {
     poSpendBySupplier: { name: string; spend: number }[];
     topSuppliersByPO: { name: string; count: number }[];
     sparklines: Record<string, number[]>;
+    // New metrics
+    totalSalesValue: number;
+    accountsReceivable: number;
+    totalMilkBought: number;
+    closingInventoryValue: number;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -110,7 +113,7 @@ export default function DashboardPage() {
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            const [productsRes, warehousesRes, suppliersRes, inventoryRes, posRes, catsRes, usersRes, familiesRes] =
+            const [productsRes, warehousesRes, suppliersRes, inventoryRes, posRes, catsRes, usersRes, familiesRes, salesRes, collectionsRes] =
                 await Promise.all([
                     productsApi.list(1, 500),
                     warehousesApi.list(),
@@ -120,6 +123,8 @@ export default function DashboardPage() {
                     categoriesApi.list(),
                     usersApi.list(1, 1),
                     productFamiliesApi.list(1, 200),
+                    salesApi.getHistory(1, 1000),
+                    collectionsApi.list(1, 1000),
                 ]);
 
             const products: ProductVariantResponse[] = productsRes.data.data || [];
@@ -132,6 +137,8 @@ export default function DashboardPage() {
             const pos: ProcurementResponse[] = posRes.data.data || [];
             const categories: CategoryResponse[] = catsRes.data.data || [];
             const families: ProductFamilyResponse[] = familiesRes.data.data || [];
+            const sales: SaleResponse[] = salesRes.data.data || [];
+            const collections: CollectionResponse[] = collectionsRes.data.data || [];
 
             const today = new Date();
 
@@ -147,6 +154,18 @@ export default function DashboardPage() {
             const activePOs = pos.filter(po => !["received", "cancelled"].includes(po.status)).length;
             const totalPOSpend = pos.reduce((s, po) => s + (parseFloat(po.total_cost) || 0), 0);
 
+            /* ── new financial metrics ── */
+            const totalSalesValue = sales.reduce((s, sale) => s + (parseFloat(sale.total_amount) || 0), 0);
+            const accountsReceivable = sales
+                .filter(sale => sale.payment_method === "credit")
+                .reduce((s, sale) => s + (parseFloat(sale.total_amount) || 0), 0);
+
+            /* ── milk metrics ── */
+            const milkVariants = products.filter(p => p.name.toLowerCase().includes("milk")).map(p => p.id);
+            const totalMilkBought = collections
+                .filter(c => milkVariants.includes(c.variant_id))
+                .reduce((s, c) => s + (parseFloat(c.weight) || 0), 0);
+
             /* ── pending deliveries & overdue ── */
             const pendingDeliveries = pos.filter(po => po.status === "ordered" && po.expected_delivery).length;
             const overduePOs = pos.filter(po => {
@@ -158,7 +177,7 @@ export default function DashboardPage() {
             /* ── inventory value estimate (qty × cost_price) ── */
             const costMap = new Map<number, number>();
             for (const p of products) costMap.set(p.id, parseFloat(p.cost_price) || 0);
-            const inventoryValue = inventory.reduce((sum, inv) => {
+            const closingInventoryValue = inventory.reduce((sum, inv) => {
                 const qty = parseFloat(inv.quantity) || 0;
                 const cost = costMap.get(inv.variant_id) || 0;
                 return sum + qty * cost;
@@ -267,22 +286,26 @@ export default function DashboardPage() {
                 activePOs: spark(activePOs),
                 skus: spark(totalSKUs),
                 spend: spark(totalPOSpend / 1000),
-                value: spark(inventoryValue / 1000),
+                value: spark(closingInventoryValue / 1000),
                 pending: spark(pendingDeliveries),
                 overdue: spark(overduePOs),
+                sales: spark(totalSalesValue / 1000),
+                receivable: spark(accountsReceivable / 1000),
+                milk: spark(totalMilkBought),
             };
 
             setStats({
                 totalProducts, totalWarehouses: warehouses.length, totalSuppliers,
                 totalCategories: categories.length, totalUsers, totalFamilies: families.length,
                 activePOs, totalSKUs, lowStockItems, outOfStockItems, totalPOSpend,
-                pendingDeliveries, overduePOs, inventoryValue,
+                pendingDeliveries, overduePOs, inventoryValue: closingInventoryValue,
                 healthyPct, lowPct, outPct,
                 recentPOs: pos.slice(0, 6),
                 expiringItems: expiringItems.slice(0, 5),
                 inventoryByWarehouse, poStatusBreakdown, topProducts, warehouseCapacity,
                 stockByCategory, supplierContribution, poSpendBySupplier, topSuppliersByPO,
                 sparklines,
+                totalSalesValue, accountsReceivable, totalMilkBought, closingInventoryValue,
             });
         } catch {
             toast.error("Failed to load dashboard data");
@@ -308,15 +331,11 @@ export default function DashboardPage() {
 
     /* ── stat cards config ── */
     const statCards: StatCardProps[] = [
-        { title: "Products", val: stats.totalProducts, icon: Package, grad: "from-teal-500 to-emerald-400", link: "/products", spark: stats.sparklines.products },
-        { title: "Warehouses", val: stats.totalWarehouses, icon: Warehouse, grad: "from-blue-500 to-cyan-400", link: "/warehouses", spark: stats.sparklines.warehouses },
-        { title: "Suppliers", val: stats.totalSuppliers, icon: Truck, grad: "from-emerald-500 to-teal-400", link: "/suppliers", spark: stats.sparklines.suppliers },
-        { title: "Active POs", val: stats.activePOs, icon: ShoppingCart, grad: "from-amber-500 to-orange-400", link: "/procurements", spark: stats.sparklines.activePOs },
-        { title: "SKUs Tracked", val: stats.totalSKUs, icon: Layers, grad: "from-indigo-500 to-purple-400", link: "/inventory", spark: stats.sparklines.skus },
-        { title: "Inventory Value", val: inr(stats.inventoryValue), icon: IndianRupee, grad: "from-violet-500 to-fuchsia-400", link: "/inventory", spark: stats.sparklines.value },
-        { title: "PO Spend", val: inr(stats.totalPOSpend), icon: Scale, grad: "from-rose-500 to-pink-400", link: "/procurements", spark: stats.sparklines.spend },
-        { title: "Pending Deliveries", val: stats.pendingDeliveries, icon: CalendarClock, grad: "from-sky-500 to-blue-400", link: "/procurements", spark: stats.sparklines.pending },
-        { title: "Overdue POs", val: stats.overduePOs, icon: Timer, grad: "from-red-500 to-rose-400", link: "/procurements", spark: stats.sparklines.overdue, alert: stats.overduePOs > 0 },
+        { title: "Total Sales", val: inr(stats.totalSalesValue), icon: TrendingUp, grad: "from-emerald-600 to-teal-500", link: "/sales/history", spark: stats.sparklines.sales },
+        { title: "Accounts Receivable", val: inr(stats.accountsReceivable), icon: IndianRupee, grad: "from-amber-600 to-orange-500", link: "/sales/history", spark: stats.sparklines.receivable },
+        { title: "Total Milk Bought", val: `${stats.totalMilkBought.toLocaleString()} kg`, icon: CircleDot, grad: "from-blue-600 to-cyan-500", link: "/collections", spark: stats.sparklines.milk },
+        { title: "Closing Inventory", val: inr(stats.inventoryValue), icon: Package, grad: "from-indigo-600 to-violet-500", link: "/inventory", spark: stats.sparklines.value },
+        { title: "Active POs", val: stats.activePOs, icon: ShoppingCart, grad: "from-rose-600 to-pink-500", link: "/procurements", spark: stats.sparklines.activePOs },
     ];
 
     const quickActions = [
@@ -356,8 +375,8 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* ═══ Stat Cards with sparklines ═══ */}
-            <div className="grid gap-3 grid-cols-2 md:grid-cols-3 xl:grid-cols-9">
+            {/* ═══ Stat Cards ═══ */}
+            <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                 {statCards.map((card) => (
                     <StatCard key={card.title} {...card} onClick={() => navigate(card.link)} />
                 ))}
@@ -409,44 +428,6 @@ export default function DashboardPage() {
                 )}
             </div>
 
-            {/* ═══ Inventory Health Gauge ═══ */}
-            <Card>
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-base flex items-center gap-2">
-                        <Gauge className="h-4 w-4 text-primary" />
-                        Inventory Health
-                    </CardTitle>
-                    <CardDescription>Stock level distribution across all tracked items</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="flex items-center gap-6">
-                        <div className="flex-1">
-                            {/* Stacked progress bar */}
-                            <div className="h-5 rounded-full overflow-hidden flex w-full bg-muted">
-                                {stats.healthyPct > 0 && (
-                                    <div className="h-full bg-emerald-500 transition-all duration-700" style={{ width: `${stats.healthyPct}%` }} />
-                                )}
-                                {stats.lowPct > 0 && (
-                                    <div className="h-full bg-amber-500 transition-all duration-700" style={{ width: `${stats.lowPct}%` }} />
-                                )}
-                                {stats.outPct > 0 && (
-                                    <div className="h-full bg-red-500 transition-all duration-700" style={{ width: `${stats.outPct}%` }} />
-                                )}
-                            </div>
-                            <div className="flex items-center gap-5 mt-3">
-                                <HealthLabel color="bg-emerald-500" label="Healthy (≥10)" value={`${stats.healthyPct}%`} />
-                                <HealthLabel color="bg-amber-500" label="Low (<10)" value={`${stats.lowPct}%`} />
-                                <HealthLabel color="bg-red-500" label="Out (0)" value={`${stats.outPct}%`} />
-                            </div>
-                        </div>
-                        <div className="hidden md:flex flex-col items-center gap-1 px-6 border-l">
-                            <p className="text-4xl font-bold text-emerald-600 dark:text-emerald-400">{stats.healthyPct}%</p>
-                            <p className="text-xs text-muted-foreground">Healthy Stock</p>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
-
             {/* ═══ Quick Actions ═══ */}
             <Card>
                 <CardHeader className="pb-3">
@@ -473,7 +454,7 @@ export default function DashboardPage() {
                 </CardContent>
             </Card>
 
-            {/* ═══ Charts Row 1: Warehouse Stock + PO Status ═══ */}
+            {/* ═══ Charts Row 1: Stock by Warehouse + Top Products ═══ */}
             <div className="grid gap-6 lg:grid-cols-2">
                 <Card>
                     <CardHeader className="pb-2">
@@ -503,48 +484,6 @@ export default function DashboardPage() {
                 <Card>
                     <CardHeader className="pb-2">
                         <CardTitle className="text-base flex items-center gap-2">
-                            <ShoppingCart className="h-4 w-4 text-primary" />
-                            PO Status Breakdown
-                        </CardTitle>
-                        <CardDescription>Current status of all purchase orders</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {stats.poStatusBreakdown.length > 0 ? (
-                            <div className="flex items-center gap-4">
-                                <ResponsiveContainer width="55%" height={300}>
-                                    <PieChart>
-                                        <Pie data={stats.poStatusBreakdown} cx="50%" cy="50%" innerRadius={60} outerRadius={110} paddingAngle={3} dataKey="value" stroke="none">
-                                            {stats.poStatusBreakdown.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                                        </Pie>
-                                        <Tooltip contentStyle={tooltipStyle} />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                                <div className="flex-1 space-y-2.5">
-                                    {stats.poStatusBreakdown.map((e, i) => (
-                                        <div key={e.name} className="flex items-center gap-2">
-                                            <div className="h-3 w-3 rounded-md shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
-                                            <span className="text-sm capitalize flex-1">{e.name}</span>
-                                            <span className="text-sm font-bold tabular-nums">{e.value}</span>
-                                        </div>
-                                    ))}
-                                    <div className="border-t pt-2">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="text-muted-foreground">Total</span>
-                                            <span className="font-bold">{stats.poStatusBreakdown.reduce((s, e) => s + e.value, 0)}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : <EmptyChartState message="No purchase orders" />}
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* ═══ Charts Row 2: Top Products + Stock by Category ═══ */}
-            <div className="grid gap-6 lg:grid-cols-2">
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
                             <TrendingUp className="h-4 w-4 text-primary" />
                             Top Products by Stock
                         </CardTitle>
@@ -570,99 +509,9 @@ export default function DashboardPage() {
                         ) : <EmptyChartState message="No product data" />}
                     </CardContent>
                 </Card>
-
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <Tags className="h-4 w-4 text-primary" />
-                            Stock by Category
-                        </CardTitle>
-                        <CardDescription>Total inventory grouped by product category</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {stats.stockByCategory.length > 0 ? (
-                            <div className="flex items-center gap-4">
-                                <ResponsiveContainer width="55%" height={300}>
-                                    <PieChart>
-                                        <Pie data={stats.stockByCategory} cx="50%" cy="50%" outerRadius={110} dataKey="value" stroke="none" label={({ name, percent }: { name?: string; percent?: number }) => `${name ?? ""} ${((percent ?? 0) * 100).toFixed(0)}%`} labelLine={false} fontSize={10}>
-                                            {stats.stockByCategory.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                                        </Pie>
-                                        <Tooltip contentStyle={tooltipStyle} />
-                                    </PieChart>
-                                </ResponsiveContainer>
-                                <div className="flex-1 space-y-2">
-                                    {stats.stockByCategory.map((e, i) => (
-                                        <div key={e.name} className="flex items-center gap-2">
-                                            <div className="h-3 w-3 rounded-md shrink-0" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
-                                            <span className="text-xs flex-1 truncate">{e.name}</span>
-                                            <span className="text-xs font-bold tabular-nums">{e.value.toLocaleString()}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : <EmptyChartState message="No category data" />}
-                    </CardContent>
-                </Card>
             </div>
 
-            {/* ═══ Charts Row 3: PO Spend by Supplier + Warehouse Utilization ═══ */}
-            <div className="grid gap-6 lg:grid-cols-2">
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <IndianRupee className="h-4 w-4 text-primary" />
-                            PO Spend by Supplier
-                        </CardTitle>
-                        <CardDescription>Total procurement spend per supplier</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {stats.poSpendBySupplier.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={stats.poSpendBySupplier} layout="vertical" margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted/50" />
-                                    <XAxis type="number" tick={{ fontSize: 11 }} className="fill-muted-foreground" tickFormatter={(v: number) => `₹${(v / 1000).toFixed(0)}k`} />
-                                    <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} className="fill-muted-foreground" width={80} />
-                                    <Tooltip contentStyle={tooltipStyle} formatter={(v) => [`₹${Number(v).toLocaleString("en-IN")}`, "Spend"]} />
-                                    <Bar dataKey="spend" fill={INDIGO} radius={[0, 6, 6, 0]} name="Spend" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : <EmptyChartState message="No spend data" />}
-                    </CardContent>
-                </Card>
-
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <Warehouse className="h-4 w-4 text-primary" />
-                            Warehouse Utilization
-                        </CardTitle>
-                        <CardDescription>SKUs stocked per warehouse</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {stats.warehouseCapacity.length > 0 ? (
-                            <div className="flex items-center gap-4">
-                                <ResponsiveContainer width="55%" height={300}>
-                                    <RadialBarChart innerRadius="25%" outerRadius="100%" data={stats.warehouseCapacity} startAngle={180} endAngle={0} barSize={14}>
-                                        <RadialBar dataKey="used" cornerRadius={8} background={{ fill: "hsl(var(--muted))" }} />
-                                        <Tooltip contentStyle={tooltipStyle} />
-                                    </RadialBarChart>
-                                </ResponsiveContainer>
-                                <div className="flex-1 space-y-2.5">
-                                    {stats.warehouseCapacity.map((w) => (
-                                        <div key={w.name} className="flex items-center gap-2">
-                                            <div className="h-3 w-3 rounded-md shrink-0" style={{ background: w.fill }} />
-                                            <span className="text-sm flex-1 truncate">{w.name}</span>
-                                            <span className="text-sm font-bold tabular-nums">{w.used}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        ) : <EmptyChartState message="No warehouse data" />}
-                    </CardContent>
-                </Card>
-            </div>
-
-            {/* ═══ Bottom Row: Recent POs + Top Suppliers + Expiring ═══ */}
+            {/* ═══ Charts Row 2: Recent POs + Top Suppliers + Expiring ═══ */}
             <div className="grid gap-6 lg:grid-cols-3">
                 {/* Recent POs */}
                 <Card className="lg:col-span-2">
@@ -890,15 +739,6 @@ function AlertBanner({ icon: Icon, title, subtitle, gradient, borderColor, iconC
     );
 }
 
-function HealthLabel({ color, label, value }: { color: string; label: string; value: string }) {
-    return (
-        <div className="flex items-center gap-1.5">
-            <div className={`h-2.5 w-2.5 rounded-full ${color}`} />
-            <span className="text-xs text-muted-foreground">{label}</span>
-            <span className="text-xs font-bold">{value}</span>
-        </div>
-    );
-}
 
 function MiniStat({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: number; color: string }) {
     return (

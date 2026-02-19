@@ -216,6 +216,32 @@ export interface CollectionResponse {
     notes?: string;
 }
 
+// --- Sales ---
+export interface SaleResponse {
+    id: number;
+    warehouse_id: number;
+    warehouse_name?: string;
+    customer_name: string;
+    total_amount: string;
+    tax_amount: string;
+    discount_amount: string;
+    payment_method: string;
+    processed_by_user_id: number;
+    processed_by_name?: string;
+    created_at: string;
+    items?: SaleItemResponse[];
+}
+
+export interface SaleItemResponse {
+    id: number;
+    variant_id: number;
+    variant_name?: string;
+    variant_sku?: string;
+    quantity: string;
+    unit_price: string;
+    line_total: string;
+}
+
 // --- Generic API Response ---
 export interface ApiResponse<T> {
     success: boolean;

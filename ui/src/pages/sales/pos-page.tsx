@@ -34,6 +34,8 @@ import { Separator } from "@/components/ui/separator";
 import { productsApi } from "@/api/products";
 import { warehousesApi } from "@/api/warehouses";
 import { salesApi } from "@/api/sales";
+import { inventoryApi } from "@/api/inventory";
+import { cn } from "@/lib/utils";
 import type { ProductVariantResponse, WarehouseResponse } from "@/types";
 
 interface CartItem extends ProductVariantResponse {
@@ -46,6 +48,7 @@ export default function POSPage() {
     const [selectedWarehouseId, setSelectedWarehouseId] = useState<string>("");
     const [searchQuery, setSearchQuery] = useState("");
     const [cart, setCart] = useState<CartItem[]>([]);
+    const [inventory, setInventory] = useState<Record<number, number>>({});
     const [customerName, setCustomerName] = useState("");
     const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "credit" | "other">("cash");
     const [isProcessing, setIsProcessing] = useState(false);
@@ -77,7 +80,38 @@ export default function POSPage() {
         }
     };
 
+    const fetchInventory = async (warehouseId: string) => {
+        if (!warehouseId) return;
+        try {
+            const resp = await inventoryApi.listByWarehouse(parseInt(warehouseId));
+            const stockMap: Record<number, number> = {};
+            (resp.data.data || []).forEach(item => {
+                stockMap[item.variant_id] = Number(item.quantity);
+            });
+            setInventory(stockMap);
+        } catch (error) {
+            console.error("Failed to fetch inventory", error);
+        }
+    };
+
+    useEffect(() => {
+        if (selectedWarehouseId) {
+            fetchInventory(selectedWarehouseId);
+        }
+    }, [selectedWarehouseId]);
+
     const addToCart = (product: ProductVariantResponse) => {
+        const currentStock = inventory[product.id] || 0;
+        const inCart = cart.find(item => item.id === product.id)?.cartQuantity || 0;
+
+        if (inCart >= currentStock && currentStock > 0) {
+            toast.warning(`Only ${currentStock} units available in stock`);
+            // We still allow it but warn, or we could block it if desired.
+        } else if (currentStock <= 0) {
+            toast.error("Out of stock in selected warehouse");
+            return;
+        }
+
         setCart(prev => {
             const existing = prev.find(item => item.id === product.id);
             if (existing) {
@@ -137,6 +171,10 @@ export default function POSPage() {
             toast.success("Sale processed successfully!");
             setCart([]);
             setCustomerName("");
+            // Refresh inventory after sale
+            if (selectedWarehouseId) {
+                fetchInventory(selectedWarehouseId);
+            }
         } catch (error: any) {
             const errorMsg = error.response?.data?.error?.message || "Checkout failed";
             toast.error(errorMsg);
@@ -199,10 +237,24 @@ export default function POSPage() {
                                     </div>
                                     <CardDescription className="text-xs truncate">SKU: {product.sku}</CardDescription>
                                 </CardHeader>
-                                <CardFooter className="p-4 pt-0 justify-between items-center">
-                                    <div className="text-[10px] text-muted-foreground">Unit: {product.unit}</div>
-                                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 rounded-full">
-                                        <Plus className="h-4 w-4" />
+                                <CardFooter className="p-4 pt-0 flex-col items-stretch gap-2">
+                                    <div className="flex justify-between items-center text-[10px] text-muted-foreground border-t pt-2">
+                                        <div>Unit: {product.unit}</div>
+                                        <div className={cn(
+                                            "font-bold flex items-center gap-1",
+                                            (inventory[product.id] || 0) > 0 ? "text-green-600" : "text-destructive"
+                                        )}>
+                                            <div className={cn("w-1.5 h-1.5 rounded-full", (inventory[product.id] || 0) > 0 ? "bg-green-600" : "bg-destructive")} />
+                                            Stock: {inventory[product.id] || 0}
+                                        </div>
+                                    </div>
+                                    <Button 
+                                        size="sm" 
+                                        variant="secondary" 
+                                        className="w-full h-8 gap-1 text-xs"
+                                        disabled={(inventory[product.id] || 0) <= 0}
+                                    >
+                                        <Plus className="h-3 w-3" /> Add to Order
                                     </Button>
                                 </CardFooter>
                             </Card>

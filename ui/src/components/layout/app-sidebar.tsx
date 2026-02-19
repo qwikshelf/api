@@ -14,6 +14,7 @@ import {
     ChevronLeft,
     CreditCard,
     ClipboardList,
+    History,
 } from "lucide-react";
 import {
     Sidebar,
@@ -43,6 +44,7 @@ const navItems = [
     { title: "Products", icon: Package, href: "/products" },
     { title: "Suppliers", icon: Truck, href: "/suppliers" },
     { title: "Inventory", icon: BoxesIcon, href: "/inventory" },
+    { title: "Sales History", icon: History, href: "/sales/history" },
     { title: "Collections", icon: ClipboardList, href: "/collections" },
     { title: "Procurements", icon: ShoppingCart, href: "/procurements" },
 ];
