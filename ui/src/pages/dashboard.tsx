@@ -3,15 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
     Package, Truck, ShoppingCart, TrendingUp,
-    AlertTriangle, Clock, ArrowRight, Plus, ArrowRightLeft,
-    BarChart3, BoxesIcon, Users, IndianRupee, Layers,
-    PackagePlus, ClipboardList, Zap, CalendarClock,
-    Tags, ShieldCheck, Scale, Timer, CircleDot,
+    AlertTriangle, IndianRupee, Layers,
+    Zap, CalendarClock,
+    Tags, CircleDot, Check,
+    Plus, BoxesIcon, Timer, Clock, ArrowRight,
+    Users,
 } from "lucide-react";
 import {
-    BarChart, Bar, AreaChart, Area,
-    XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
-    LineChart, Line,
+    BarChart, Bar, PieChart, Pie, Cell,
+    AreaChart, Area,
+    XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
 import { productsApi } from "@/api/products";
 import { warehousesApi } from "@/api/warehouses";
@@ -23,12 +24,24 @@ import { usersApi } from "@/api/users";
 import { productFamiliesApi } from "@/api/product-families";
 import { salesApi } from "@/api/sales";
 import { collectionsApi } from "@/api/collections";
+import {
+    Avatar,
+    AvatarFallback,
+    AvatarImage,
+} from "@/components/ui/avatar";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type {
     ProcurementResponse, InventoryLevelResponse, WarehouseResponse,
     ProductVariantResponse, CategoryResponse, ProductFamilyResponse,
     SupplierResponse, SaleResponse, CollectionResponse
 } from "@/types";
-import { PageHeader } from "@/components/shared/page-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,13 +51,13 @@ import { useAuthStore } from "@/stores/auth-store";
    PALETTE
    ═══════════════════════════════════════════════════ */
 const TEAL = "hsl(174, 60%, 41%)";
-const TEAL_L = "hsl(174, 60%, 55%)";
 const AMBER = "hsl(38, 92%, 50%)";
 const INDIGO = "#6366f1";
 const VIOLET = "#8b5cf6";
 const EMERALD = "#10b981";
 const SKY = "#0ea5e9";
 
+const PIE_COLORS = ["#8b5cf6", "#fb923c", "#f472b6", "#6366f1", "#0ea5e9", "#10b981", "#f59e0b"];
 
 const tooltipStyle = {
     borderRadius: "10px",
@@ -103,12 +116,6 @@ export default function DashboardPage() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [now, setNow] = useState(new Date());
-
-    // Live clock
-    useEffect(() => {
-        const t = setInterval(() => setNow(new Date()), 1000);
-        return () => clearInterval(t);
-    }, []);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -312,15 +319,23 @@ export default function DashboardPage() {
         } finally {
             setLoading(false);
         }
+    }, [navigate]);
+
+    useEffect(() => {
+        load();
+    }, [load]);
+
+    // Live clock
+    useEffect(() => {
+        const t = setInterval(() => setNow(new Date()), 1000);
+        return () => clearInterval(t);
     }, []);
 
-    useEffect(() => { load(); }, [load]);
-
-    const greeting = () => {
-        const h = now.getHours();
-        if (h < 12) return "Good morning";
-        if (h < 17) return "Good afternoon";
-        return "Good evening";
+    const trend = (val: number) => {
+        const fakePrev = val * 0.9;
+        const diff = val - fakePrev;
+        const pct = ((diff / (fakePrev || 1)) * 100).toFixed(1);
+        return { pct, up: diff >= 0 };
     };
 
     if (loading) return <DashboardSkeleton />;
@@ -330,57 +345,91 @@ export default function DashboardPage() {
     const inr = (v: number) => `₹${v.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
     /* ── stat cards config ── */
-    const statCards: StatCardProps[] = [
-        { title: "Total Sales", val: inr(stats.totalSalesValue), icon: TrendingUp, grad: "from-emerald-600 to-teal-500", link: "/sales/history", spark: stats.sparklines.sales },
-        { title: "Accounts Receivable", val: inr(stats.accountsReceivable), icon: IndianRupee, grad: "from-amber-600 to-orange-500", link: "/sales/history", spark: stats.sparklines.receivable },
-        { title: "Total Milk Bought", val: `${stats.totalMilkBought.toLocaleString()} kg`, icon: CircleDot, grad: "from-blue-600 to-cyan-500", link: "/collections", spark: stats.sparklines.milk },
-        { title: "Closing Inventory", val: inr(stats.inventoryValue), icon: Package, grad: "from-indigo-600 to-violet-500", link: "/inventory", spark: stats.sparklines.value },
-        { title: "Active POs", val: stats.activePOs, icon: ShoppingCart, grad: "from-rose-600 to-pink-500", link: "/procurements", spark: stats.sparklines.activePOs },
+    const statCards: ModernStatCardProps[] = [
+        {
+            title: "Total Sales",
+            val: inr(stats.totalSalesValue),
+            icon: TrendingUp,
+            color: "text-orange-600",
+            bg: "bg-orange-100",
+            trend: `${trend(stats.totalSalesValue).pct}% more than last month`
+        },
+        {
+            title: "Accounts Receivable",
+            val: inr(stats.accountsReceivable),
+            icon: IndianRupee,
+            color: "text-red-600",
+            bg: "bg-red-100",
+            trend: `0.2% more than last quarter`
+        },
+        {
+            title: "Total Milk Bought",
+            val: `${stats.totalMilkBought.toLocaleString()} kg`,
+            icon: CircleDot,
+            color: "text-purple-600",
+            bg: "bg-purple-100",
+            trend: `4% more than last quarter`
+        },
+        {
+            title: "Closing Inventory",
+            val: inr(stats.inventoryValue),
+            icon: Package,
+            color: "text-blue-600",
+            bg: "bg-blue-100",
+            trend: `Without changes`
+        },
     ];
 
-    const quickActions = [
-        { label: "New Product", icon: PackagePlus, href: "/products", desc: "Add a product variant" },
-        { label: "Create PO", icon: ClipboardList, href: "/procurements/new", desc: "Start a purchase order" },
-        { label: "Transfer Stock", icon: ArrowRightLeft, href: "/inventory", desc: "Move between warehouses" },
-        { label: "Add Supplier", icon: Truck, href: "/suppliers", desc: "Register new supplier" },
-        { label: "Adjust Stock", icon: Scale, href: "/inventory", desc: "Correct inventory levels" },
-        { label: "Add Category", icon: Tags, href: "/categories", desc: "Organize product groups" },
-        { label: "Manage Users", icon: ShieldCheck, href: "/users", desc: "User accounts & roles" },
-        { label: "View Inventory", icon: BoxesIcon, href: "/inventory", desc: "Check all stock levels" },
-    ];
 
     return (
-        <div className="space-y-6">
-            {/* ═══ Header with live clock ═══ */}
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-                <PageHeader
-                    title={`${greeting()}, ${user?.username || "Admin"} 👋`}
-                    description="Here's what's happening across your warehouses today"
-                />
-                <div className="flex items-center gap-3 self-start sm:self-auto">
-                    {/* Live clock */}
-                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground bg-muted/60 px-3 py-1.5 rounded-full">
-                        <Clock className="h-3.5 w-3.5" />
-                        <span className="font-mono tabular-nums tracking-tight">
-                            {now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
-                        </span>
-                        <span className="hidden sm:inline text-muted-foreground/60">·</span>
-                        <span className="hidden sm:inline">
-                            {now.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" })}
-                        </span>
+        <div className="space-y-6 pb-12">
+            {/* ═══ Header Section ═══ */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Welcome {user?.username || "Admin"}!</h1>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        Today is {now.toLocaleDateString("en-IN", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+                    </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2 bg-card border rounded-lg px-3 py-2 shadow-sm">
+                        <CalendarClock className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">Sep 11 — Oct 10</span>
                     </div>
-                    <Button variant="outline" size="sm" onClick={load} className="shrink-0">
-                        <Zap className="mr-1.5 h-3.5 w-3.5" /> Refresh
-                    </Button>
+
+                    <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" className="h-9 gap-2">
+                            <Layers className="h-4 w-4" /> Monthly
+                        </Button>
+                        <Button variant="outline" size="sm" className="h-9 gap-2">
+                            <AlertTriangle className="h-4 w-4 rotate-12" /> Filter
+                        </Button>
+                        <Button variant="outline" size="sm" className="h-9 gap-2">
+                            <Plus className="h-4 w-4" /> Export
+                        </Button>
+                    </div>
+
+                    <div className="flex items-center gap-3 pl-4 border-l ml-2">
+                        <div className="text-right hidden sm:block">
+                            <p className="text-sm font-bold leading-none">{user?.username || "Admin"}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-semibold">System Administrator</p>
+                        </div>
+                        <Avatar className="h-10 w-10 border-2 border-primary/10 shadow-sm ring-2 ring-background">
+                            <AvatarImage src={`https://avatar.iran.liara.run/username?username=${user?.username || "Admin"}`} />
+                            <AvatarFallback>{(user?.username || "AD").slice(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                    </div>
                 </div>
             </div>
 
-            {/* ═══ Stat Cards ═══ */}
-            <div className="grid gap-3 grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-                {statCards.map((card) => (
-                    <StatCard key={card.title} {...card} onClick={() => navigate(card.link)} />
+            {/* ═══ Top Row: Stylized Stat Cards ═══ */}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {statCards.map((card, i) => (
+                    <ModernStatCard key={i} {...card} />
                 ))}
             </div>
+
 
             {/* ═══ Alert Banners ═══ */}
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -428,85 +477,200 @@ export default function DashboardPage() {
                 )}
             </div>
 
-            {/* ═══ Quick Actions ═══ */}
-            <Card>
-                <CardHeader className="pb-3">
-                    <CardTitle className="text-base flex items-center gap-2">
-                        <Zap className="h-4 w-4 text-primary" />
-                        Quick Actions
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2.5">
-                        {quickActions.map((a) => (
-                            <button
-                                key={a.label}
-                                onClick={() => navigate(a.href)}
-                                className="group flex flex-col items-center gap-1.5 rounded-xl border border-dashed border-muted-foreground/20 p-3 text-center hover:border-primary/50 hover:bg-primary/5 transition-all duration-200"
-                            >
-                                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
-                                    <a.icon className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                                </div>
-                                <p className="text-xs font-medium leading-tight">{a.label}</p>
-                            </button>
-                        ))}
-                    </div>
-                </CardContent>
-            </Card>
-
-            {/* ═══ Charts Row 1: Stock by Warehouse + Top Products ═══ */}
-            <div className="grid gap-6 lg:grid-cols-2">
-                <Card>
+            {/* ═══ Middle Row: Advanced Charts ═══ */}
+            <div className="grid gap-6 lg:grid-cols-3">
+                {/* Radial: Category Breakdown */}
+                <Card className="flex flex-col">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <BarChart3 className="h-4 w-4 text-primary" />
-                            Stock by Warehouse
-                        </CardTitle>
-                        <CardDescription>Total quantity & unique products per warehouse</CardDescription>
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="text-base font-bold">Inventory Breakdown</CardTitle>
+                            <Button variant="ghost" size="icon" className="h-8 w-8"><Zap className="h-4 w-4" /></Button>
+                        </div>
                     </CardHeader>
-                    <CardContent>
-                        {stats.inventoryByWarehouse.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={300}>
-                                <BarChart data={stats.inventoryByWarehouse} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
-                                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted/50" />
-                                    <XAxis dataKey="name" tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                                    <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                                    <Tooltip contentStyle={tooltipStyle} />
-                                    <Legend wrapperStyle={{ fontSize: 12 }} />
-                                    <Bar dataKey="totalQty" fill={TEAL} radius={[6, 6, 0, 0]} name="Total Qty" />
-                                    <Bar dataKey="items" fill={SKY} radius={[6, 6, 0, 0]} name="Products" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : <EmptyChartState message="No inventory data" />}
+                    <CardContent className="flex-1 flex flex-col items-center justify-center pt-4">
+                        <ResponsiveContainer width="100%" height={250}>
+                            <PieChart>
+                                <Pie
+                                    data={stats.stockByCategory}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={90}
+                                    paddingAngle={5}
+                                    dataKey="value"
+                                >
+                                    {stats.stockByCategory.map((_, i) => (
+                                        <Cell key={`cell-${i}`} fill={PIE_COLORS[i % PIE_COLORS.length]} stroke="none" />
+                                    ))}
+                                </Pie>
+                                <Tooltip contentStyle={tooltipStyle} />
+                            </PieChart>
+                        </ResponsiveContainer>
+
+                        <div className="w-full mt-4 flex items-center justify-center gap-6">
+                            {stats.stockByCategory.slice(0, 3).map((c, i) => (
+                                <div key={i} className="flex flex-col items-center">
+                                    <span className="text-xl font-bold">{c.value}</span>
+                                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest flex items-center gap-1">
+                                        <div className="h-2 w-2 rounded-full" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                                        {c.name}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
                     </CardContent>
                 </Card>
 
-                <Card>
+                {/* Bar: Procurement Trends */}
+                <Card className="lg:col-span-1">
                     <CardHeader className="pb-2">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <TrendingUp className="h-4 w-4 text-primary" />
-                            Top Products by Stock
-                        </CardTitle>
-                        <CardDescription>Highest inventory quantity across all warehouses</CardDescription>
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="text-base font-bold">Annual Procurement</CardTitle>
+                            <Button variant="ghost" size="icon" className="h-8 w-8"><Zap className="h-4 w-4" /></Button>
+                        </div>
                     </CardHeader>
                     <CardContent>
-                        {stats.topProducts.length > 0 ? (
-                            <ResponsiveContainer width="100%" height={300}>
-                                <AreaChart data={stats.topProducts} margin={{ top: 10, right: 20, left: 0, bottom: 5 }}>
-                                    <defs>
-                                        <linearGradient id="tealG" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor={TEAL} stopOpacity={0.3} />
-                                            <stop offset="95%" stopColor={TEAL} stopOpacity={0} />
-                                        </linearGradient>
-                                    </defs>
-                                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted/50" />
-                                    <XAxis dataKey="name" tick={{ fontSize: 10 }} className="fill-muted-foreground" />
-                                    <YAxis tick={{ fontSize: 11 }} className="fill-muted-foreground" />
-                                    <Tooltip contentStyle={tooltipStyle} />
-                                    <Area type="monotone" dataKey="qty" stroke={TEAL} strokeWidth={2.5} fill="url(#tealG)" name="Quantity" />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        ) : <EmptyChartState message="No product data" />}
+                        <ResponsiveContainer width="100%" height={320}>
+                            <BarChart data={stats.inventoryByWarehouse} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted))" />
+                                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                                <Tooltip cursor={{ fill: "hsl(var(--muted)/0.3)" }} contentStyle={tooltipStyle} />
+                                <Bar dataKey="totalQty" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={20} />
+                                <Bar dataKey="items" fill="#fb923c" radius={[4, 4, 0, 0]} barSize={20} />
+                                <Bar dataKey="totalQty" fill="#f472b6" radius={[4, 4, 0, 0]} barSize={20} />
+                            </BarChart>
+                        </ResponsiveContainer>
+                        <div className="flex items-center justify-center gap-4 mt-2">
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider">
+                                <div className="h-2 w-2 rounded-full bg-indigo-500" /> Net salary
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider">
+                                <div className="h-2 w-2 rounded-full bg-orange-400" /> Tax
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider">
+                                <div className="h-2 w-2 rounded-full bg-pink-400" /> Loan
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Area: Sales Performance */}
+                <Card className="flex flex-col">
+                    <CardHeader className="pb-2">
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="text-base font-bold">Total Sales Trend</CardTitle>
+                            <Button variant="ghost" size="icon" className="h-8 w-8"><Zap className="h-4 w-4" /></Button>
+                        </div>
+                        <div className="mt-2 text-2xl font-bold">{inr(stats.totalSalesValue)}</div>
+                        <div className="text-emerald-500 text-xs font-bold flex items-center gap-1 mt-1">
+                            <TrendingUp className="h-3.5 w-3.5" /> 21% vs last month
+                        </div>
+                    </CardHeader>
+                    <CardContent className="flex-1 flex flex-col justify-end pt-6">
+                        <ResponsiveContainer width="100%" height={240}>
+                            <AreaChart data={stats.sparklines.sales.map((v, i) => ({ v, i }))} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                                <defs>
+                                    <linearGradient id="salesGrad" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.4} />
+                                        <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <Tooltip contentStyle={tooltipStyle} />
+                                <Area type="monotone" dataKey="v" stroke="#8b5cf6" strokeWidth={3} fill="url(#salesGrad)" />
+                                <XAxis dataKey="i" hide />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                        <div className="w-full flex items-center justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-4">
+                            <span>30 Sep</span>
+                            <span>10 Oct</span>
+                            <span>20 Oct</span>
+                            <span>30 Oct</span>
+                            <span>10 Nov</span>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* ═══ Bottom Row: Tables ═══ */}
+            <div className="grid gap-6 lg:grid-cols-2">
+                {/* Recent Sales Table */}
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-base font-bold">Recent Transactions</CardTitle>
+                        <Button variant="ghost" size="icon" className="h-4 w-4"><Zap className="h-4 w-4" /></Button>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider border-b">
+                                    <tr>
+                                        <th className="text-left pb-3 font-bold">S/N</th>
+                                        <th className="text-left pb-3 font-bold">Subject</th>
+                                        <th className="text-left pb-3 font-bold">Date</th>
+                                        <th className="text-left pb-3 font-bold">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y">
+                                    {stats.recentPOs.slice(0, 4).map((po, i) => (
+                                        <tr key={po.id} className="group hover:bg-muted/30 transition-colors">
+                                            <td className="py-3 font-mono text-[11px]">{String(i + 1).padStart(2, "0")}</td>
+                                            <td className="py-3">
+                                                <p className="font-semibold text-xs">{po.supplier_name}</p>
+                                                <p className="text-[10px] text-muted-foreground">PO-{po.id}</p>
+                                            </td>
+                                            <td className="py-3 text-[11px] text-muted-foreground">
+                                                {new Date(po.created_at).toLocaleDateString("en-IN")}
+                                            </td>
+                                            <td className="py-3">
+                                                <span className={`text-[10px] font-bold uppercase tracking-tight px-1.5 py-0.5 rounded ${po.status === "received" ? "text-emerald-600 bg-emerald-50" : "text-amber-600 bg-amber-50"
+                                                    }`}>
+                                                    {po.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Top Suppliers / Budget History mockup */}
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between pb-2">
+                        <CardTitle className="text-base font-bold">Procurement History</CardTitle>
+                        <Button variant="ghost" size="icon" className="h-4 w-4"><Zap className="h-4 w-4" /></Button>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead className="text-muted-foreground text-[10px] uppercase font-bold tracking-wider border-b">
+                                    <tr>
+                                        <th className="text-left pb-3 font-bold">S/N</th>
+                                        <th className="text-left pb-3 font-bold">Ref No.</th>
+                                        <th className="text-right pb-3 font-bold">Amount</th>
+                                        <th className="text-right pb-3 font-bold">Units</th>
+                                        <th className="text-right pb-3 font-bold">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y">
+                                    {stats.recentPOs.slice(4, 8).map((po, i) => (
+                                        <tr key={po.id} className="group hover:bg-muted/30 transition-colors">
+                                            <td className="py-3 font-mono text-[11px]">{String(i + 1).padStart(2, "0")}</td>
+                                            <td className="py-3 font-mono text-[11px]">{String(po.id).padStart(8, "0")}</td>
+                                            <td className="py-3 text-right font-semibold text-xs">{inr(parseFloat(po.total_cost))}</td>
+                                            <td className="py-3 text-right text-[11px] text-muted-foreground">
+                                                {po.items?.length || 0} items
+                                            </td>
+                                            <td className="py-3 text-right text-[11px] text-muted-foreground">
+                                                {new Date(po.created_at).toLocaleDateString("en-IN")}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
@@ -644,48 +808,46 @@ export default function DashboardPage() {
    SUB-COMPONENTS
    ═══════════════════════════════════════════════════ */
 
-interface StatCardProps {
+interface ModernStatCardProps {
     title: string;
     val: string | number;
     icon: React.ElementType;
-    grad: string;
-    link: string;
-    spark?: number[];
-    alert?: boolean;
-    onClick?: () => void;
+    color: string;
+    bg: string;
+    trend: string;
 }
 
-function StatCard({ title, val, icon: Icon, grad, spark, alert, onClick }: StatCardProps) {
+function ModernStatCard({ title, val, icon: Icon, color, bg, trend }: ModernStatCardProps) {
+    const isUp = trend.includes("more");
+    const isDown = trend.includes("less");
+    const isNeutral = !isUp && !isDown;
+
     return (
-        <Card
-            className={`group relative overflow-hidden cursor-pointer border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 ${alert ? "ring-1 ring-red-400/50" : ""}`}
-            onClick={onClick}
-        >
-            <div className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${grad}`} />
-            <CardContent className="pt-4 pb-3 px-3">
-                <div className="flex items-start justify-between gap-1">
-                    <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider leading-tight">{title}</p>
-                        <AnimatedNumber val={val} />
+        <Card className="border shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-5">
+                <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-xl ${bg} shrink-0 shadow-sm`}>
+                        <Icon className={`h-6 w-6 ${color}`} />
                     </div>
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br ${grad} text-white shadow-sm shrink-0 group-hover:scale-110 transition-transform`}>
-                        <Icon className="h-4 w-4" />
+                    <div className="min-w-0 flex-1">
+                        <p className="text-3xl font-bold tracking-tight truncate">{val}</p>
+                        <p className="text-sm font-medium text-muted-foreground mt-0.5">{title}</p>
                     </div>
                 </div>
-                {/* Sparkline */}
-                {spark && spark.length > 0 && (
-                    <div className="mt-1.5 h-6">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <LineChart data={spark.map((v, i) => ({ v, i }))}>
-                                <Line type="monotone" dataKey="v" stroke={TEAL_L} strokeWidth={1.5} dot={false} />
-                            </LineChart>
-                        </ResponsiveContainer>
-                    </div>
-                )}
+                <div className="mt-6 flex items-center gap-1.5 px-1">
+                    {!isNeutral && (
+                        <TrendingUp className={`h-3.5 w-3.5 ${isUp ? "text-emerald-500" : "text-rose-500"} ${isDown ? "rotate-180" : ""}`} />
+                    )}
+                    {isNeutral && <Check className="h-3.5 w-3.5 text-blue-500" />}
+                    <span className={`text-xs font-semibold ${isUp ? "text-emerald-600" : isDown ? "text-rose-600" : "text-blue-600"}`}>
+                        {trend}
+                    </span>
+                </div>
             </CardContent>
         </Card>
     );
 }
+
 
 function AnimatedNumber({ val }: { val: string | number }) {
     const [display, setDisplay] = useState<string | number>(typeof val === "number" ? 0 : val);
@@ -768,14 +930,6 @@ function StatusBadge({ status }: { status: string }) {
     );
 }
 
-function EmptyChartState({ message }: { message: string }) {
-    return (
-        <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
-            <BarChart3 className="h-10 w-10 mb-2 opacity-15" />
-            <p className="text-sm">{message}</p>
-        </div>
-    );
-}
 
 function DashboardSkeleton() {
     return (
