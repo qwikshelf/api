@@ -26,6 +26,8 @@ type Config struct {
 	VariantHandler     *handler.ProductVariantHandler
 	InventoryHandler   *handler.InventoryHandler
 	ProcurementHandler *handler.ProcurementHandler
+	SaleHandler        *handler.SaleHandler
+	CollectionHandler  *handler.CollectionHandler
 }
 
 // SetupRoutes configures all API routes
@@ -156,6 +158,21 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 				procurements.GET("/supplier/:supplierId", cfg.ProcurementHandler.ListBySupplier)
 				procurements.PATCH("/:id/status", cfg.ProcurementHandler.UpdateStatus)
 				procurements.PATCH("/:id/receive", cfg.ProcurementHandler.ReceiveItems)
+			}
+
+			// Sale routes
+			sales := protected.Group("/sales")
+			{
+				sales.GET("", cfg.SaleHandler.List)
+				sales.POST("", cfg.SaleHandler.Create)
+				sales.GET("/:id", cfg.SaleHandler.Get)
+			}
+
+			// Collection routes
+			collections := protected.Group("/collections")
+			{
+				collections.GET("", cfg.CollectionHandler.List)
+				collections.POST("", cfg.CollectionHandler.Record)
 			}
 		}
 	}

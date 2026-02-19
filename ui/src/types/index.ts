@@ -201,6 +201,21 @@ export interface CreateProcurementRequest {
     items: { variant_id: number; quantity: string; unit_cost: string }[];
 }
 
+// --- Collections ---
+export interface CollectionResponse {
+    id: number;
+    variant_id: number;
+    variant_name?: string;
+    supplier_id: number;
+    supplier_name?: string;
+    agent_id: number;
+    agent_name?: string;
+    warehouse_id: number;
+    weight: string;
+    collected_at: string;
+    notes?: string;
+}
+
 // --- Generic API Response ---
 export interface ApiResponse<T> {
     success: boolean;

@@ -47,6 +47,7 @@ func main() {
 
 	// Initialize structured logger
 	pretty := cfg.App.Env != "production"
+	logger.Debug().Str("host", cfg.Database.Host).Msg("Database host")
 	logger.Init(cfg.Log.Level, cfg.Log.File, pretty)
 	logger.Info().Str("env", cfg.App.Env).Str("log_file", cfg.Log.File).Msg("Logger initialized")
 
