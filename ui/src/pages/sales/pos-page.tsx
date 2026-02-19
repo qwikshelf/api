@@ -140,8 +140,27 @@ export default function POSPage() {
         setCart(prev => prev.filter(item => item.id !== id));
     };
 
+    const isFractionalProduct = (item: any) => {
+        return item.sku?.toUpperCase().includes("RBM");
+    };
+
+    const updateQuantityDirect = (id: number, value: string) => {
+        const numVal = parseFloat(value);
+        if (value === "") {
+            setCart(prev => prev.map(item => item.id === id ? { ...item, cartQuantity: 0 } : item));
+            return;
+        }
+        if (isNaN(numVal) || numVal < 0) return;
+        setCart(prev => prev.map(item => {
+            if (item.id === id) {
+                return { ...item, cartQuantity: numVal };
+            }
+            return item;
+        }));
+    };
+
     const subtotal = cart.reduce((sum, item) => sum + (Number(item.selling_price) * item.cartQuantity), 0);
-    const tax = subtotal * 0.18; // Example 18% tax
+    const tax = 0; // Tax removed as per user request
     const total = subtotal + tax;
 
     const handleCheckout = async () => {
@@ -248,9 +267,9 @@ export default function POSPage() {
                                             Stock: {inventory[product.id] || 0}
                                         </div>
                                     </div>
-                                    <Button 
-                                        size="sm" 
-                                        variant="secondary" 
+                                    <Button
+                                        size="sm"
+                                        variant="secondary"
                                         className="w-full h-8 gap-1 text-xs"
                                         disabled={(inventory[product.id] || 0) <= 0}
                                     >
@@ -311,27 +330,42 @@ export default function POSPage() {
                                         <div key={item.id} className="flex gap-3 bg-background p-3 rounded-lg border shadow-sm group">
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="text-sm font-semibold truncate leading-none mb-1">{item.name}</h4>
-                                                <p className="text-xs text-muted-foreground">₹{item.selling_price} × {item.cartQuantity}</p>
+                                                <p className="text-xs text-muted-foreground">₹{item.selling_price} × {isFractionalProduct(item) ? item.cartQuantity : item.cartQuantity.toFixed(0)}</p>
                                             </div>
                                             <div className="flex flex-col items-end gap-2 shrink-0">
-                                                <div className="flex items-center border rounded-md h-7">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-6 w-6"
-                                                        onClick={() => updateQuantity(item.id, -1)}
-                                                    >
-                                                        <Minus className="h-3 w-3" />
-                                                    </Button>
-                                                    <span className="w-8 text-center text-xs font-bold leading-none">{item.cartQuantity}</span>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-6 w-6"
-                                                        onClick={() => updateQuantity(item.id, 1)}
-                                                    >
-                                                        <Plus className="h-3 w-3" />
-                                                    </Button>
+                                                <div className="flex items-center gap-2">
+                                                    {isFractionalProduct(item) ? (
+                                                        <div className="flex items-center gap-1.5 bg-muted/50 px-2 py-1 rounded-md border border-primary/20">
+                                                            <span className="text-[10px] font-bold uppercase text-primary/70">Qty:</span>
+                                                            <Input
+                                                                type="number"
+                                                                step="0.01"
+                                                                value={item.cartQuantity || ""}
+                                                                onChange={(e) => updateQuantityDirect(item.id, e.target.value)}
+                                                                className="h-6 w-14 border-none text-right text-xs font-bold focus-visible:ring-0 bg-transparent p-0"
+                                                            />
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center border rounded-md h-7 overflow-hidden bg-background">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-6 w-6"
+                                                                onClick={() => updateQuantity(item.id, -1)}
+                                                            >
+                                                                <Minus className="h-3 w-3" />
+                                                            </Button>
+                                                            <span className="w-8 text-center text-xs font-bold leading-none">{item.cartQuantity}</span>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-6 w-6"
+                                                                onClick={() => updateQuantity(item.id, 1)}
+                                                            >
+                                                                <Plus className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <Button
                                                     variant="ghost"
@@ -355,10 +389,6 @@ export default function POSPage() {
                         <div className="flex justify-between text-sm">
                             <span className="text-muted-foreground">Subtotal</span>
                             <span>₹{subtotal.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Tax (18%)</span>
-                            <span>₹{tax.toFixed(2)}</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between text-lg font-bold text-primary">

@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useAuthStore } from "@/stores/auth-store";
 import { toast } from "sonner";
 import { ArrowLeft, Package, CheckCircle2, Truck, PackageCheck, XCircle } from "lucide-react";
 import { procurementsApi } from "@/api/procurements";
@@ -18,24 +19,33 @@ import {
 import { Label } from "@/components/ui/label";
 
 const STATUS_COLORS: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
+    pending: "outline",
     draft: "outline",
     approved: "secondary",
     ordered: "default",
+    partial: "secondary",
     received: "default",
     cancelled: "destructive",
 };
 
 const STATUS_ICONS: Record<string, React.ReactNode> = {
+    pending: <Package className="h-4 w-4" />,
     draft: <Package className="h-4 w-4" />,
     approved: <CheckCircle2 className="h-4 w-4" />,
     ordered: <Truck className="h-4 w-4" />,
+    partial: <Package className="h-4 w-4" />,
     received: <PackageCheck className="h-4 w-4" />,
     cancelled: <XCircle className="h-4 w-4" />,
 };
 
 // Workflow: draft → approved → ordered → received
 // Any non-terminal status can be cancelled
-const NEXT_STATUS: Record<string, { label: string; status: string; variant: "default" | "destructive" }[]> = {
+// Workflow definitions
+const WORKFLOW_ACTIONS: Record<string, { label: string; status: string; variant: "default" | "destructive" }[]> = {
+    pending: [
+        { label: "Approve", status: "approved", variant: "default" },
+        { label: "Cancel", status: "cancelled", variant: "destructive" },
+    ],
     draft: [
         { label: "Approve", status: "approved", variant: "default" },
         { label: "Cancel", status: "cancelled", variant: "destructive" },
@@ -45,6 +55,10 @@ const NEXT_STATUS: Record<string, { label: string; status: string; variant: "def
         { label: "Cancel", status: "cancelled", variant: "destructive" },
     ],
     ordered: [
+        { label: "Mark as Received", status: "received", variant: "default" },
+        { label: "Cancel", status: "cancelled", variant: "destructive" },
+    ],
+    partial: [
         { label: "Mark as Received", status: "received", variant: "default" },
         { label: "Cancel", status: "cancelled", variant: "destructive" },
     ],
@@ -58,6 +72,8 @@ export default function ProcurementDetailPage() {
     const [po, setPo] = useState<ProcurementResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [statusSaving, setStatusSaving] = useState(false);
+    const user = useAuthStore((s) => s.user);
+    const isAdminOrManager = user?.role?.name?.toLowerCase() === "admin" || user?.role?.name?.toLowerCase() === "manager";
 
     // Receive items dialog
     const [receiveOpen, setReceiveOpen] = useState(false);
@@ -132,7 +148,29 @@ export default function ProcurementDetailPage() {
 
     if (!po) return null;
 
-    const actions = NEXT_STATUS[po.status] || [];
+    const availableActions = useMemo(() => {
+        if (!po) return [];
+        const standardActions = WORKFLOW_ACTIONS[po.status] || [];
+
+        if (isAdminOrManager) {
+            // Admins can transition to almost anything from anywhere if not terminal
+            const isTerminal = po.status === "received" || po.status === "cancelled";
+            if (isTerminal) return [];
+
+            const allPossible: { label: string; status: string; variant: "default" | "destructive" | "outline" | "secondary" }[] = [
+                { label: "Approve", status: "approved", variant: "secondary" },
+                { label: "Order", status: "ordered", variant: "secondary" },
+                { label: "Receive", status: "received", variant: "default" },
+                { label: "Cancel", status: "cancelled", variant: "destructive" },
+            ];
+
+            // Filter out current status
+            return allPossible.filter(a => a.status !== po.status);
+        }
+
+        return standardActions;
+    }, [po, isAdminOrManager]);
+
     const isTerminal = po.status === "received" || po.status === "cancelled";
 
     return (
@@ -235,7 +273,7 @@ export default function ProcurementDetailPage() {
             </Card>
 
             {/* Status Actions */}
-            {!isTerminal && actions.length > 0 && (
+            {!isTerminal && availableActions.length > 0 && (
                 <Card>
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between">
@@ -243,13 +281,14 @@ export default function ProcurementDetailPage() {
                                 <p className="font-medium">Actions</p>
                                 <p className="text-sm text-muted-foreground">Update the purchase order status</p>
                             </div>
-                            <div className="flex gap-2">
-                                {actions.map((action) => (
+                            <div className="flex flex-wrap gap-2">
+                                {availableActions.map((action) => (
                                     <Button
                                         key={action.status}
-                                        variant={action.variant}
+                                        variant={action.variant as any}
                                         onClick={() => handleStatusChange(action.status)}
                                         disabled={statusSaving}
+                                        size="sm"
                                     >
                                         {action.label}
                                     </Button>
