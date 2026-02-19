@@ -64,6 +64,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 	supplierRepo := postgres.NewSupplierRepository(db)
 	inventoryRepo := postgres.NewInventoryRepository(db)
 	procurementRepo := postgres.NewProcurementRepository(db)
+	saleRepo := postgres.NewSaleRepository(db)
+	collectionRepo := postgres.NewCollectionRepository(db)
 
 	// Initialize services
 	hasher := bcrypt.NewHasher()
@@ -77,6 +79,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 	supplierService := service.NewSupplierService(supplierRepo)
 	inventoryService := service.NewInventoryService(inventoryRepo, warehouseRepo, productVariantRepo)
 	procurementService := service.NewProcurementService(procurementRepo, supplierRepo, inventoryRepo, warehouseRepo, productVariantRepo)
+	saleService := service.NewSaleService(saleRepo, inventoryRepo, productVariantRepo, warehouseRepo)
+	collectionService := service.NewCollectionService(collectionRepo, inventoryRepo, productVariantRepo, warehouseRepo, supplierRepo)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService)
@@ -89,6 +93,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 	supplierHandler := handler.NewSupplierHandler(supplierService)
 	inventoryHandler := handler.NewInventoryHandler(inventoryService)
 	procurementHandler := handler.NewProcurementHandler(procurementService)
+	saleHandler := handler.NewSaleHandler(saleService)
+	collectionHandler := handler.NewCollectionHandler(collectionService)
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(cfg.JWT.Secret)
@@ -109,6 +115,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 		VariantHandler:     productVariantHandler,
 		InventoryHandler:   inventoryHandler,
 		ProcurementHandler: procurementHandler,
+		SaleHandler:        saleHandler,
+		CollectionHandler:  collectionHandler,
 	})
 
 	return &App{

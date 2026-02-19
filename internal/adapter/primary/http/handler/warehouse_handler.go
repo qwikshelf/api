@@ -34,7 +34,7 @@ func (h *WarehouseHandler) List(c *gin.Context) {
 		response.InternalErrorDebug(c, "Failed to fetch warehouses", err)
 		return
 	}
-	var resp []dto.WarehouseResponse
+	resp := make([]dto.WarehouseResponse, 0)
 	for _, w := range warehouses {
 		resp = append(resp, dto.WarehouseResponse{ID: w.ID, Name: w.Name, Type: w.Type, Address: w.Address})
 	}

@@ -32,7 +32,7 @@ func (h *CategoryHandler) List(c *gin.Context) {
 		response.InternalErrorDebug(c, "Failed to fetch categories", err)
 		return
 	}
-	var resp []dto.CategoryResponse
+	resp := make([]dto.CategoryResponse, 0)
 	for _, cat := range categories {
 		resp = append(resp, dto.CategoryResponse{ID: cat.ID, Name: cat.Name})
 	}
@@ -177,7 +177,7 @@ func (h *ProductFamilyHandler) List(c *gin.Context) {
 		response.InternalErrorDebug(c, "Failed to fetch product families", err)
 		return
 	}
-	var resp []dto.ProductFamilyResponse
+	resp := make([]dto.ProductFamilyResponse, 0)
 	for _, f := range families {
 		fr := dto.ProductFamilyResponse{ID: f.ID, CategoryID: f.CategoryID, Name: f.Name, Description: f.Description}
 		if f.Category != nil {
@@ -351,7 +351,7 @@ func (h *ProductVariantHandler) List(c *gin.Context) {
 		response.InternalErrorDebug(c, "Failed to fetch products", err)
 		return
 	}
-	var resp []dto.ProductVariantResponse
+	resp := make([]dto.ProductVariantResponse, 0)
 	for _, v := range variants {
 		resp = append(resp, dto.ProductVariantResponse{
 			ID: v.ID, FamilyID: v.FamilyID, Name: v.Name, SKU: v.SKU,

@@ -12,6 +12,8 @@ import {
     ShoppingCart,
     LogOut,
     ChevronLeft,
+    CreditCard,
+    ClipboardList,
 } from "lucide-react";
 import {
     Sidebar,
@@ -32,6 +34,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
     { title: "Dashboard", icon: LayoutDashboard, href: "/" },
+    { title: "POS", icon: CreditCard, href: "/pos" },
     { title: "Users", icon: Users, href: "/users" },
     { title: "Roles", icon: Shield, href: "/roles" },
     { title: "Warehouses", icon: Warehouse, href: "/warehouses" },
@@ -40,6 +43,7 @@ const navItems = [
     { title: "Products", icon: Package, href: "/products" },
     { title: "Suppliers", icon: Truck, href: "/suppliers" },
     { title: "Inventory", icon: BoxesIcon, href: "/inventory" },
+    { title: "Collections", icon: ClipboardList, href: "/collections" },
     { title: "Procurements", icon: ShoppingCart, href: "/procurements" },
 ];
 
