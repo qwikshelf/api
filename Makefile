@@ -17,6 +17,11 @@ help:
 	@echo "  make shell-api  Open shell in API container"
 	@echo "  make shell-db   Open shell in DB container"
 	@echo "  make clean      Stop containers and remove volumes (WARNING: Data loss)"
+	@echo "  make deploy     Deploy to EC2 (Requires EC2_IP and optionally SSH_KEY_PATH)"
+
+deploy:
+	@chmod +x deploy.sh
+	./deploy.sh
 
 start: up
 stop: down
