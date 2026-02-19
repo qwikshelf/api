@@ -29,14 +29,6 @@ import {
     AvatarFallback,
     AvatarImage,
 } from "@/components/ui/avatar";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import type {
     ProcurementResponse, InventoryLevelResponse, WarehouseResponse,
     ProductVariantResponse, CategoryResponse, ProductFamilyResponse,
