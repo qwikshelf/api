@@ -17,7 +17,7 @@ export interface CreateSaleRequest {
 
 export const salesApi = {
     create: (data: CreateSaleRequest) => api.post("/sales", data),
-    getHistory: (page = 1, per_page = 20, warehouse_id?: number) =>
-        api.get("/sales", { params: { page, per_page, warehouse_id } }),
+    getHistory: (page = 1, per_page = 20, warehouse_id?: number, start_date?: string, end_date?: string) =>
+        api.get("/sales", { params: { page, per_page, warehouse_id, start_date, end_date } }),
     getById: (id: number) => api.get(`/sales/${id}`),
 };

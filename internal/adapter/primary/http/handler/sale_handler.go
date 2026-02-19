@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -143,13 +144,39 @@ func (h *SaleHandler) Get(c *gin.Context) {
 func (h *SaleHandler) List(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	perPage, _ := strconv.Atoi(c.DefaultQuery("per_page", "20"))
+
 	var warehouseID *int64
 	if wid, err := strconv.ParseInt(c.Query("warehouse_id"), 10, 64); err == nil {
 		warehouseID = &wid
 	}
 
+	var startDate, endDate *time.Time
+	if sdStr := c.Query("start_date"); sdStr != "" {
+		if t, err := time.Parse(time.RFC3339, sdStr); err == nil {
+			startDate = new(time.Time)
+			*startDate = t
+		} else if t, err := time.Parse("2006-01-02", sdStr); err == nil {
+			startDate = new(time.Time)
+			*startDate = t
+		}
+	}
+	if edStr := c.Query("end_date"); edStr != "" {
+		if t, err := time.Parse(time.RFC3339, edStr); err == nil {
+			endDate = new(time.Time)
+			*endDate = t
+		} else if t, err := time.Parse("2006-01-02", edStr); err == nil {
+			// Set to end of day if only date is provided
+			t = t.Add(23*time.Hour + 59*time.Minute + 59*time.Second)
+			endDate = new(time.Time)
+			*endDate = t
+		}
+	}
+
+	// For debugging
+	fmt.Printf("Fetching sales history filters -> Warehouse: %v, Start: %v, End: %v\n", warehouseID, startDate, endDate)
+
 	offset := (page - 1) * perPage
-	sales, total, err := h.saleService.List(c.Request.Context(), warehouseID, offset, perPage)
+	sales, total, err := h.saleService.List(c.Request.Context(), warehouseID, startDate, endDate, offset, perPage)
 	if err != nil {
 		response.InternalErrorDebug(c, "Failed to list sales history", err)
 		return

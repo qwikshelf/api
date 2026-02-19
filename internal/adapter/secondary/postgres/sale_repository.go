@@ -3,6 +3,8 @@ package postgres
 import (
 	"context"
 	"errors"
+	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 
@@ -108,31 +110,55 @@ func (r *SaleRepository) GetByID(ctx context.Context, id int64) (*entity.Sale, e
 	return s, rows.Err()
 }
 
-// List retrieves all sales with pagination and optional warehouse filter
-func (r *SaleRepository) List(ctx context.Context, warehouseID *int64, offset, limit int) ([]entity.Sale, int64, error) {
+// List retrieves all sales with pagination and optional filters
+func (r *SaleRepository) List(ctx context.Context, warehouseID *int64, startDate, endDate *time.Time, offset, limit int) ([]entity.Sale, int64, error) {
 	var total int64
-	countQuery := `SELECT COUNT(*) FROM sales`
-	if warehouseID != nil {
-		countQuery += ` WHERE warehouse_id = $1`
-		r.db.Pool.QueryRow(ctx, countQuery, *warehouseID).Scan(&total)
-	} else {
-		r.db.Pool.QueryRow(ctx, countQuery).Scan(&total)
-	}
 
+	// Build dynamic query
+	countQuery := `SELECT COUNT(*) FROM sales WHERE 1=1`
 	query := `
 		SELECT id, warehouse_id, customer_name, total_amount, tax_amount, discount_amount, payment_method, processed_by_user_id, created_at
-		FROM sales
+		FROM sales WHERE 1=1
 	`
-	var rows pgx.Rows
-	var err error
+
+	args := []interface{}{}
+	argCount := 1
+
 	if warehouseID != nil {
-		query += ` WHERE warehouse_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
-		rows, err = r.db.Pool.Query(ctx, query, *warehouseID, limit, offset)
-	} else {
-		query += ` ORDER BY created_at DESC LIMIT $1 OFFSET $2`
-		rows, err = r.db.Pool.Query(ctx, query, limit, offset)
+		where := fmt.Sprintf(" AND warehouse_id = $%d", argCount)
+		countQuery += where
+		query += where
+		args = append(args, *warehouseID)
+		argCount++
 	}
 
+	if startDate != nil {
+		where := fmt.Sprintf(" AND created_at >= $%d", argCount)
+		countQuery += where
+		query += where
+		args = append(args, *startDate)
+		argCount++
+	}
+
+	if endDate != nil {
+		where := fmt.Sprintf(" AND created_at <= $%d", argCount)
+		countQuery += where
+		query += where
+		args = append(args, *endDate)
+		argCount++
+	}
+
+	// Get total count
+	err := r.db.Pool.QueryRow(ctx, countQuery, args...).Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	// Add ordering and pagination
+	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", argCount, argCount+1)
+	args = append(args, limit, offset)
+
+	rows, err := r.db.Pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, 0, err
 	}

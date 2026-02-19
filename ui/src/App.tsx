@@ -24,6 +24,7 @@ const CreateProcurementPage = lazy(() => import("@/pages/procurements/create"));
 const ProcurementDetailPage = lazy(() => import("@/pages/procurements/detail"));
 const POSPage = lazy(() => import("@/pages/sales/pos-page"));
 const CollectionPage = lazy(() => import("@/pages/collections/CollectionPage"));
+const SalesRecordPage = lazy(() => import("@/pages/sales/SalesRecordPage"));
 
 function PageLoader() {
     return (
@@ -63,6 +64,7 @@ function App() {
                             <Route path="/procurements/new" element={<Suspense fallback={<PageLoader />}><CreateProcurementPage /></Suspense>} />
                             <Route path="/procurements/:id" element={<Suspense fallback={<PageLoader />}><ProcurementDetailPage /></Suspense>} />
                             <Route path="/pos" element={<Suspense fallback={<PageLoader />}><POSPage /></Suspense>} />
+                            <Route path="/sales/history" element={<Suspense fallback={<PageLoader />}><SalesRecordPage /></Suspense>} />
                             <Route path="/collections" element={<Suspense fallback={<PageLoader />}><CollectionPage /></Suspense>} />
                         </Route>
                     </Routes>

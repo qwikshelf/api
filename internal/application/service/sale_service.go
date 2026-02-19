@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"time"
 
 	"github.com/qwikshelf/api/internal/domain/entity"
 	domainErrors "github.com/qwikshelf/api/internal/domain/errors"
@@ -80,6 +81,6 @@ func (s *SaleService) GetByID(ctx context.Context, id int64) (*entity.Sale, erro
 }
 
 // List retrieves all sales with pagination and filtering
-func (s *SaleService) List(ctx context.Context, warehouseID *int64, offset, limit int) ([]entity.Sale, int64, error) {
-	return s.saleRepo.List(ctx, warehouseID, offset, limit)
+func (s *SaleService) List(ctx context.Context, warehouseID *int64, startDate, endDate *time.Time, offset, limit int) ([]entity.Sale, int64, error) {
+	return s.saleRepo.List(ctx, warehouseID, startDate, endDate, offset, limit)
 }
