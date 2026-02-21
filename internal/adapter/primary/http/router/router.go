@@ -58,6 +58,7 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 		{
 			auth.POST("/login", cfg.AuthHandler.Login)
 			auth.POST("/logout", cfg.AuthHandler.Logout)
+			auth.POST("/refresh", cfg.AuthHandler.Refresh)
 		}
 
 		// Protected routes

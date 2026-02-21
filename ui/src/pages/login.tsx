@@ -10,13 +10,13 @@ import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
     const navigate = useNavigate();
-    const { token, setAuth } = useAuthStore();
+    const { accessToken, setAuth } = useAuthStore();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    if (token) return <Navigate to="/" replace />;
+    if (accessToken) return <Navigate to="/" replace />;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -26,7 +26,7 @@ export default function LoginPage() {
         try {
             const res = await authApi.login(username, password);
             const data = res.data.data;
-            setAuth(data.token, data.user);
+            setAuth(data.access_token, data.refresh_token, data.user);
             navigate("/");
         } catch (err: unknown) {
             const axiosErr = err as { response?: { data?: { error?: { message?: string } } } };
