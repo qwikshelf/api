@@ -3,9 +3,10 @@ import { persist } from "zustand/middleware";
 import type { UserResponse } from "@/types";
 
 interface AuthState {
-    token: string | null;
+    accessToken: string | null;
+    refreshToken: string | null;
     user: UserResponse | null;
-    setAuth: (token: string, user: UserResponse) => void;
+    setAuth: (accessToken: string, refreshToken: string, user: UserResponse) => void;
     logout: () => void;
     isAuthenticated: () => boolean;
 }
@@ -13,11 +14,12 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
     persist(
         (set, get) => ({
-            token: null,
+            accessToken: null,
+            refreshToken: null,
             user: null,
-            setAuth: (token, user) => set({ token, user }),
-            logout: () => set({ token: null, user: null }),
-            isAuthenticated: () => !!get().token,
+            setAuth: (accessToken, refreshToken, user) => set({ accessToken, refreshToken, user }),
+            logout: () => set({ accessToken: null, refreshToken: null, user: null }),
+            isAuthenticated: () => !!get().accessToken,
         }),
         {
             name: "qwikshelf-auth",

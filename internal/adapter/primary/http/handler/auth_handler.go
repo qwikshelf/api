@@ -49,14 +49,15 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		case domainErrors.ErrUserInactive:
 			response.Forbidden(c, "User account is inactive")
 		default:
-response.InternalErrorDebug(c, "Login failed", err)
+			response.InternalErrorDebug(c, "Login failed", err)
 		}
 		return
 	}
 
 	resp := dto.LoginResponse{
-		Token:     result.Token,
-		ExpiresAt: result.ExpiresAt,
+		AccessToken:  result.AccessToken,
+		RefreshToken: result.RefreshToken,
+		ExpiresAt:    result.ExpiresAt,
 		User: dto.UserResponse{
 			ID:        result.User.ID,
 			Username:  result.User.Username,
@@ -86,6 +87,46 @@ response.InternalErrorDebug(c, "Login failed", err)
 // @Router       /auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
 	response.OK(c, "Logout successful", nil)
+}
+
+// Refresh handles token refresh
+// @Summary      Refresh token
+// @Description  Get a new access token using a refresh token
+// @Tags         Auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      dto.RefreshRequest  true  "Refresh token"
+// @Success      200      {object}  response.Response{data=dto.LoginResponse}
+// @Failure      401      {object}  response.Response
+// @Failure      500      {object}  response.Response
+// @Router       /auth/refresh [post]
+func (h *AuthHandler) Refresh(c *gin.Context) {
+	var req dto.RefreshRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request body")
+		return
+	}
+
+	result, err := h.authService.RefreshToken(c.Request.Context(), req.RefreshToken)
+	if err != nil {
+		response.Unauthorized(c, "Invalid or expired refresh token")
+		return
+	}
+
+	resp := dto.LoginResponse{
+		AccessToken:  result.AccessToken,
+		RefreshToken: result.RefreshToken,
+		ExpiresAt:    result.ExpiresAt,
+		User: dto.UserResponse{
+			ID:        result.User.ID,
+			Username:  result.User.Username,
+			RoleID:    result.User.RoleID,
+			IsActive:  result.User.IsActive,
+			CreatedAt: result.User.CreatedAt,
+		},
+	}
+
+	response.OK(c, "Token refreshed", resp)
 }
 
 // Me returns the current authenticated user
@@ -165,7 +206,7 @@ func (h *UserHandler) List(c *gin.Context) {
 
 	users, total, err := h.userService.List(c.Request.Context(), offset, perPage)
 	if err != nil {
-response.InternalErrorDebug(c, "Failed to fetch users", err)
+		response.InternalErrorDebug(c, "Failed to fetch users", err)
 		return
 	}
 
@@ -230,7 +271,7 @@ func (h *UserHandler) Create(c *gin.Context) {
 		case domainErrors.ErrRoleNotFound:
 			response.BadRequest(c, "Role not found")
 		default:
-response.InternalErrorDebug(c, "Failed to create user", err)
+			response.InternalErrorDebug(c, "Failed to create user", err)
 		}
 		return
 	}
@@ -341,7 +382,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 		case domainErrors.ErrRoleNotFound:
 			response.BadRequest(c, "Role not found")
 		default:
-response.InternalErrorDebug(c, "Failed to update user", err)
+			response.InternalErrorDebug(c, "Failed to update user", err)
 		}
 		return
 	}
@@ -381,7 +422,7 @@ func (h *UserHandler) Delete(c *gin.Context) {
 		if err == domainErrors.ErrUserNotFound {
 			response.NotFound(c, "User not found")
 		} else {
-response.InternalErrorDebug(c, "Failed to delete user", err)
+			response.InternalErrorDebug(c, "Failed to delete user", err)
 		}
 		return
 	}

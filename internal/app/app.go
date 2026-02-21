@@ -48,13 +48,9 @@ func NewApp(cfg *config.Config) (*App, error) {
 		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
-	// Run pending migrations
-	if err := db.RunMigrations("migrations"); err != nil {
-		return nil, fmt.Errorf("failed to run migrations: %w", err)
-	}
-
 	// Initialize repositories
 	userRepo := postgres.NewUserRepository(db)
+	sessionRepo := postgres.NewSessionRepository(db)
 	roleRepo := postgres.NewRoleRepository(db)
 	permissionRepo := postgres.NewPermissionRepository(db)
 	warehouseRepo := postgres.NewWarehouseRepository(db)
@@ -69,7 +65,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 
 	// Initialize services
 	hasher := bcrypt.NewHasher()
-	authService := service.NewAuthService(userRepo, hasher, cfg.JWT)
+	authService := service.NewAuthService(userRepo, sessionRepo, hasher, cfg.JWT)
 	userService := service.NewUserService(userRepo, roleRepo, hasher)
 	roleService := service.NewRoleService(roleRepo, permissionRepo)
 	warehouseService := service.NewWarehouseService(warehouseRepo)

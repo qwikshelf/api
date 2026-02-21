@@ -13,9 +13,15 @@ type LoginRequest struct {
 
 // LoginResponse represents a login response
 type LoginResponse struct {
-	Token     string       `json:"token"`
-	ExpiresAt time.Time    `json:"expires_at"`
-	User      UserResponse `json:"user"`
+	AccessToken  string       `json:"access_token"`
+	RefreshToken string       `json:"refresh_token"`
+	ExpiresAt    time.Time    `json:"expires_at"`
+	User         UserResponse `json:"user"`
+}
+
+// RefreshRequest represents a token refresh request
+type RefreshRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
 // --- User DTOs ---
