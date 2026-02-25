@@ -19,17 +19,18 @@ type ProductFamily struct {
 
 // ProductVariant represents a specific product SKU
 type ProductVariant struct {
-	ID             int64           `json:"id"`
-	FamilyID       int64           `json:"family_id"`
-	Family         *ProductFamily  `json:"family,omitempty"`
-	FamilyName     string          `json:"family_name,omitempty"` // populated by JOINs
-	Name           string          `json:"name"`
-	SKU            string          `json:"sku"`
-	Barcode        string          `json:"barcode,omitempty"`
-	Unit           string          `json:"unit"`
-	CostPrice      decimal.Decimal `json:"cost_price"`
-	SellingPrice   decimal.Decimal `json:"selling_price"`
-	IsManufactured bool            `json:"is_manufactured"`
+	ID               int64           `json:"id"`
+	FamilyID         int64           `json:"family_id"`
+	Family           *ProductFamily  `json:"family,omitempty"`
+	FamilyName       string          `json:"family_name,omitempty"` // populated by JOINs
+	Name             string          `json:"name"`
+	SKU              string          `json:"sku"`
+	Barcode          string          `json:"barcode,omitempty"`
+	Unit             string          `json:"unit"`
+	CostPrice        decimal.Decimal `json:"cost_price"`
+	SellingPrice     decimal.Decimal `json:"selling_price"`
+	IsManufactured   bool            `json:"is_manufactured"`
+	ConversionFactor decimal.Decimal `json:"conversion_factor"`
 }
 
 // Margin calculates the profit margin percentage

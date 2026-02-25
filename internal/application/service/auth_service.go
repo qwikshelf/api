@@ -47,12 +47,12 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-// LoginResult contains the result of a successful login
 type LoginResult struct {
 	AccessToken  string
 	RefreshToken string
 	ExpiresAt    time.Time
 	User         *entity.User
+	Permissions  []entity.Permission
 }
 
 // Login authenticates a user and returns a JWT token
@@ -95,13 +95,20 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (*Lo
 		return nil, err
 	}
 
+	// Fetch complete permissions
+	perms, _ := s.userRepo.GetPermissions(ctx, user.ID)
+	var permSlugs []string
+	for _, p := range perms {
+		permSlugs = append(permSlugs, p.Slug)
+	}
+
 	// Generate JWT Access Token
 	claims := &Claims{
 		UserID:      user.ID,
 		Username:    user.Username,
 		RoleID:      user.RoleID,
 		SessionID:   session.ID,
-		Permissions: []string{}, // To be populated if needed
+		Permissions: permSlugs,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -120,6 +127,7 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (*Lo
 		RefreshToken: rawRefreshToken,
 		ExpiresAt:    expiresAt,
 		User:         user,
+		Permissions:  perms,
 	}, nil
 }
 
@@ -156,13 +164,20 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*L
 		return nil, err
 	}
 
+	// Fetch complete permissions
+	perms, _ := s.userRepo.GetPermissions(ctx, user.ID)
+	var permSlugs []string
+	for _, p := range perms {
+		permSlugs = append(permSlugs, p.Slug)
+	}
+
 	// 5. Build Access Token
 	claims := &Claims{
 		UserID:      user.ID,
 		Username:    user.Username,
 		RoleID:      user.RoleID,
 		SessionID:   session.ID,
-		Permissions: []string{}, // Populate if possible
+		Permissions: permSlugs,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expiresAt),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -181,6 +196,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshToken string) (*L
 		RefreshToken: newRawRefreshToken,
 		ExpiresAt:    expiresAt,
 		User:         user,
+		Permissions:  perms,
 	}, nil
 }
 
@@ -215,7 +231,12 @@ func (s *AuthService) ValidateToken(tokenString string) (*Claims, error) {
 	return claims, nil
 }
 
-// GetUserByID retrieves a user by ID (for /me endpoint)
-func (s *AuthService) GetUserByID(ctx context.Context, id int64) (*entity.User, error) {
-	return s.userRepo.GetByID(ctx, id)
+// GetUserByID retrieves a user by ID and their permissions (for /me endpoint)
+func (s *AuthService) GetUserByID(ctx context.Context, id int64) (*entity.User, []entity.Permission, error) {
+	user, err := s.userRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, nil, err
+	}
+	perms, _ := s.userRepo.GetPermissions(ctx, id)
+	return user, perms, nil
 }

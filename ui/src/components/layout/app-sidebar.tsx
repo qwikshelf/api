@@ -36,17 +36,17 @@ import { cn } from "@/lib/utils";
 const navItems = [
     { title: "Dashboard", icon: LayoutDashboard, href: "/" },
     { title: "POS", icon: CreditCard, href: "/pos" },
-    { title: "Users", icon: Users, href: "/users" },
-    { title: "Roles", icon: Shield, href: "/roles" },
-    { title: "Warehouses", icon: Warehouse, href: "/warehouses" },
-    { title: "Categories", icon: Tags, href: "/categories" },
-    { title: "Product Families", icon: FolderTree, href: "/product-families" },
-    { title: "Products", icon: Package, href: "/products" },
-    { title: "Suppliers", icon: Truck, href: "/suppliers" },
-    { title: "Inventory", icon: BoxesIcon, href: "/inventory" },
-    { title: "Sales History", icon: History, href: "/sales/history" },
-    { title: "Collections", icon: ClipboardList, href: "/collections" },
-    { title: "Procurements", icon: ShoppingCart, href: "/procurements" },
+    { title: "Users", icon: Users, href: "/users", permission: "users.view" },
+    { title: "Roles", icon: Shield, href: "/roles", permission: "roles.view" },
+    { title: "Warehouses", icon: Warehouse, href: "/warehouses", permission: "warehouses.view" },
+    { title: "Categories", icon: Tags, href: "/categories", permission: "products.view" },
+    { title: "Product Families", icon: FolderTree, href: "/product-families", permission: "products.view" },
+    { title: "Products", icon: Package, href: "/products", permission: "products.view" },
+    { title: "Suppliers", icon: Truck, href: "/suppliers", permission: "suppliers.view" },
+    { title: "Inventory", icon: BoxesIcon, href: "/inventory", permission: "inventory.view" },
+    { title: "Sales History", icon: History, href: "/sales/history", permission: "sales.view" },
+    { title: "Collections", icon: ClipboardList, href: "/collections", permission: "procurement.manage" }, // Map collection to procurement or related permission
+    { title: "Procurements", icon: ShoppingCart, href: "/procurements", permission: "procurement.view" },
 ];
 
 export function AppSidebar() {
@@ -86,7 +86,14 @@ export function AppSidebar() {
                     <SidebarGroupLabel>Navigation</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {navItems.map((item) => (
+                            {navItems.filter(item => {
+                                if (item.href === "/pos" || item.href === "/") return true;
+                                if (!item.permission) return true;
+                                if (user?.role?.name === "admin") return true;
+
+                                const userPermissions = user?.permissions?.map(p => typeof p === 'string' ? p : p.slug) || [];
+                                return userPermissions.includes(item.permission);
+                            }).map((item) => (
                                 <SidebarMenuItem key={item.href}>
                                     <SidebarMenuButton
                                         asChild

@@ -40,6 +40,7 @@ export default function RolesPage() {
     const loadPermissions = useCallback(async () => {
         try {
             const res = await permissionsApi.list();
+            console.log(res.data.data);
             setAllPermissions(res.data.data || []);
         } catch { /* silent */ }
     }, []);

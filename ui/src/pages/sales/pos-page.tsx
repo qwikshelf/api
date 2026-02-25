@@ -52,6 +52,7 @@ export default function POSPage() {
     const [customerName, setCustomerName] = useState("");
     const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "upi" | "credit" | "other">("cash");
     const [isProcessing, setIsProcessing] = useState(false);
+    const [selectedVariant, setSelectedVariant] = useState<Record<number, number>>({});
 
     useEffect(() => {
         fetchWarehouses();
@@ -101,12 +102,25 @@ export default function POSPage() {
     }, [selectedWarehouseId]);
 
     const addToCart = (product: ProductVariantResponse) => {
-        const currentStock = inventory[product.id] || 0;
+        // Compute available stock using conversion factor (shared inventory)
+        const factor = parseFloat(product.conversion_factor || "1");
+        let currentStock: number;
+
+        if (factor > 1) {
+            // Find the base variant (factor=1) in the same family
+            const baseVariant = products.find(
+                p => p.family_id === product.family_id && parseFloat(p.conversion_factor || "1") === 1
+            );
+            const baseStock = baseVariant ? (inventory[baseVariant.id] || 0) : 0;
+            currentStock = Math.floor(baseStock / factor);
+        } else {
+            currentStock = inventory[product.id] || 0;
+        }
+
         const inCart = cart.find(item => item.id === product.id)?.cartQuantity || 0;
 
         if (inCart >= currentStock && currentStock > 0) {
             toast.warning(`Only ${currentStock} units available in stock`);
-            // We still allow it but warn, or we could block it if desired.
         } else if (currentStock <= 0) {
             toast.error("Out of stock in selected warehouse");
             return;
@@ -241,43 +255,113 @@ export default function POSPage() {
 
                 <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {filteredProducts.map((product) => (
-                            <Card
-                                key={product.id}
-                                className="cursor-pointer hover:border-primary transition-colors group"
-                                onClick={() => addToCart(product)}
-                            >
-                                <CardHeader className="p-4 pb-2">
-                                    <div className="flex justify-between items-start gap-2">
-                                        <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
-                                            {product.name}
-                                        </CardTitle>
-                                        <Badge variant="secondary">₹{product.selling_price}</Badge>
-                                    </div>
-                                    <CardDescription className="text-xs truncate">SKU: {product.sku}</CardDescription>
-                                </CardHeader>
-                                <CardFooter className="p-4 pt-0 flex-col items-stretch gap-2">
-                                    <div className="flex justify-between items-center text-[10px] text-muted-foreground border-t pt-2">
-                                        <div>Unit: {product.unit}</div>
-                                        <div className={cn(
-                                            "font-bold flex items-center gap-1",
-                                            (inventory[product.id] || 0) > 0 ? "text-green-600" : "text-destructive"
-                                        )}>
-                                            <div className={cn("w-1.5 h-1.5 rounded-full", (inventory[product.id] || 0) > 0 ? "bg-green-600" : "bg-destructive")} />
-                                            Stock: {inventory[product.id] || 0}
-                                        </div>
-                                    </div>
-                                    <Button
-                                        size="sm"
-                                        variant="secondary"
-                                        className="w-full h-8 gap-1 text-xs"
-                                        disabled={(inventory[product.id] || 0) <= 0}
+                        {(() => {
+                            // Group filtered products by family_id
+                            const familyMap = new Map<number, ProductVariantResponse[]>();
+                            for (const p of filteredProducts) {
+                                const fid = p.family_id;
+                                if (!familyMap.has(fid)) familyMap.set(fid, []);
+                                familyMap.get(fid)!.push(p);
+                            }
+
+                            return Array.from(familyMap.entries()).map(([familyId, variants]) => {
+                                const activeId = selectedVariant[familyId] ?? variants[0].id;
+                                const activeVariant = variants.find(v => v.id === activeId) || variants[0];
+                                const hasMultiple = variants.length > 1;
+
+                                // Find the base variant (conversion_factor = 1) for shared inventory
+                                const baseVariant = variants.find(v => parseFloat(v.conversion_factor || "1") === 1) || variants[0];
+                                const baseStock = inventory[baseVariant.id] || 0;
+
+                                // Calculate stock for the active variant based on conversion factor
+                                const activeFactor = parseFloat(activeVariant.conversion_factor || "1");
+                                const stock = activeFactor > 1 ? Math.floor(baseStock / activeFactor) : baseStock;
+
+                                return (
+                                    <Card
+                                        key={familyId}
+                                        className="hover:border-primary transition-colors group flex flex-col"
                                     >
-                                        <Plus className="h-3 w-3" /> Add to Order
-                                    </Button>
-                                </CardFooter>
-                            </Card>
-                        ))}
+                                        <CardHeader className="p-4 pb-2">
+                                            <div className="flex justify-between items-start gap-2">
+                                                <CardTitle className="text-base leading-tight group-hover:text-primary transition-colors">
+                                                    {hasMultiple ? (activeVariant.family_name || activeVariant.name) : activeVariant.name}
+                                                </CardTitle>
+                                                <Badge variant="secondary">₹{activeVariant.selling_price}</Badge>
+                                            </div>
+                                            <CardDescription className="text-xs truncate">SKU: {activeVariant.sku}</CardDescription>
+                                        </CardHeader>
+
+                                        <CardFooter className="p-4 pt-0 flex-col items-stretch gap-2 mt-auto">
+                                            {/* Variant chips */}
+                                            {hasMultiple && (
+                                                <div className="flex flex-wrap gap-1.5 border-t pt-2">
+                                                    {variants.map(v => {
+                                                        const vFactor = parseFloat(v.conversion_factor || "1");
+                                                        const vStock = vFactor > 1 ? Math.floor(baseStock / vFactor) : baseStock;
+                                                        const isActive = v.id === activeVariant.id;
+                                                        const isOOS = vStock <= 0;
+                                                        // Extract a short label from the variant name
+                                                        // e.g. "Standard White Eggs - Single" -> "Single"
+                                                        const familyName = v.family_name || "";
+                                                        let chipLabel = v.name;
+                                                        if (familyName && v.name.startsWith(familyName)) {
+                                                            chipLabel = v.name.slice(familyName.length).replace(/^\s*[-–—]\s*/, "").trim() || v.name;
+                                                        }
+
+                                                        return (
+                                                            <button
+                                                                key={v.id}
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    if (isOOS) {
+                                                                        toast.error(`${chipLabel} is out of stock`);
+                                                                        return;
+                                                                    }
+                                                                    setSelectedVariant(prev => ({ ...prev, [familyId]: v.id }));
+                                                                }}
+                                                                className={cn(
+                                                                    "px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-all",
+                                                                    isActive
+                                                                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                                                                        : isOOS
+                                                                            ? "bg-muted/50 text-muted-foreground/40 border-transparent cursor-not-allowed line-through"
+                                                                            : "bg-muted/60 text-foreground border-transparent hover:border-primary/40 cursor-pointer"
+                                                                )}
+                                                            >
+                                                                {chipLabel}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {/* Stock & Add to Order */}
+                                            <div className="flex justify-between items-center text-[10px] text-muted-foreground border-t pt-2">
+                                                <div>Unit: {activeVariant.unit}</div>
+                                                <div className={cn(
+                                                    "font-bold flex items-center gap-1",
+                                                    stock > 0 ? "text-green-600" : "text-destructive"
+                                                )}>
+                                                    <div className={cn("w-1.5 h-1.5 rounded-full", stock > 0 ? "bg-green-600" : "bg-destructive")} />
+                                                    Stock: {stock}
+                                                </div>
+                                            </div>
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
+                                                className="w-full h-8 gap-1 text-xs cursor-pointer"
+                                                disabled={stock <= 0}
+                                                onClick={() => addToCart(activeVariant)}
+                                            >
+                                                <Plus className="h-3 w-3" /> Add to Order
+                                            </Button>
+                                        </CardFooter>
+                                    </Card>
+                                );
+                            });
+                        })()}
                     </div>
                     {filteredProducts.length === 0 && (
                         <div className="flex flex-col items-center justify-center h-64 text-muted-foreground bg-muted/20 rounded-lg border-2 border-dashed">

@@ -53,39 +53,42 @@ type ProductFamilyResponse struct {
 // SKU must be unique and between 2 and 50 characters.
 // CostPrice and SellingPrice are required.
 type CreateProductVariantRequest struct {
-	FamilyID       int64           `json:"family_id" binding:"required"`
-	Name           string          `json:"name" binding:"required,min=2,max=100"`
-	SKU            string          `json:"sku" binding:"required,min=2,max=50"`
-	Barcode        string          `json:"barcode,omitempty" binding:"omitempty,max=50"`
-	Unit           string          `json:"unit" binding:"required,oneof=piece kg liter box pack dozen"`
-	CostPrice      decimal.Decimal `json:"cost_price" binding:"required"`
-	SellingPrice   decimal.Decimal `json:"selling_price" binding:"required"`
-	IsManufactured bool            `json:"is_manufactured"`
+	FamilyID         int64           `json:"family_id" binding:"required"`
+	Name             string          `json:"name" binding:"required,min=2,max=100"`
+	SKU              string          `json:"sku" binding:"required,min=2,max=50"`
+	Barcode          string          `json:"barcode,omitempty" binding:"omitempty,max=50"`
+	Unit             string          `json:"unit" binding:"required,oneof=piece kg liter box pack dozen"`
+	CostPrice        decimal.Decimal `json:"cost_price" binding:"required"`
+	SellingPrice     decimal.Decimal `json:"selling_price" binding:"required"`
+	IsManufactured   bool            `json:"is_manufactured"`
+	ConversionFactor decimal.Decimal `json:"conversion_factor"`
 }
 
 // UpdateProductVariantRequest represents a request to update a product variant
 type UpdateProductVariantRequest struct {
-	FamilyID       int64            `json:"family_id,omitempty"`
-	Name           string           `json:"name,omitempty" binding:"omitempty,min=2,max=100"`
-	SKU            string           `json:"sku,omitempty" binding:"omitempty,min=2,max=50"`
-	Barcode        string           `json:"barcode,omitempty" binding:"omitempty,max=50"`
-	Unit           string           `json:"unit,omitempty" binding:"omitempty,oneof=piece kg liter box pack dozen"`
-	CostPrice      *decimal.Decimal `json:"cost_price,omitempty"`
-	SellingPrice   *decimal.Decimal `json:"selling_price,omitempty"`
-	IsManufactured *bool            `json:"is_manufactured,omitempty"`
+	FamilyID         int64            `json:"family_id,omitempty"`
+	Name             string           `json:"name,omitempty" binding:"omitempty,min=2,max=100"`
+	SKU              string           `json:"sku,omitempty" binding:"omitempty,min=2,max=50"`
+	Barcode          string           `json:"barcode,omitempty" binding:"omitempty,max=50"`
+	Unit             string           `json:"unit,omitempty" binding:"omitempty,oneof=piece kg liter box pack dozen"`
+	CostPrice        *decimal.Decimal `json:"cost_price,omitempty"`
+	SellingPrice     *decimal.Decimal `json:"selling_price,omitempty"`
+	IsManufactured   *bool            `json:"is_manufactured,omitempty"`
+	ConversionFactor *decimal.Decimal `json:"conversion_factor,omitempty"`
 }
 
 // ProductVariantResponse represents a product variant in API responses
 type ProductVariantResponse struct {
-	ID             int64                  `json:"id"`
-	FamilyID       int64                  `json:"family_id"`
-	Family         *ProductFamilyResponse `json:"family,omitempty"`
-	FamilyName     string                 `json:"family_name,omitempty"`
-	Name           string                 `json:"name"`
-	SKU            string                 `json:"sku"`
-	Barcode        string                 `json:"barcode,omitempty"`
-	Unit           string                 `json:"unit"`
-	CostPrice      decimal.Decimal        `json:"cost_price"`
-	SellingPrice   decimal.Decimal        `json:"selling_price"`
-	IsManufactured bool                   `json:"is_manufactured"`
+	ID               int64                  `json:"id"`
+	FamilyID         int64                  `json:"family_id"`
+	Family           *ProductFamilyResponse `json:"family,omitempty"`
+	FamilyName       string                 `json:"family_name,omitempty"`
+	Name             string                 `json:"name"`
+	SKU              string                 `json:"sku"`
+	Barcode          string                 `json:"barcode,omitempty"`
+	Unit             string                 `json:"unit"`
+	CostPrice        decimal.Decimal        `json:"cost_price"`
+	SellingPrice     decimal.Decimal        `json:"selling_price"`
+	IsManufactured   bool                   `json:"is_manufactured"`
+	ConversionFactor decimal.Decimal        `json:"conversion_factor"`
 }

@@ -18,10 +18,8 @@ import { suppliersApi } from "@/api/suppliers";
 import { inventoryApi } from "@/api/inventory";
 import { procurementsApi } from "@/api/procurements";
 import { categoriesApi } from "@/api/categories";
-import { usersApi } from "@/api/users";
 import { productFamiliesApi } from "@/api/product-families";
-import { salesApi } from "@/api/sales";
-import { collectionsApi } from "@/api/collections";
+import { dashboardApi } from "@/api/dashboard";
 import {
     Avatar,
     AvatarFallback,
@@ -110,77 +108,37 @@ export default function DashboardPage() {
     const load = useCallback(async () => {
         setLoading(true);
         try {
-            const [productsRes, warehousesRes, suppliersRes, inventoryRes, posRes, catsRes, usersRes, familiesRes, salesRes, collectionsRes] =
-                await Promise.all([
-                    productsApi.list(1, 500),
-                    warehousesApi.list(),
-                    suppliersApi.list(1, 200),
-                    inventoryApi.list(1, 1000),
-                    procurementsApi.list(1, 200),
-                    categoriesApi.list(),
-                    usersApi.list(1, 1),
-                    productFamiliesApi.list(1, 200),
-                    salesApi.getHistory(1, 1000),
-                    collectionsApi.list(1, 1000),
-                ]);
+            // Fetch core backend aggregates
+            const statsRes = await dashboardApi.getStats();
+            const d = statsRes.data.data;
 
-            const products: ProductVariantResponse[] = productsRes.data.data || [];
-            const totalProducts = productsRes.data.meta?.total ?? products.length;
-            const suppliers: SupplierResponse[] = suppliersRes.data.data || [];
-            const totalSuppliers = suppliersRes.data.meta?.total ?? suppliers.length;
-            const totalUsers = usersRes.data.meta?.total ?? (usersRes.data.data?.length || 0);
-            const warehouses: WarehouseResponse[] = warehousesRes.data.data || [];
-            const inventory: InventoryLevelResponse[] = inventoryRes.data.data || [];
-            const pos: ProcurementResponse[] = posRes.data.data || [];
-            const categories: CategoryResponse[] = catsRes.data.data || [];
-            const families: ProductFamilyResponse[] = familiesRes.data.data || [];
-            const sales: SaleResponse[] = salesRes.data.data || [];
-            const collections: CollectionResponse[] = collectionsRes.data.data || [];
+            // Fetch secondary datasets for charts (using settled to avoid crashing on permission errors)
+            // We fetch smaller slices because we only need them for UI visualizations
+            const results = await Promise.allSettled([
+                productsApi.list(1, 100),
+                warehousesApi.list(),
+                suppliersApi.list(1, 100),
+                inventoryApi.list(1, 100),
+                procurementsApi.list(1, 50),
+                categoriesApi.list(),
+                productFamiliesApi.list(1, 100)
+            ]);
+
+            const products: ProductVariantResponse[] = results[0].status === "fulfilled" ? results[0].value.data.data || [] : [];
+            const warehouses: WarehouseResponse[] = results[1].status === "fulfilled" ? results[1].value.data.data || [] : [];
+            const suppliers: SupplierResponse[] = results[2].status === "fulfilled" ? results[2].value.data.data || [] : [];
+            const inventory: InventoryLevelResponse[] = results[3].status === "fulfilled" ? results[3].value.data.data || [] : [];
+            const pos: ProcurementResponse[] = results[4].status === "fulfilled" ? results[4].value.data.data || [] : [];
+            const categories: CategoryResponse[] = results[5].status === "fulfilled" ? results[5].value.data.data || [] : [];
+            const families: ProductFamilyResponse[] = results[6].status === "fulfilled" ? results[6].value.data.data || [] : [];
 
             const today = new Date();
 
-            /* ── core counts ── */
-            const totalSKUs = inventory.length;
-            const lowStockItems = inventory.filter(i => { const q = parseFloat(i.quantity); return q > 0 && q < 10; }).length;
-            const outOfStockItems = inventory.filter(i => parseFloat(i.quantity) <= 0).length;
-            const healthyItems = inventory.filter(i => parseFloat(i.quantity) >= 10).length;
-            const totalInv = inventory.length || 1;
-            const healthyPct = Math.round((healthyItems / totalInv) * 100);
-            const lowPct = Math.round((lowStockItems / totalInv) * 100);
-            const outPct = Math.round((outOfStockItems / totalInv) * 100);
-            const activePOs = pos.filter(po => !["received", "cancelled"].includes(po.status)).length;
-            const totalPOSpend = pos.reduce((s, po) => s + (parseFloat(po.total_cost) || 0), 0);
+            /* ── Core computed stats from arrays for specific UI widgets ── */
+            const healthyPct = d.totalSKUs > 0 ? Math.round(((d.totalSKUs - d.lowStockItems - d.outOfStockItems) / d.totalSKUs) * 100) : 0;
+            const lowPct = d.totalSKUs > 0 ? Math.round((d.lowStockItems / d.totalSKUs) * 100) : 0;
+            const outPct = d.totalSKUs > 0 ? Math.round((d.outOfStockItems / d.totalSKUs) * 100) : 0;
 
-            /* ── new financial metrics ── */
-            const totalSalesValue = sales.reduce((s, sale) => s + (parseFloat(sale.total_amount) || 0), 0);
-            const accountsReceivable = sales
-                .filter(sale => sale.payment_method === "credit")
-                .reduce((s, sale) => s + (parseFloat(sale.total_amount) || 0), 0);
-
-            /* ── milk metrics ── */
-            const milkVariants = products.filter(p => p.name.toLowerCase().includes("milk")).map(p => p.id);
-            const totalMilkBought = collections
-                .filter(c => milkVariants.includes(c.variant_id))
-                .reduce((s, c) => s + (parseFloat(c.weight) || 0), 0);
-
-            /* ── pending deliveries & overdue ── */
-            const pendingDeliveries = pos.filter(po => po.status === "ordered" && po.expected_delivery).length;
-            const overduePOs = pos.filter(po => {
-                if (["received", "cancelled"].includes(po.status)) return false;
-                if (!po.expected_delivery) return false;
-                return new Date(po.expected_delivery) < today;
-            }).length;
-
-            /* ── inventory value estimate (qty × cost_price) ── */
-            const costMap = new Map<number, number>();
-            for (const p of products) costMap.set(p.id, parseFloat(p.cost_price) || 0);
-            const closingInventoryValue = inventory.reduce((sum, inv) => {
-                const qty = parseFloat(inv.quantity) || 0;
-                const cost = costMap.get(inv.variant_id) || 0;
-                return sum + qty * cost;
-            }, 0);
-
-            /* ── expiring soon (within 30 days) ── */
             const thirtyDays = new Date(today.getTime() + 30 * 86400000);
             const expiringItems = inventory.filter(inv => {
                 if (!inv.expiry_date) return false;
@@ -244,7 +202,7 @@ export default function DashboardPage() {
             /* ── supplier contribution (variants per supplier) — fake from supplier list ── */
             const supplierContribution = suppliers.slice(0, 6).map(s => ({
                 name: s.name.length > 12 ? s.name.slice(0, 10) + "…" : s.name,
-                variants: Math.floor(Math.random() * 15) + 1, // placeholder — would need supplier.listVariants per supplier
+                variants: Math.floor(Math.random() * 15) + 1, // placeholder
             }));
 
             /* ── PO spend by supplier ── */
@@ -277,32 +235,28 @@ export default function DashboardPage() {
                 Math.max(0, Math.round(base + (Math.sin(i * 1.2) * base * 0.2) + (Math.random() * base * 0.1)))
             );
             const sparklines: Record<string, number[]> = {
-                products: spark(totalProducts),
-                warehouses: spark(warehouses.length),
-                suppliers: spark(totalSuppliers),
-                activePOs: spark(activePOs),
-                skus: spark(totalSKUs),
-                spend: spark(totalPOSpend / 1000),
-                value: spark(closingInventoryValue / 1000),
-                pending: spark(pendingDeliveries),
-                overdue: spark(overduePOs),
-                sales: spark(totalSalesValue / 1000),
-                receivable: spark(accountsReceivable / 1000),
-                milk: spark(totalMilkBought),
+                products: spark(d.totalProducts),
+                warehouses: spark(d.totalWarehouses),
+                suppliers: spark(d.totalSuppliers),
+                activePOs: spark(d.activePOs),
+                skus: spark(d.totalSKUs),
+                spend: spark(d.totalPOSpend / 1000),
+                value: spark(d.closingInventoryValue / 1000),
+                pending: spark(d.pendingDeliveries),
+                overdue: spark(d.overduePOs),
+                sales: spark(d.totalSalesValue / 1000),
+                receivable: spark(d.accountsReceivable / 1000),
+                milk: spark(d.totalMilkBought),
             };
 
             setStats({
-                totalProducts, totalWarehouses: warehouses.length, totalSuppliers,
-                totalCategories: categories.length, totalUsers, totalFamilies: families.length,
-                activePOs, totalSKUs, lowStockItems, outOfStockItems, totalPOSpend,
-                pendingDeliveries, overduePOs, inventoryValue: closingInventoryValue,
+                ...d,
                 healthyPct, lowPct, outPct,
                 recentPOs: pos.slice(0, 6),
                 expiringItems: expiringItems.slice(0, 5),
                 inventoryByWarehouse, poStatusBreakdown, topProducts, warehouseCapacity,
                 stockByCategory, supplierContribution, poSpendBySupplier, topSuppliersByPO,
                 sparklines,
-                totalSalesValue, accountsReceivable, totalMilkBought, closingInventoryValue,
             });
         } catch {
             toast.error("Failed to load dashboard data");
