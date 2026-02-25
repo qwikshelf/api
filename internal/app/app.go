@@ -77,6 +77,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	procurementService := service.NewProcurementService(procurementRepo, supplierRepo, inventoryRepo, warehouseRepo, productVariantRepo)
 	saleService := service.NewSaleService(saleRepo, inventoryRepo, productVariantRepo, warehouseRepo)
 	collectionService := service.NewCollectionService(collectionRepo, inventoryRepo, productVariantRepo, warehouseRepo, supplierRepo)
+	dashboardService := service.NewDashboardService(db)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService)
@@ -91,6 +92,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	procurementHandler := handler.NewProcurementHandler(procurementService)
 	saleHandler := handler.NewSaleHandler(saleService)
 	collectionHandler := handler.NewCollectionHandler(collectionService)
+	dashboardHandler := handler.NewDashboardHandler(dashboardService, authService)
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(cfg.JWT.Secret)
@@ -113,6 +115,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 		ProcurementHandler: procurementHandler,
 		SaleHandler:        saleHandler,
 		CollectionHandler:  collectionHandler,
+		DashboardHandler:   dashboardHandler,
 	})
 
 	return &App{

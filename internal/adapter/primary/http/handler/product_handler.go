@@ -355,7 +355,7 @@ func (h *ProductVariantHandler) List(c *gin.Context) {
 	for _, v := range variants {
 		resp = append(resp, dto.ProductVariantResponse{
 			ID: v.ID, FamilyID: v.FamilyID, Name: v.Name, SKU: v.SKU,
-			Barcode: v.Barcode, Unit: v.Unit, CostPrice: v.CostPrice, SellingPrice: v.SellingPrice, IsManufactured: v.IsManufactured,
+			Barcode: v.Barcode, Unit: v.Unit, CostPrice: v.CostPrice, SellingPrice: v.SellingPrice, IsManufactured: v.IsManufactured, ConversionFactor: v.ConversionFactor,
 		})
 	}
 	totalPages := int(total) / perPage
@@ -382,7 +382,7 @@ func (h *ProductVariantHandler) Create(c *gin.Context) {
 		response.BadRequest(c, "Invalid request body")
 		return
 	}
-	variant, err := h.variantService.Create(c.Request.Context(), req.FamilyID, req.Name, req.SKU, req.Barcode, req.Unit, req.CostPrice, req.SellingPrice, req.IsManufactured)
+	variant, err := h.variantService.Create(c.Request.Context(), req.FamilyID, req.Name, req.SKU, req.Barcode, req.Unit, req.CostPrice, req.SellingPrice, req.IsManufactured, req.ConversionFactor)
 	if err != nil {
 		switch err {
 		case domainErrors.ErrProductFamilyNotFound:
@@ -398,7 +398,7 @@ func (h *ProductVariantHandler) Create(c *gin.Context) {
 	}
 	response.Created(c, "Product created", dto.ProductVariantResponse{
 		ID: variant.ID, FamilyID: variant.FamilyID, Name: variant.Name, SKU: variant.SKU,
-		Barcode: variant.Barcode, Unit: variant.Unit, CostPrice: variant.CostPrice, SellingPrice: variant.SellingPrice, IsManufactured: variant.IsManufactured,
+		Barcode: variant.Barcode, Unit: variant.Unit, CostPrice: variant.CostPrice, SellingPrice: variant.SellingPrice, IsManufactured: variant.IsManufactured, ConversionFactor: variant.ConversionFactor,
 	})
 }
 
@@ -424,7 +424,7 @@ func (h *ProductVariantHandler) Get(c *gin.Context) {
 	}
 	response.OK(c, "Product retrieved", dto.ProductVariantResponse{
 		ID: variant.ID, FamilyID: variant.FamilyID, Name: variant.Name, SKU: variant.SKU,
-		Barcode: variant.Barcode, Unit: variant.Unit, CostPrice: variant.CostPrice, SellingPrice: variant.SellingPrice, IsManufactured: variant.IsManufactured,
+		Barcode: variant.Barcode, Unit: variant.Unit, CostPrice: variant.CostPrice, SellingPrice: variant.SellingPrice, IsManufactured: variant.IsManufactured, ConversionFactor: variant.ConversionFactor,
 	})
 }
 
@@ -465,7 +465,7 @@ func (h *ProductVariantHandler) Update(c *gin.Context) {
 	if req.Barcode != "" {
 		barcode = &req.Barcode
 	}
-	variant, err := h.variantService.Update(c.Request.Context(), id, familyID, name, sku, barcode, req.CostPrice, req.SellingPrice, req.IsManufactured)
+	variant, err := h.variantService.Update(c.Request.Context(), id, familyID, name, sku, barcode, req.CostPrice, req.SellingPrice, req.IsManufactured, req.ConversionFactor)
 	if err != nil {
 		switch err {
 		case domainErrors.ErrProductVariantNotFound:
@@ -483,7 +483,7 @@ func (h *ProductVariantHandler) Update(c *gin.Context) {
 	}
 	response.OK(c, "Product updated", dto.ProductVariantResponse{
 		ID: variant.ID, FamilyID: variant.FamilyID, Name: variant.Name, SKU: variant.SKU,
-		Barcode: variant.Barcode, Unit: variant.Unit, CostPrice: variant.CostPrice, SellingPrice: variant.SellingPrice, IsManufactured: variant.IsManufactured,
+		Barcode: variant.Barcode, Unit: variant.Unit, CostPrice: variant.CostPrice, SellingPrice: variant.SellingPrice, IsManufactured: variant.IsManufactured, ConversionFactor: variant.ConversionFactor,
 	})
 }
 

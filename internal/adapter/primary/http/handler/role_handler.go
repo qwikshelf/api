@@ -34,7 +34,7 @@ func NewRoleHandler(roleService *service.RoleService) *RoleHandler {
 func (h *RoleHandler) List(c *gin.Context) {
 	roles, err := h.roleService.List(c.Request.Context())
 	if err != nil {
-response.InternalErrorDebug(c, "Failed to fetch roles", err)
+		response.InternalErrorDebug(c, "Failed to fetch roles", err)
 		return
 	}
 
@@ -72,7 +72,7 @@ func (h *RoleHandler) Create(c *gin.Context) {
 
 	role, err := h.roleService.Create(c.Request.Context(), req.Name, req.Description, req.PermissionIDs)
 	if err != nil {
-response.InternalErrorDebug(c, "Failed to create role", err)
+		response.InternalErrorDebug(c, "Failed to create role", err)
 		return
 	}
 
@@ -168,7 +168,7 @@ func (h *RoleHandler) Update(c *gin.Context) {
 		if err == domainErrors.ErrRoleNotFound {
 			response.NotFound(c, "Role not found")
 		} else {
-response.InternalErrorDebug(c, "Failed to update role", err)
+			response.InternalErrorDebug(c, "Failed to update role", err)
 		}
 		return
 	}
@@ -206,10 +206,39 @@ func (h *RoleHandler) Delete(c *gin.Context) {
 		if err == domainErrors.ErrRoleNotFound {
 			response.NotFound(c, "Role not found")
 		} else {
-response.InternalErrorDebug(c, "Failed to delete role", err)
+			response.InternalErrorDebug(c, "Failed to delete role", err)
 		}
 		return
 	}
 
 	response.NoContent(c)
+}
+
+// ListPermissions lists all permissions
+// @Summary      List permissions
+// @Description  Returns a list of all available permissions
+// @Tags         Roles
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  response.Response{data=[]dto.PermissionResponse}
+// @Failure      401  {object}  response.Response
+// @Failure      500  {object}  response.Response
+// @Router       /permissions [get]
+func (h *RoleHandler) ListPermissions(c *gin.Context) {
+	permissions, err := h.roleService.ListPermissions(c.Request.Context())
+	if err != nil {
+		response.InternalErrorDebug(c, "Failed to fetch permissions", err)
+		return
+	}
+
+	var resp []dto.PermissionResponse
+	for _, p := range permissions {
+		resp = append(resp, dto.PermissionResponse{
+			ID:          p.ID,
+			Slug:        p.Slug,
+			Description: p.Description,
+		})
+	}
+
+	response.OK(c, "Permissions retrieved", resp)
 }

@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Check } from "lucide-react";
 import { usersApi } from "@/api/users";
-import { rolesApi } from "@/api/roles";
-import type { UserResponse, RoleResponse } from "@/types";
+import { rolesApi, permissionsApi } from "@/api/roles";
+import type { UserResponse, RoleResponse, PermissionResponse } from "@/types";
+import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/shared/page-header";
 import { DataTable, type Column } from "@/components/shared/data-table";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
@@ -32,6 +33,11 @@ export default function UsersPage() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
+    // Permissions state
+    const [allPermissions, setAllPermissions] = useState<PermissionResponse[]>([]);
+    const [inheritedPermIds, setInheritedPermIds] = useState<Set<number>>(new Set());
+    const [selectedDirectPermIds, setSelectedDirectPermIds] = useState<number[]>([]);
+
     const load = useCallback(async () => {
         setLoading(true);
         try {
@@ -49,8 +55,36 @@ export default function UsersPage() {
         } catch { /* silent */ }
     }, []);
 
+    const loadPermissions = useCallback(async () => {
+        try {
+            const res = await permissionsApi.list();
+            setAllPermissions(res.data.data || []);
+        } catch { /* silent */ }
+    }, []);
+
     useEffect(() => { load(); }, [load]);
     useEffect(() => { loadRoles(); }, [loadRoles]);
+    useEffect(() => { loadPermissions(); }, [loadPermissions]);
+
+    useEffect(() => {
+        if (!form.role_id) {
+            setInheritedPermIds(new Set());
+            return;
+        }
+        rolesApi.get(form.role_id).then(res => {
+            const rolePerms = res.data.data.permissions || [];
+            const ids = new Set(rolePerms.map(p => p.id));
+            setInheritedPermIds(ids);
+
+            // Re-calculate direct overrides if we just loaded the initial role of the editing user
+            if (editing && editing.role_id === form.role_id) {
+                const directIds = (editing.permissions || [])
+                    .map(p => p.id)
+                    .filter(id => !ids.has(id));
+                setSelectedDirectPermIds(directIds);
+            }
+        }).catch(() => setInheritedPermIds(new Set()));
+    }, [form.role_id, editing]);
 
     const handleSave = async () => {
         if (!form.username.trim() || !form.role_id) return;
@@ -61,12 +95,13 @@ export default function UsersPage() {
                     username: form.username,
                     role_id: form.role_id,
                     is_active: form.is_active,
+                    direct_permission_ids: selectedDirectPermIds,
                     ...(form.password ? { password: form.password } : {}),
                 });
                 toast.success("User updated");
             } else {
                 if (!form.password) { toast.error("Password is required"); setSaving(false); return; }
-                await usersApi.create(form);
+                await usersApi.create({ ...form, direct_permission_ids: selectedDirectPermIds });
                 toast.success("User created");
             }
             setDialogOpen(false);
@@ -91,12 +126,21 @@ export default function UsersPage() {
     const openCreate = () => {
         setEditing(null);
         setForm({ username: "", password: "", role_id: roles[0]?.id || 0, is_active: true });
+        setSelectedDirectPermIds([]);
         setDialogOpen(true);
     };
     const openEdit = (u: UserResponse) => {
         setEditing(u);
         setForm({ username: u.username, password: "", role_id: u.role_id, is_active: u.is_active });
+        // selectedDirectPermIds is asynchronously populated by the useEffect watching form.role_id
         setDialogOpen(true);
+    };
+
+    const togglePermission = (id: number) => {
+        if (inheritedPermIds.has(id)) return; // Cannot toggle inherited
+        setSelectedDirectPermIds(prev =>
+            prev.includes(id) ? prev.filter(pid => pid !== id) : [...prev, id]
+        );
     };
 
     const columns: Column<UserResponse>[] = [
@@ -167,6 +211,51 @@ export default function UsersPage() {
                         <div className="flex items-center gap-3">
                             <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />
                             <Label>Active</Label>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Direct Permissions (Overrides Role)</Label>
+                            {allPermissions.length === 0 ? (
+                                <p className="text-sm text-muted-foreground">No permissions available</p>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto rounded-lg border p-3">
+                                    {allPermissions.map((perm) => {
+                                        const isInherited = inheritedPermIds.has(perm.id);
+                                        const isDirect = selectedDirectPermIds.includes(perm.id);
+                                        const isSelected = isInherited || isDirect;
+
+                                        return (
+                                            <button
+                                                key={perm.id}
+                                                type="button"
+                                                onClick={() => togglePermission(perm.id)}
+                                                disabled={isInherited}
+                                                className={cn(
+                                                    "flex items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors",
+                                                    isInherited ? "bg-muted text-muted-foreground opacity-70 cursor-not-allowed" :
+                                                        isDirect ? "bg-primary/10 text-primary border border-primary/30" :
+                                                            "hover:bg-muted border border-transparent"
+                                                )}
+                                            >
+                                                <div className={cn(
+                                                    "flex h-4 w-4 shrink-0 items-center justify-center rounded border",
+                                                    isInherited ? "bg-muted-foreground/30 border-transparent text-background" :
+                                                        isDirect ? "bg-primary border-primary text-primary-foreground" :
+                                                            "border-muted-foreground/30"
+                                                )}>
+                                                    {isSelected && <Check className="h-3 w-3" />}
+                                                </div>
+                                                <span className="truncate">{perm.slug}</span>
+                                                {isInherited && <span className="ml-auto text-[10px] uppercase tracking-wider opacity-60">Role</span>}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                            {selectedDirectPermIds.length > 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                    {selectedDirectPermIds.length} direct override{selectedDirectPermIds.length !== 1 ? "s" : ""} applied.
+                                </p>
+                            )}
                         </div>
                     </div>
                     <DialogFooter>

@@ -1,10 +1,11 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { AppLayout } from "@/components/layout/app-layout";
 import { ProtectedRoute } from "@/components/shared/protected-route";
+import { PermissionGuard } from "@/components/shared/permission-guard";
 import { Skeleton } from "@/components/ui/skeleton";
 import LoginPage from "@/pages/login";
 
@@ -51,21 +52,21 @@ function App() {
                             }
                         >
                             <Route path="/" element={<Suspense fallback={<PageLoader />}><DashboardPage /></Suspense>} />
-                            <Route path="/categories" element={<Suspense fallback={<PageLoader />}><CategoriesPage /></Suspense>} />
-                            <Route path="/warehouses" element={<Suspense fallback={<PageLoader />}><WarehousesPage /></Suspense>} />
-                            <Route path="/roles" element={<Suspense fallback={<PageLoader />}><RolesPage /></Suspense>} />
-                            <Route path="/users" element={<Suspense fallback={<PageLoader />}><UsersPage /></Suspense>} />
-                            <Route path="/product-families" element={<Suspense fallback={<PageLoader />}><ProductFamiliesPage /></Suspense>} />
-                            <Route path="/products" element={<Suspense fallback={<PageLoader />}><ProductsPage /></Suspense>} />
-                            <Route path="/suppliers" element={<Suspense fallback={<PageLoader />}><SuppliersPage /></Suspense>} />
-                            <Route path="/suppliers/:id" element={<Suspense fallback={<PageLoader />}><SupplierDetailPage /></Suspense>} />
-                            <Route path="/inventory" element={<Suspense fallback={<PageLoader />}><InventoryPage /></Suspense>} />
-                            <Route path="/procurements" element={<Suspense fallback={<PageLoader />}><ProcurementsPage /></Suspense>} />
-                            <Route path="/procurements/new" element={<Suspense fallback={<PageLoader />}><CreateProcurementPage /></Suspense>} />
-                            <Route path="/procurements/:id" element={<Suspense fallback={<PageLoader />}><ProcurementDetailPage /></Suspense>} />
                             <Route path="/pos" element={<Suspense fallback={<PageLoader />}><POSPage /></Suspense>} />
-                            <Route path="/sales/history" element={<Suspense fallback={<PageLoader />}><SalesRecordPage /></Suspense>} />
-                            <Route path="/collections" element={<Suspense fallback={<PageLoader />}><CollectionPage /></Suspense>} />
+                            <Route path="/categories" element={<PermissionGuard requireAll={["products.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><CategoriesPage /></Suspense></PermissionGuard>} />
+                            <Route path="/warehouses" element={<PermissionGuard requireAll={["warehouses.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><WarehousesPage /></Suspense></PermissionGuard>} />
+                            <Route path="/roles" element={<PermissionGuard requireAll={["roles.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><RolesPage /></Suspense></PermissionGuard>} />
+                            <Route path="/users" element={<PermissionGuard requireAll={["users.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><UsersPage /></Suspense></PermissionGuard>} />
+                            <Route path="/product-families" element={<PermissionGuard requireAll={["products.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ProductFamiliesPage /></Suspense></PermissionGuard>} />
+                            <Route path="/products" element={<PermissionGuard requireAll={["products.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ProductsPage /></Suspense></PermissionGuard>} />
+                            <Route path="/suppliers" element={<PermissionGuard requireAll={["suppliers.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><SuppliersPage /></Suspense></PermissionGuard>} />
+                            <Route path="/suppliers/:id" element={<PermissionGuard requireAll={["suppliers.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><SupplierDetailPage /></Suspense></PermissionGuard>} />
+                            <Route path="/inventory" element={<PermissionGuard requireAll={["inventory.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><InventoryPage /></Suspense></PermissionGuard>} />
+                            <Route path="/procurements" element={<PermissionGuard requireAll={["procurement.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ProcurementsPage /></Suspense></PermissionGuard>} />
+                            <Route path="/procurements/new" element={<PermissionGuard requireAll={["procurement.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><CreateProcurementPage /></Suspense></PermissionGuard>} />
+                            <Route path="/procurements/:id" element={<PermissionGuard requireAll={["procurement.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ProcurementDetailPage /></Suspense></PermissionGuard>} />
+                            <Route path="/sales/history" element={<PermissionGuard requireAll={["sales.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><SalesRecordPage /></Suspense></PermissionGuard>} />
+                            <Route path="/collections" element={<PermissionGuard requireAll={["procurement.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><CollectionPage /></Suspense></PermissionGuard>} />
                         </Route>
                     </Routes>
                 </BrowserRouter>

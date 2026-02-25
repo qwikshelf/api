@@ -28,6 +28,7 @@ type Config struct {
 	ProcurementHandler *handler.ProcurementHandler
 	SaleHandler        *handler.SaleHandler
 	CollectionHandler  *handler.CollectionHandler
+	DashboardHandler   *handler.DashboardHandler
 }
 
 // SetupRoutes configures all API routes
@@ -81,11 +82,17 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 			// Role routes
 			roles := protected.Group("/roles")
 			{
-				roles.GET("", cfg.RoleHandler.List)
-				roles.POST("", cfg.RoleHandler.Create)
-				roles.GET("/:id", cfg.RoleHandler.Get)
-				roles.PUT("/:id", cfg.RoleHandler.Update)
-				roles.DELETE("/:id", cfg.RoleHandler.Delete)
+				roles.GET("", cfg.AuthMiddleware.RequirePermission("roles.view"), cfg.RoleHandler.List)
+				roles.POST("", cfg.AuthMiddleware.RequirePermission("roles.manage"), cfg.RoleHandler.Create)
+				roles.GET("/:id", cfg.AuthMiddleware.RequirePermission("roles.view"), cfg.RoleHandler.Get)
+				roles.PUT("/:id", cfg.AuthMiddleware.RequirePermission("roles.manage"), cfg.RoleHandler.Update)
+				roles.DELETE("/:id", cfg.AuthMiddleware.RequirePermission("roles.manage"), cfg.RoleHandler.Delete)
+			}
+
+			// Permissions routes
+			permissions := protected.Group("/permissions")
+			{
+				permissions.GET("", cfg.AuthMiddleware.RequirePermission("roles.view"), cfg.RoleHandler.ListPermissions)
 			}
 
 			// Warehouse routes
@@ -174,6 +181,12 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 			{
 				collections.GET("", cfg.CollectionHandler.List)
 				collections.POST("", cfg.CollectionHandler.Record)
+			}
+
+			// Dashboard routes
+			dashboard := protected.Group("/dashboard")
+			{
+				dashboard.GET("/stats", cfg.DashboardHandler.GetStats)
 			}
 		}
 	}

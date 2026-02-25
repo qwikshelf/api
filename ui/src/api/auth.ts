@@ -1,5 +1,5 @@
 import api from "./axios";
-import type { ApiResponse, LoginResponse } from "@/types";
+import type { ApiResponse, LoginResponse, UserResponse } from "@/types";
 
 export const authApi = {
     login: (username: string, password: string) =>
@@ -7,5 +7,5 @@ export const authApi = {
 
     logout: () => api.post("/auth/logout"),
 
-    me: () => api.get<ApiResponse<{ id: number; username: string; role: string }>>("/auth/me"),
+    me: () => api.get<ApiResponse<UserResponse>>("/auth/me"),
 };

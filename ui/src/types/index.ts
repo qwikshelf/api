@@ -21,6 +21,7 @@ export interface CreateUserRequest {
     password: string;
     role_id: number;
     is_active: boolean;
+    direct_permission_ids?: number[];
 }
 
 export interface UpdateUserRequest {
@@ -28,6 +29,7 @@ export interface UpdateUserRequest {
     password?: string;
     role_id?: number;
     is_active?: boolean;
+    direct_permission_ids?: number[];
 }
 
 export interface UserResponse {
@@ -37,6 +39,7 @@ export interface UserResponse {
     role?: RoleResponse;
     is_active: boolean;
     created_at: string;
+    permissions?: PermissionResponse[];
 }
 
 // --- Roles ---
@@ -92,6 +95,7 @@ export interface ProductVariantResponse {
     cost_price: string;
     selling_price: string;
     is_manufactured: boolean;
+    conversion_factor: string;
 }
 
 export interface CreateProductVariantRequest {
@@ -103,6 +107,7 @@ export interface CreateProductVariantRequest {
     cost_price: string;
     selling_price: string;
     is_manufactured: boolean;
+    conversion_factor?: string;
 }
 
 export interface UpdateProductVariantRequest {
@@ -114,6 +119,7 @@ export interface UpdateProductVariantRequest {
     cost_price?: string;
     selling_price?: string;
     is_manufactured?: boolean;
+    conversion_factor?: string;
 }
 
 // --- Warehouses ---

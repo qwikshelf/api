@@ -157,6 +157,66 @@ func (r *UserRepository) ExistsByUsername(ctx context.Context, username string) 
 	return exists, err
 }
 
+// GetPermissions retrieves all permissions for a user (role-based + direct)
+func (r *UserRepository) GetPermissions(ctx context.Context, userID int64) ([]entity.Permission, error) {
+	query := `
+		SELECT DISTINCT p.id, p.slug, p.description
+		FROM permissions p
+		WHERE p.id IN (
+			-- role permissions
+			SELECT permission_id FROM role_permissions rp
+			JOIN users u ON u.role_id = rp.role_id
+			WHERE u.id = $1
+			UNION
+			-- direct user permissions
+			SELECT permission_id FROM user_permissions up
+			WHERE up.user_id = $1
+		)
+		ORDER BY p.id
+	`
+	rows, err := r.db.Pool.Query(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var permissions []entity.Permission
+	for rows.Next() {
+		var p entity.Permission
+		if err := rows.Scan(&p.ID, &p.Slug, &p.Description); err != nil {
+			return nil, err
+		}
+		permissions = append(permissions, p)
+	}
+
+	return permissions, rows.Err()
+}
+
+// SetDirectPermissions sets the direct permissions for a user
+func (r *UserRepository) SetDirectPermissions(ctx context.Context, userID int64, permissionIDs []int64) error {
+	tx, err := r.db.Pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	// Delete existing direct permissions
+	if _, err := tx.Exec(ctx, "DELETE FROM user_permissions WHERE user_id = $1", userID); err != nil {
+		return err
+	}
+
+	// Insert new direct permissions
+	if len(permissionIDs) > 0 {
+		for _, pid := range permissionIDs {
+			if _, err := tx.Exec(ctx, "INSERT INTO user_permissions (user_id, permission_id) VALUES ($1, $2)", userID, pid); err != nil {
+				return err
+			}
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
 // RoleRepository implements repository.RoleRepository
 type RoleRepository struct {
 	db *DB

@@ -75,6 +75,14 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		}
 	}
 
+	for _, p := range result.Permissions {
+		resp.User.Permissions = append(resp.User.Permissions, dto.PermissionResponse{
+			ID:          p.ID,
+			Slug:        p.Slug,
+			Description: p.Description,
+		})
+	}
+
 	response.OK(c, "Login successful", resp)
 }
 
@@ -126,6 +134,22 @@ func (h *AuthHandler) Refresh(c *gin.Context) {
 		},
 	}
 
+	if result.User.Role != nil {
+		resp.User.Role = &dto.RoleResponse{
+			ID:          result.User.Role.ID,
+			Name:        result.User.Role.Name,
+			Description: result.User.Role.Description,
+		}
+	}
+
+	for _, p := range result.Permissions {
+		resp.User.Permissions = append(resp.User.Permissions, dto.PermissionResponse{
+			ID:          p.ID,
+			Slug:        p.Slug,
+			Description: p.Description,
+		})
+	}
+
 	response.OK(c, "Token refreshed", resp)
 }
 
@@ -146,7 +170,7 @@ func (h *AuthHandler) Me(c *gin.Context) {
 		return
 	}
 
-	user, err := h.authService.GetUserByID(c.Request.Context(), userID)
+	user, permissions, err := h.authService.GetUserByID(c.Request.Context(), userID)
 	if err != nil {
 		response.NotFound(c, "User not found")
 		return
@@ -166,6 +190,14 @@ func (h *AuthHandler) Me(c *gin.Context) {
 			Name:        user.Role.Name,
 			Description: user.Role.Description,
 		}
+	}
+
+	for _, p := range permissions {
+		resp.Permissions = append(resp.Permissions, dto.PermissionResponse{
+			ID:          p.ID,
+			Slug:        p.Slug,
+			Description: p.Description,
+		})
 	}
 
 	response.OK(c, "Current user retrieved", resp)
@@ -226,6 +258,16 @@ func (h *UserHandler) List(c *gin.Context) {
 				Description: u.Role.Description,
 			}
 		}
+		// Fetch permissions for each user
+		if perms, err := h.userService.GetPermissions(c.Request.Context(), u.ID); err == nil {
+			for _, p := range perms {
+				userResp.Permissions = append(userResp.Permissions, dto.PermissionResponse{
+					ID:          p.ID,
+					Slug:        p.Slug,
+					Description: p.Description,
+				})
+			}
+		}
 		resp = append(resp, userResp)
 	}
 
@@ -263,7 +305,7 @@ func (h *UserHandler) Create(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.Create(c.Request.Context(), req.Username, req.Password, req.RoleID, req.IsActive)
+	user, err := h.userService.Create(c.Request.Context(), req.Username, req.Password, req.RoleID, req.IsActive, req.DirectPermissionIDs)
 	if err != nil {
 		switch err {
 		case domainErrors.ErrUsernameExists:
@@ -328,6 +370,18 @@ func (h *UserHandler) Get(c *gin.Context) {
 		}
 	}
 
+	// Fetch permissions
+	perms, err := h.userService.GetPermissions(c.Request.Context(), id)
+	if err == nil {
+		for _, p := range perms {
+			resp.Permissions = append(resp.Permissions, dto.PermissionResponse{
+				ID:          p.ID,
+				Slug:        p.Slug,
+				Description: p.Description,
+			})
+		}
+	}
+
 	response.OK(c, "User retrieved", resp)
 }
 
@@ -372,7 +426,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 		roleID = &req.RoleID
 	}
 
-	user, err := h.userService.Update(c.Request.Context(), id, username, password, roleID, req.IsActive)
+	user, err := h.userService.Update(c.Request.Context(), id, username, password, roleID, req.IsActive, req.DirectPermissionIDs)
 	if err != nil {
 		switch err {
 		case domainErrors.ErrUserNotFound:

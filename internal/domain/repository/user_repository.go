@@ -28,6 +28,12 @@ type UserRepository interface {
 
 	// ExistsByUsername checks if a username exists
 	ExistsByUsername(ctx context.Context, username string) (bool, error)
+
+	// GetPermissions retrieves all permissions for a user (role + direct)
+	GetPermissions(ctx context.Context, userID int64) ([]entity.Permission, error)
+
+	// SetDirectPermissions sets the direct permissions for a user
+	SetDirectPermissions(ctx context.Context, userID int64, permissionIDs []int64) error
 }
 
 // RoleRepository defines the interface for role data access

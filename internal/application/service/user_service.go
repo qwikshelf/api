@@ -25,7 +25,7 @@ func NewUserService(userRepo repository.UserRepository, roleRepo repository.Role
 }
 
 // Create creates a new user
-func (s *UserService) Create(ctx context.Context, username, password string, roleID int64, isActive bool) (*entity.User, error) {
+func (s *UserService) Create(ctx context.Context, username, password string, roleID int64, isActive bool, directPermissionIDs []int64) (*entity.User, error) {
 	// Check if username exists
 	exists, err := s.userRepo.ExistsByUsername(ctx, username)
 	if err != nil {
@@ -59,6 +59,12 @@ func (s *UserService) Create(ctx context.Context, username, password string, rol
 		return nil, err
 	}
 
+	if len(directPermissionIDs) > 0 {
+		if err := s.userRepo.SetDirectPermissions(ctx, user.ID, directPermissionIDs); err != nil {
+			return nil, err
+		}
+	}
+
 	return user, nil
 }
 
@@ -71,13 +77,18 @@ func (s *UserService) GetByID(ctx context.Context, id int64) (*entity.User, erro
 	return user, nil
 }
 
+// GetPermissions retrieves all permissions for a user
+func (s *UserService) GetPermissions(ctx context.Context, id int64) ([]entity.Permission, error) {
+	return s.userRepo.GetPermissions(ctx, id)
+}
+
 // List retrieves all users with pagination
 func (s *UserService) List(ctx context.Context, offset, limit int) ([]entity.User, int64, error) {
 	return s.userRepo.List(ctx, offset, limit)
 }
 
 // Update updates an existing user
-func (s *UserService) Update(ctx context.Context, id int64, username, password *string, roleID *int64, isActive *bool) (*entity.User, error) {
+func (s *UserService) Update(ctx context.Context, id int64, username, password *string, roleID *int64, isActive *bool, directPermissionIDs []int64) (*entity.User, error) {
 	user, err := s.userRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, domainErrors.ErrUserNotFound
@@ -115,6 +126,12 @@ func (s *UserService) Update(ctx context.Context, id int64, username, password *
 
 	if err := s.userRepo.Update(ctx, user); err != nil {
 		return nil, err
+	}
+
+	if directPermissionIDs != nil {
+		if err := s.userRepo.SetDirectPermissions(ctx, user.ID, directPermissionIDs); err != nil {
+			return nil, err
+		}
 	}
 
 	return user, nil

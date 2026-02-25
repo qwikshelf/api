@@ -30,28 +30,32 @@ type RefreshRequest struct {
 // Username must be 3-50 chars. Password must be at least 6 chars.
 // RoleID is required.
 type CreateUserRequest struct {
-	Username string `json:"username" binding:"required,min=3,max=50"`
-	Password string `json:"password" binding:"required,min=6"`
-	RoleID   int64  `json:"role_id" binding:"required"`
-	IsActive bool   `json:"is_active"`
+	Username            string  `json:"username" binding:"required,min=3,max=50"`
+	Password            string  `json:"password" binding:"required,min=6"`
+	RoleID              int64   `json:"role_id" binding:"required"`
+	IsActive            bool    `json:"is_active"`
+	DirectPermissionIDs []int64 `json:"direct_permission_ids,omitempty"`
 }
 
 // UpdateUserRequest represents a request to update a user
 type UpdateUserRequest struct {
-	Username string `json:"username,omitempty" binding:"omitempty,min=3,max=50"`
-	Password string `json:"password,omitempty" binding:"omitempty,min=6"`
-	RoleID   int64  `json:"role_id,omitempty"`
-	IsActive *bool  `json:"is_active,omitempty"`
+	Username            string  `json:"username,omitempty" binding:"omitempty,min=3,max=50"`
+	Password            string  `json:"password,omitempty" binding:"omitempty,min=6"`
+	RoleID              int64   `json:"role_id,omitempty"`
+	IsActive            *bool   `json:"is_active,omitempty"`
+	DirectPermissionIDs []int64 `json:"direct_permission_ids,omitempty"`
 }
 
 // UserResponse represents a user in API responses
 type UserResponse struct {
-	ID        int64         `json:"id"`
-	Username  string        `json:"username"`
-	RoleID    int64         `json:"role_id"`
-	Role      *RoleResponse `json:"role,omitempty"`
-	IsActive  bool          `json:"is_active"`
-	CreatedAt time.Time     `json:"created_at"`
+	ID                  int64                `json:"id"`
+	Username            string               `json:"username"`
+	RoleID              int64                `json:"role_id"`
+	Role                *RoleResponse        `json:"role,omitempty"`
+	IsActive            bool                 `json:"is_active"`
+	CreatedAt           time.Time            `json:"created_at"`
+	Permissions         []PermissionResponse `json:"permissions,omitempty"`
+	DirectPermissionIDs []int64              `json:"direct_permission_ids,omitempty"`
 }
 
 // --- Role DTOs ---

@@ -230,27 +230,27 @@ func (r *ProductVariantRepository) Create(ctx context.Context, variant *entity.P
 	}
 
 	query := `
-		INSERT INTO product_variants (family_id, name, sku, barcode, unit, cost_price, selling_price, is_manufactured)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO product_variants (family_id, name, sku, barcode, unit, cost_price, selling_price, is_manufactured, conversion_factor)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		RETURNING id
 	`
 	return r.db.Pool.QueryRow(ctx, query,
 		variant.FamilyID, variant.Name, variant.SKU, barcode, variant.Unit,
-		variant.CostPrice, variant.SellingPrice, variant.IsManufactured,
+		variant.CostPrice, variant.SellingPrice, variant.IsManufactured, variant.ConversionFactor,
 	).Scan(&variant.ID)
 }
 
 // GetByID retrieves a product variant by ID
 func (r *ProductVariantRepository) GetByID(ctx context.Context, id int64) (*entity.ProductVariant, error) {
 	query := `
-		SELECT id, family_id, name, sku, barcode, unit, cost_price, selling_price, is_manufactured
+		SELECT id, family_id, name, sku, barcode, unit, cost_price, selling_price, is_manufactured, conversion_factor
 		FROM product_variants WHERE id = $1
 	`
 	v := &entity.ProductVariant{}
 	var barcode *string
 	err := r.db.Pool.QueryRow(ctx, query, id).Scan(
 		&v.ID, &v.FamilyID, &v.Name, &v.SKU, &barcode, &v.Unit,
-		&v.CostPrice, &v.SellingPrice, &v.IsManufactured,
+		&v.CostPrice, &v.SellingPrice, &v.IsManufactured, &v.ConversionFactor,
 	)
 	if barcode != nil {
 		v.Barcode = *barcode
@@ -267,14 +267,14 @@ func (r *ProductVariantRepository) GetByID(ctx context.Context, id int64) (*enti
 // GetBySKU retrieves a product variant by SKU
 func (r *ProductVariantRepository) GetBySKU(ctx context.Context, sku string) (*entity.ProductVariant, error) {
 	query := `
-		SELECT id, family_id, name, sku, barcode, unit, cost_price, selling_price, is_manufactured
+		SELECT id, family_id, name, sku, barcode, unit, cost_price, selling_price, is_manufactured, conversion_factor
 		FROM product_variants WHERE sku = $1
 	`
 	v := &entity.ProductVariant{}
 	var barcode *string
 	err := r.db.Pool.QueryRow(ctx, query, sku).Scan(
 		&v.ID, &v.FamilyID, &v.Name, &v.SKU, &barcode, &v.Unit,
-		&v.CostPrice, &v.SellingPrice, &v.IsManufactured,
+		&v.CostPrice, &v.SellingPrice, &v.IsManufactured, &v.ConversionFactor,
 	)
 	if barcode != nil {
 		v.Barcode = *barcode
@@ -291,14 +291,14 @@ func (r *ProductVariantRepository) GetBySKU(ctx context.Context, sku string) (*e
 // GetByBarcode retrieves a product variant by barcode
 func (r *ProductVariantRepository) GetByBarcode(ctx context.Context, barcode string) (*entity.ProductVariant, error) {
 	query := `
-		SELECT id, family_id, name, sku, barcode, unit, cost_price, selling_price, is_manufactured
+		SELECT id, family_id, name, sku, barcode, unit, cost_price, selling_price, is_manufactured, conversion_factor
 		FROM product_variants WHERE barcode = $1
 	`
 	v := &entity.ProductVariant{}
 	var barcodeVal *string
 	err := r.db.Pool.QueryRow(ctx, query, barcode).Scan(
 		&v.ID, &v.FamilyID, &v.Name, &v.SKU, &barcodeVal, &v.Unit,
-		&v.CostPrice, &v.SellingPrice, &v.IsManufactured,
+		&v.CostPrice, &v.SellingPrice, &v.IsManufactured, &v.ConversionFactor,
 	)
 	if barcodeVal != nil {
 		v.Barcode = *barcodeVal
@@ -320,7 +320,7 @@ func (r *ProductVariantRepository) List(ctx context.Context, offset, limit int) 
 	}
 
 	query := `
-		SELECT id, family_id, name, sku, barcode, unit, cost_price, selling_price, is_manufactured
+		SELECT id, family_id, name, sku, barcode, unit, cost_price, selling_price, is_manufactured, conversion_factor
 		FROM product_variants
 		ORDER BY id
 		LIMIT $1 OFFSET $2
@@ -337,7 +337,7 @@ func (r *ProductVariantRepository) List(ctx context.Context, offset, limit int) 
 		var barcode *string
 		if err := rows.Scan(
 			&v.ID, &v.FamilyID, &v.Name, &v.SKU, &barcode, &v.Unit,
-			&v.CostPrice, &v.SellingPrice, &v.IsManufactured,
+			&v.CostPrice, &v.SellingPrice, &v.IsManufactured, &v.ConversionFactor,
 		); err != nil {
 			return nil, 0, err
 		}
@@ -352,7 +352,7 @@ func (r *ProductVariantRepository) List(ctx context.Context, offset, limit int) 
 // ListByFamily retrieves product variants by family
 func (r *ProductVariantRepository) ListByFamily(ctx context.Context, familyID int64) ([]entity.ProductVariant, error) {
 	query := `
-		SELECT id, family_id, name, sku, barcode, unit, cost_price, selling_price, is_manufactured
+		SELECT id, family_id, name, sku, barcode, unit, cost_price, selling_price, is_manufactured, conversion_factor
 		FROM product_variants WHERE family_id = $1 ORDER BY id
 	`
 	rows, err := r.db.Pool.Query(ctx, query, familyID)
@@ -367,7 +367,7 @@ func (r *ProductVariantRepository) ListByFamily(ctx context.Context, familyID in
 		var barcode *string
 		if err := rows.Scan(
 			&v.ID, &v.FamilyID, &v.Name, &v.SKU, &barcode, &v.Unit,
-			&v.CostPrice, &v.SellingPrice, &v.IsManufactured,
+			&v.CostPrice, &v.SellingPrice, &v.IsManufactured, &v.ConversionFactor,
 		); err != nil {
 			return nil, err
 		}
@@ -388,12 +388,12 @@ func (r *ProductVariantRepository) Update(ctx context.Context, variant *entity.P
 
 	query := `
 		UPDATE product_variants 
-		SET family_id = $1, name = $2, sku = $3, barcode = $4, unit = $5, cost_price = $6, selling_price = $7, is_manufactured = $8 
-		WHERE id = $9
+		SET family_id = $1, name = $2, sku = $3, barcode = $4, unit = $5, cost_price = $6, selling_price = $7, is_manufactured = $8, conversion_factor = $9 
+		WHERE id = $10
 	`
 	result, err := r.db.Pool.Exec(ctx, query,
 		variant.FamilyID, variant.Name, variant.SKU, barcode, variant.Unit,
-		variant.CostPrice, variant.SellingPrice, variant.IsManufactured, variant.ID,
+		variant.CostPrice, variant.SellingPrice, variant.IsManufactured, variant.ConversionFactor, variant.ID,
 	)
 	if err != nil {
 		return err

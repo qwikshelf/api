@@ -159,7 +159,7 @@ func NewProductVariantService(variantRepo repository.ProductVariantRepository, f
 }
 
 // Create creates a new product variant
-func (s *ProductVariantService) Create(ctx context.Context, familyID int64, name, sku, barcode, unit string, costPrice, sellingPrice decimal.Decimal, isManufactured bool) (*entity.ProductVariant, error) {
+func (s *ProductVariantService) Create(ctx context.Context, familyID int64, name, sku, barcode, unit string, costPrice, sellingPrice decimal.Decimal, isManufactured bool, conversionFactor decimal.Decimal) (*entity.ProductVariant, error) {
 	// Verify family exists
 	if _, err := s.familyRepo.GetByID(ctx, familyID); err != nil {
 		return nil, domainErrors.ErrProductFamilyNotFound
@@ -189,15 +189,20 @@ func (s *ProductVariantService) Create(ctx context.Context, familyID int64, name
 		unit = "piece"
 	}
 
+	if conversionFactor.IsZero() {
+		conversionFactor = decimal.NewFromInt(1)
+	}
+
 	variant := &entity.ProductVariant{
-		FamilyID:       familyID,
-		Name:           name,
-		SKU:            sku,
-		Barcode:        barcode,
-		Unit:           unit,
-		CostPrice:      costPrice,
-		SellingPrice:   sellingPrice,
-		IsManufactured: isManufactured,
+		FamilyID:         familyID,
+		Name:             name,
+		SKU:              sku,
+		Barcode:          barcode,
+		Unit:             unit,
+		CostPrice:        costPrice,
+		SellingPrice:     sellingPrice,
+		IsManufactured:   isManufactured,
+		ConversionFactor: conversionFactor,
 	}
 
 	if err := s.variantRepo.Create(ctx, variant); err != nil {
@@ -221,7 +226,7 @@ func (s *ProductVariantService) List(ctx context.Context, offset, limit int) ([]
 }
 
 // Update updates a product variant
-func (s *ProductVariantService) Update(ctx context.Context, id int64, familyID *int64, name, sku, barcode *string, costPrice, sellingPrice *decimal.Decimal, isManufactured *bool) (*entity.ProductVariant, error) {
+func (s *ProductVariantService) Update(ctx context.Context, id int64, familyID *int64, name, sku, barcode *string, costPrice, sellingPrice *decimal.Decimal, isManufactured *bool, conversionFactor *decimal.Decimal) (*entity.ProductVariant, error) {
 	variant, err := s.variantRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, domainErrors.ErrProductVariantNotFound
@@ -266,6 +271,9 @@ func (s *ProductVariantService) Update(ctx context.Context, id int64, familyID *
 	}
 	if isManufactured != nil {
 		variant.IsManufactured = *isManufactured
+	}
+	if conversionFactor != nil {
+		variant.ConversionFactor = *conversionFactor
 	}
 
 	if err := s.variantRepo.Update(ctx, variant); err != nil {
