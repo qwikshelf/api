@@ -28,7 +28,8 @@ import {
 import type {
     ProcurementResponse, InventoryLevelResponse, WarehouseResponse,
     ProductVariantResponse, CategoryResponse, ProductFamilyResponse,
-    SupplierResponse, SaleResponse, CollectionResponse
+    SupplierResponse
+
 } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
