@@ -33,6 +33,7 @@ type ProductVariantRepository interface {
 	GetByBarcode(ctx context.Context, barcode string) (*entity.ProductVariant, error)
 	List(ctx context.Context, offset, limit int) ([]entity.ProductVariant, int64, error)
 	ListByFamily(ctx context.Context, familyID int64) ([]entity.ProductVariant, error)
+	ListByCategory(ctx context.Context, categoryID int64, offset, limit int) ([]entity.ProductVariant, int64, error)
 	Update(ctx context.Context, variant *entity.ProductVariant) error
 	Delete(ctx context.Context, id int64) error
 	ExistsBySKU(ctx context.Context, sku string) (bool, error)

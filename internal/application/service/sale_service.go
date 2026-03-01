@@ -119,3 +119,8 @@ func (s *SaleService) GetByID(ctx context.Context, id int64) (*entity.Sale, erro
 func (s *SaleService) List(ctx context.Context, warehouseID *int64, startDate, endDate *time.Time, offset, limit int) ([]entity.Sale, int64, error) {
 	return s.saleRepo.List(ctx, warehouseID, startDate, endDate, offset, limit)
 }
+
+// ListByCustomer retrieves sales for a specific customer
+func (s *SaleService) ListByCustomer(ctx context.Context, customerID int64, offset, limit int) ([]entity.Sale, int64, error) {
+	return s.saleRepo.ListByCustomer(ctx, customerID, offset, limit)
+}

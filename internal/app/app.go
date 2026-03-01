@@ -93,6 +93,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	saleHandler := handler.NewSaleHandler(saleService)
 	collectionHandler := handler.NewCollectionHandler(collectionService)
 	dashboardHandler := handler.NewDashboardHandler(dashboardService, authService)
+	publicHandler := handler.NewPublicHandler(productVariantService, categoryService, saleService, userService, authService)
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(cfg.JWT.Secret)
@@ -116,6 +117,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 		SaleHandler:        saleHandler,
 		CollectionHandler:  collectionHandler,
 		DashboardHandler:   dashboardHandler,
+		PublicHandler:      publicHandler,
 	})
 
 	return &App{

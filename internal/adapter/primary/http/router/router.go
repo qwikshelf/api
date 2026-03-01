@@ -29,6 +29,7 @@ type Config struct {
 	SaleHandler        *handler.SaleHandler
 	CollectionHandler  *handler.CollectionHandler
 	DashboardHandler   *handler.DashboardHandler
+	PublicHandler      *handler.PublicHandler
 }
 
 // SetupRoutes configures all API routes
@@ -55,6 +56,23 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 	v1 := r.Group("/api/v1")
 	{
 		// Public routes
+		public := v1.Group("/public")
+		{
+			public.GET("/products", cfg.PublicHandler.ListProducts)
+			public.GET("/products/:id", cfg.PublicHandler.GetProduct)
+			public.GET("/categories", cfg.PublicHandler.ListCategories)
+			public.POST("/orders", cfg.PublicHandler.CreateOrder)
+			public.POST("/register", cfg.PublicHandler.Register)
+			public.POST("/login", cfg.PublicHandler.Login)
+
+			// Authenticated customer endpoints
+			me := public.Group("/my", cfg.AuthMiddleware.Authenticate())
+			{
+				me.GET("/orders", cfg.PublicHandler.GetMyOrders)
+				me.GET("/orders/:id", cfg.PublicHandler.GetOrderTracking)
+			}
+		}
+
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/login", cfg.AuthHandler.Login)

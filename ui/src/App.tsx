@@ -41,7 +41,7 @@ function App() {
     return (
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
             <TooltipProvider>
-                <BrowserRouter>
+                <BrowserRouter basename="/admin">
                     <Routes>
                         <Route path="/login" element={<LoginPage />} />
                         <Route

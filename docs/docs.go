@@ -156,6 +156,64 @@ const docTemplate = `{
                 }
             }
         },
+        "/auth/refresh": {
+            "post": {
+                "description": "Get a new access token using a refresh token",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Refresh token",
+                "parameters": [
+                    {
+                        "description": "Refresh token",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qwikshelf_api_internal_application_dto.RefreshRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_qwikshelf_api_internal_application_dto.LoginResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/categories": {
             "get": {
                 "security": [
@@ -397,6 +455,117 @@ const docTemplate = `{
                 }
             }
         },
+        "/collections": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a paginated list of all collections",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Collections"
+                ],
+                "summary": "List collections",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Items per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/github_com_qwikshelf_api_internal_application_dto.CollectionResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Allows an agent to record a product receipt with weight and supplier",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Collections"
+                ],
+                "summary": "Record a collection",
+                "parameters": [
+                    {
+                        "description": "Collection details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qwikshelf_api_internal_application_dto.RecordCollectionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_qwikshelf_api_internal_application_dto.CollectionResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
         "/inventory": {
             "get": {
                 "security": [
@@ -417,6 +586,18 @@ const docTemplate = `{
                         "type": "integer",
                         "description": "Filter by warehouse ID",
                         "name": "warehouse_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Page number (default 1)",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Items per page (default 20)",
+                        "name": "limit",
                         "in": "query"
                     }
                 ],
@@ -619,6 +800,58 @@ const docTemplate = `{
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/permissions": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Returns a list of all available permissions",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "List permissions",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/github_com_qwikshelf_api_internal_application_dto.PermissionResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
                         }
@@ -1501,6 +1734,92 @@ const docTemplate = `{
                 }
             }
         },
+        "/public/categories": {
+            "get": {
+                "description": "Returns a list of categories for the storefront navigation",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Public"
+                ],
+                "summary": "List public categories",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/github_com_qwikshelf_api_internal_application_dto.PublicCategoryResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/public/products": {
+            "get": {
+                "description": "Returns a list of product variants for the storefront",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Public"
+                ],
+                "summary": "List public products",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Items per page",
+                        "name": "per_page",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/github_com_qwikshelf_api_internal_application_dto.PublicProductResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "/roles": {
             "get": {
                 "security": [
@@ -1798,6 +2117,75 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
+                        }
+                    }
+                }
+            }
+        },
+        "/sales": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates a new sale and deducts inventory",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Sales"
+                ],
+                "summary": "Process sale",
+                "parameters": [
+                    {
+                        "description": "Sale details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_qwikshelf_api_internal_application_dto.CreateSaleRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/github_com_qwikshelf_api_internal_application_dto.SaleResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/github_com_qwikshelf_api_pkg_response.Response"
                         }
@@ -2855,7 +3243,6 @@ const docTemplate = `{
         "github_com_qwikshelf_api_internal_application_dto.AdjustInventoryRequest": {
             "type": "object",
             "required": [
-                "quantity_delta",
                 "variant_id",
                 "warehouse_id"
             ],
@@ -2885,6 +3272,44 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_qwikshelf_api_internal_application_dto.CollectionResponse": {
+            "type": "object",
+            "properties": {
+                "agent_id": {
+                    "type": "integer"
+                },
+                "agent_name": {
+                    "type": "string"
+                },
+                "collected_at": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "supplier_id": {
+                    "type": "integer"
+                },
+                "supplier_name": {
+                    "type": "string"
+                },
+                "variant_id": {
+                    "type": "integer"
+                },
+                "variant_name": {
+                    "type": "string"
+                },
+                "warehouse_id": {
+                    "type": "integer"
+                },
+                "weight": {
+                    "type": "number"
+                }
+            }
+        },
         "github_com_qwikshelf_api_internal_application_dto.CreateCategoryRequest": {
             "type": "object",
             "required": [
@@ -2901,8 +3326,6 @@ const docTemplate = `{
         "github_com_qwikshelf_api_internal_application_dto.CreateProcurementItemRequest": {
             "type": "object",
             "required": [
-                "quantity",
-                "unit_cost",
                 "variant_id"
             ],
             "properties": {
@@ -2978,6 +3401,9 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 50
                 },
+                "conversion_factor": {
+                    "type": "number"
+                },
                 "cost_price": {
                     "type": "number"
                 },
@@ -3035,6 +3461,64 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_qwikshelf_api_internal_application_dto.CreateSaleItem": {
+            "type": "object",
+            "required": [
+                "quantity",
+                "unit_price",
+                "variant_id"
+            ],
+            "properties": {
+                "quantity": {
+                    "type": "number"
+                },
+                "unit_price": {
+                    "type": "number"
+                },
+                "variant_id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_qwikshelf_api_internal_application_dto.CreateSaleRequest": {
+            "type": "object",
+            "required": [
+                "items",
+                "payment_method",
+                "warehouse_id"
+            ],
+            "properties": {
+                "customer_name": {
+                    "type": "string"
+                },
+                "discount_amount": {
+                    "type": "number"
+                },
+                "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/github_com_qwikshelf_api_internal_application_dto.CreateSaleItem"
+                    }
+                },
+                "payment_method": {
+                    "type": "string",
+                    "enum": [
+                        "cash",
+                        "card",
+                        "upi",
+                        "credit",
+                        "other"
+                    ]
+                },
+                "tax_amount": {
+                    "type": "number"
+                },
+                "warehouse_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "github_com_qwikshelf_api_internal_application_dto.CreateSupplierRequest": {
             "type": "object",
             "required": [
@@ -3087,6 +3571,12 @@ const docTemplate = `{
                 "username"
             ],
             "properties": {
+                "direct_permission_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "is_active": {
                     "type": "boolean"
                 },
@@ -3137,7 +3627,7 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "batch_number": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "expiry_date": {
                     "type": "string"
@@ -3182,10 +3672,13 @@ const docTemplate = `{
         "github_com_qwikshelf_api_internal_application_dto.LoginResponse": {
             "type": "object",
             "properties": {
+                "access_token": {
+                    "type": "string"
+                },
                 "expires_at": {
                     "type": "string"
                 },
-                "token": {
+                "refresh_token": {
                     "type": "string"
                 },
                 "user": {
@@ -3306,6 +3799,9 @@ const docTemplate = `{
                 "barcode": {
                     "type": "string"
                 },
+                "conversion_factor": {
+                    "type": "number"
+                },
                 "cost_price": {
                     "type": "number"
                 },
@@ -3338,11 +3834,56 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_qwikshelf_api_internal_application_dto.PublicCategoryResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_qwikshelf_api_internal_application_dto.PublicProductResponse": {
+            "type": "object",
+            "properties": {
+                "category_name": {
+                    "type": "string"
+                },
+                "conversion_factor": {
+                    "type": "number"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "family_id": {
+                    "type": "integer"
+                },
+                "family_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "selling_price": {
+                    "type": "number"
+                },
+                "sku": {
+                    "type": "string"
+                },
+                "unit": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_qwikshelf_api_internal_application_dto.ReceiveItemRequest": {
             "type": "object",
             "required": [
-                "item_id",
-                "quantity_received"
+                "item_id"
             ],
             "properties": {
                 "item_id": {
@@ -3368,6 +3909,47 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_qwikshelf_api_internal_application_dto.RecordCollectionRequest": {
+            "type": "object",
+            "required": [
+                "supplier_id",
+                "variant_id",
+                "weight"
+            ],
+            "properties": {
+                "collected_at": {
+                    "description": "If nil, server uses now",
+                    "type": "string"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "supplier_id": {
+                    "type": "integer"
+                },
+                "variant_id": {
+                    "type": "integer"
+                },
+                "warehouse_id": {
+                    "description": "Optional, server can default to Main",
+                    "type": "integer"
+                },
+                "weight": {
+                    "type": "number"
+                }
+            }
+        },
+        "github_com_qwikshelf_api_internal_application_dto.RefreshRequest": {
+            "type": "object",
+            "required": [
+                "refresh_token"
+            ],
+            "properties": {
+                "refresh_token": {
+                    "type": "string"
+                }
+            }
+        },
         "github_com_qwikshelf_api_internal_application_dto.RoleResponse": {
             "type": "object",
             "properties": {
@@ -3385,6 +3967,76 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/github_com_qwikshelf_api_internal_application_dto.PermissionResponse"
                     }
+                }
+            }
+        },
+        "github_com_qwikshelf_api_internal_application_dto.SaleItemResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "line_total": {
+                    "type": "number"
+                },
+                "quantity": {
+                    "type": "number"
+                },
+                "unit_price": {
+                    "type": "number"
+                },
+                "variant_id": {
+                    "type": "integer"
+                },
+                "variant_name": {
+                    "type": "string"
+                },
+                "variant_sku": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_qwikshelf_api_internal_application_dto.SaleResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "customer_name": {
+                    "type": "string"
+                },
+                "discount_amount": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_qwikshelf_api_internal_application_dto.SaleItemResponse"
+                    }
+                },
+                "payment_method": {
+                    "type": "string"
+                },
+                "processed_by_name": {
+                    "type": "string"
+                },
+                "processed_by_user_id": {
+                    "type": "integer"
+                },
+                "tax_amount": {
+                    "type": "number"
+                },
+                "total_amount": {
+                    "type": "number"
+                },
+                "warehouse_id": {
+                    "type": "integer"
+                },
+                "warehouse_name": {
+                    "type": "string"
                 }
             }
         },
@@ -3431,7 +4083,6 @@ const docTemplate = `{
         "github_com_qwikshelf_api_internal_application_dto.TransferItemRequest": {
             "type": "object",
             "required": [
-                "quantity",
                 "variant_id"
             ],
             "properties": {
@@ -3550,6 +4201,9 @@ const docTemplate = `{
                     "type": "string",
                     "maxLength": 50
                 },
+                "conversion_factor": {
+                    "type": "number"
+                },
                 "cost_price": {
                     "type": "number"
                 },
@@ -3625,6 +4279,12 @@ const docTemplate = `{
         "github_com_qwikshelf_api_internal_application_dto.UpdateUserRequest": {
             "type": "object",
             "properties": {
+                "direct_permission_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "is_active": {
                     "type": "boolean"
                 },
@@ -3673,11 +4333,23 @@ const docTemplate = `{
                 "created_at": {
                     "type": "string"
                 },
+                "direct_permission_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
                 "id": {
                     "type": "integer"
                 },
                 "is_active": {
                     "type": "boolean"
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_qwikshelf_api_internal_application_dto.PermissionResponse"
+                    }
                 },
                 "role": {
                     "$ref": "#/definitions/github_com_qwikshelf_api_internal_application_dto.RoleResponse"
@@ -3710,10 +4382,10 @@ const docTemplate = `{
         "github_com_qwikshelf_api_internal_domain_entity.TransferStatus": {
             "type": "string",
             "enum": [
-                "PENDING",
-                "IN_TRANSIT",
-                "COMPLETED",
-                "CANCELLED"
+                "pending",
+                "in_transit",
+                "completed",
+                "cancelled"
             ],
             "x-enum-varnames": [
                 "TransferStatusPending",

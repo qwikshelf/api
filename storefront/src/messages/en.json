@@ -1,0 +1,141 @@
+{
+    "Navbar": {
+        "deliverTo": "Deliver to",
+        "trackOrder": "Track Order",
+        "helpCenter": "Help Center",
+        "sell": "Sell on QwikShelf",
+        "searchPlaceholder": "Search for fresh milk, ghee, paneer...",
+        "signIn": "Sign In",
+        "account": "Account & Lists",
+        "returns": "Returns",
+        "orders": "& Orders",
+        "cart": "Cart",
+        "allCategories": "All Categories",
+        "flashDeals": "Flash Deals",
+        "tagline": "Bringing the farm to your shelf since 2024"
+    },
+    "Hero": {
+        "badge": "FRESH FROM FARM",
+        "title": "Freshness Delivered to Your Doorstep",
+        "description": "Experience the pure taste of nature with our range of fresh dairy products, organic ghee, and daily essentials.",
+        "shopNow": "Shop Now",
+        "watchVideo": "How it works",
+        "stats": {
+            "happyCustomers": "Happy Customers",
+            "fastDelivery": "Fast Delivery",
+            "purityGuaranteed": "Purity Guaranteed"
+        }
+    },
+    "Auth": {
+        "loginTitle": "Welcome Back",
+        "loginSubtitle": "Sign in to manage your orders",
+        "signupTitle": "Create Account",
+        "signupSubtitle": "Join QwikShelf for a better shopping experience",
+        "username": "Username (Email or Phone)",
+        "password": "Password",
+        "fullName": "Full Name",
+        "phone": "Phone (Optional)",
+        "address": "Address (Optional)",
+        "signIn": "Sign In",
+        "signUp": "Sign Up",
+        "noAccount": "Don't have an account?",
+        "hasAccount": "Already have an account?",
+        "forgotPassword": "Forgot Password?"
+    },
+    "Banners": {
+        "freshMilk": {
+            "title": "Pure Farm Fresh Milk",
+            "subtitle": "Directly from the farm to your doorstep within 3 hours of milking.",
+            "button": "Subscribe Now"
+        },
+        "bilonaGhee": {
+            "title": "Traditional Bilona Ghee",
+            "subtitle": "Made using the ancient Vedic process for maximum nutrition.",
+            "button": "Shop Ghee"
+        },
+        "paneerCurd": {
+            "title": "Artisanal Paneer & Curd",
+            "subtitle": "Soft, creamy and 100% natural. No preservatives added.",
+            "button": "View Collection"
+        },
+        "featuredDeal": "Featured Deal"
+    },
+    "Home": {
+        "TrustBadges": {
+            "freeDelivery": {
+                "title": "Free Delivery",
+                "subtitle": "Orders over ₹499"
+            },
+            "quickDelivery": {
+                "title": "Quick Delivery",
+                "subtitle": "Within 3 Hours"
+            },
+            "pure": {
+                "title": "100% Pure",
+                "subtitle": "Zero Preservatives"
+            },
+            "farmFresh": {
+                "title": "Farm Fresh",
+                "subtitle": "Daily Collection"
+            }
+        },
+        "Sections": {
+            "shopByCategory": "Shop by Category",
+            "viewAll": "View All",
+            "freshArrivals": "Our Fresh Arrivals",
+            "freshArrivalsSubtitle": "Showing the latest farm-to-table dairy products"
+        }
+    },
+    "Account": {
+        "Sidebar": {
+            "myProfile": "My Profile",
+            "orderHistory": "Order History",
+            "signOut": "Sign Out"
+        },
+        "Profile": {
+            "personalInfo": "Personal Information",
+            "fullName": "Full Name",
+            "username": "Username",
+            "phone": "Phone Number",
+            "phoneNotProvided": "Not provided",
+            "address": "Delivery Address",
+            "addressNotSaved": "No address saved",
+            "updateDetails": "Need to update your details?",
+            "updateDetailsDesc": "Contact our support team to change your registered email or phone number for security purposes.",
+            "contactSupport": "Contact Support"
+        },
+        "Orders": {
+            "yourOrders": "Your Orders",
+            "fetchingOrders": "Fetching your orders...",
+            "noOrdersTitle": "No orders yet",
+            "noOrdersDesc": "Looks like you haven't placed any orders yet.",
+            "startShopping": "Start Shopping",
+            "orderNumber": "Order #",
+            "status": "Status",
+            "total": "Total",
+            "confirmed": "Confirmed"
+        },
+        "OrderDetails": {
+            "orderDetails": "Order Details",
+            "placedOn": "Placed on",
+            "statusTracker": {
+                "placed": "Placed",
+                "confirmed": "Confirmed",
+                "shipped": "Shipped",
+                "delivered": "Delivered"
+            },
+            "itemsSummary": "Items Summary",
+            "variantId": "Product variant ID",
+            "qty": "Qty",
+            "subtotal": "Subtotal",
+            "taxFees": "Tax & Fees",
+            "totalAmount": "Total Amount",
+            "closeDetails": "Close Details"
+        }
+    },
+    "Product": {
+        "addToCart": "Add to Cart",
+        "defaultCategory": "Dairy",
+        "mrp": "MRP"
+    }
+}

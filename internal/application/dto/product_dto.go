@@ -21,6 +21,12 @@ type CategoryResponse struct {
 	Name string `json:"name"`
 }
 
+// PublicCategoryResponse represents a category for public storefront (SEO friendly)
+type PublicCategoryResponse struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
 // --- Product Family DTOs ---
 
 // CreateProductFamilyRequest represents a request to create a product family.
@@ -91,4 +97,41 @@ type ProductVariantResponse struct {
 	SellingPrice     decimal.Decimal        `json:"selling_price"`
 	IsManufactured   bool                   `json:"is_manufactured"`
 	ConversionFactor decimal.Decimal        `json:"conversion_factor"`
+}
+
+// PublicProductResponse represents a product variant for public storefront
+type PublicProductResponse struct {
+	ID               int64           `json:"id"`
+	FamilyID         int64           `json:"family_id"`
+	FamilyName       string          `json:"family_name,omitempty"`
+	Name             string          `json:"name"`
+	SKU              string          `json:"sku"`
+	Unit             string          `json:"unit"`
+	SellingPrice     decimal.Decimal `json:"selling_price"`
+	ConversionFactor decimal.Decimal `json:"conversion_factor"`
+	Description      string          `json:"description,omitempty"`
+	CategoryName     string          `json:"category_name,omitempty"`
+}
+
+// --- Public Order DTOs ---
+
+// PublicCreateOrderRequest represents a request to create an order from the storefront
+type PublicCreateOrderRequest struct {
+	CustomerName  string                  `json:"customer_name" binding:"required"`
+	CustomerPhone string                  `json:"customer_phone" binding:"required"`
+	Address       string                  `json:"address" binding:"required"`
+	Items         []PublicCreateOrderItem `json:"items" binding:"required,min=1,dive"`
+}
+
+// PublicCreateOrderItem represents an item in a public order request
+type PublicCreateOrderItem struct {
+	VariantID int64           `json:"variant_id" binding:"required"`
+	Quantity  decimal.Decimal `json:"quantity" binding:"required,gt=0"`
+}
+
+// PublicOrderResponse represents a summary of a created order for the storefront
+type PublicOrderResponse struct {
+	ID          int64           `json:"id"`
+	Status      string          `json:"status"`
+	TotalAmount decimal.Decimal `json:"total_amount"`
 }
