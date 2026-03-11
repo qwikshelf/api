@@ -1,7 +1,8 @@
+"use client"
 import { Search, ShoppingCart, User, MapPin, Menu, ChevronDown, Languages, X, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/store/use-cart";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api from "@/lib/api";
 import { useAuth } from "@/store/use-auth";
