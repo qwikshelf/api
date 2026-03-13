@@ -15,6 +15,9 @@ import {
     CreditCard,
     ClipboardList,
     History,
+    MapPin,
+    UploadCloud,
+    Map as MapIcon,
 } from "lucide-react";
 import {
     Sidebar,
@@ -47,6 +50,9 @@ const navItems = [
     { title: "Sales History", icon: History, href: "/sales/history", permission: "sales.view" },
     { title: "Collections", icon: ClipboardList, href: "/collections", permission: "procurement.manage" }, // Map collection to procurement or related permission
     { title: "Procurements", icon: ShoppingCart, href: "/procurements", permission: "procurement.view" },
+    { title: "Delivery Zones", icon: MapPin, href: "/serviceability/zones", permission: "serviceability.manage" },
+    { title: "Pincode Import", icon: UploadCloud, href: "/serviceability/import", permission: "serviceability.manage" },
+    { title: "Serviceability Map", icon: MapIcon, href: "/serviceability/map", permission: "serviceability.manage" },
 ];
 
 export function AppSidebar() {

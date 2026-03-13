@@ -132,6 +132,36 @@ export interface WarehouseResponse {
     address?: string;
 }
 
+// --- Serviceability ---
+export interface DeliveryZone {
+    id: number;
+    name: string;
+    warehouse_id?: number;
+    warehouse_name?: string;
+    min_order_amount: number;
+    delivery_charge: number;
+    estimated_delivery_text: string;
+    is_active: boolean;
+    created_at: string;
+}
+
+export interface ServiceableAreaResponse {
+    pincode: string;
+    zone_id: number;
+    zone_name: string;
+    warehouse_id?: number;
+    is_active: boolean;
+    min_order_amount: number;
+    delivery_charge: number;
+    estimated_delivery_text: string;
+    geo_data?: {
+        pincode: string;
+        boundary: string; // GeoJSON string
+        center: string;   // WKT or Point string
+        metadata: any;
+    };
+}
+
 // --- Suppliers ---
 export interface SupplierResponse {
     id: number;

@@ -6,9 +6,22 @@ import (
 	"github.com/qwikshelf/api/internal/domain/entity"
 )
 
-// PincodeRepository defines the interface for managing serviceable areas.
+// PincodeRepository defines the interface for managing zones and pincode serviceability.
 type PincodeRepository interface {
+	// Serviceability
 	GetByPincode(ctx context.Context, pincode string) (*entity.ServiceableArea, error)
-	List(ctx context.Context) ([]entity.ServiceableArea, error)
-	Update(ctx context.Context, area *entity.ServiceableArea) error
+	
+	// Zones
+	CreateZone(ctx context.Context, zone *entity.DeliveryZone) error
+	GetZone(ctx context.Context, id int64) (*entity.DeliveryZone, error)
+	ListZones(ctx context.Context) ([]entity.DeliveryZone, error)
+	UpdateZone(ctx context.Context, zone *entity.DeliveryZone) error
+	
+	// Pincode Management
+	MapPincodeToZone(ctx context.Context, pincode string, zoneID int64) error
+	UnmapPincode(ctx context.Context, pincode string) error
+	
+	// GeoData
+	SaveGeoData(ctx context.Context, geo *entity.PincodeGeoData) error
+	ListGeoData(ctx context.Context) ([]entity.PincodeGeoData, error)
 }

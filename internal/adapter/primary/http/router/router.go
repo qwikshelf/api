@@ -28,8 +28,9 @@ type Config struct {
 	ProcurementHandler *handler.ProcurementHandler
 	SaleHandler        *handler.SaleHandler
 	CollectionHandler  *handler.CollectionHandler
-	DashboardHandler   *handler.DashboardHandler
-	PublicHandler      *handler.PublicHandler
+	DashboardHandler      *handler.DashboardHandler
+	ServiceabilityHandler *handler.ServiceabilityHandler
+	PublicHandler         *handler.PublicHandler
 }
 
 // SetupRoutes configures all API routes
@@ -206,6 +207,19 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 			dashboard := protected.Group("/dashboard")
 			{
 				dashboard.GET("/stats", cfg.DashboardHandler.GetStats)
+			}
+
+			// Serviceability routes (Admin)
+			serviceability := protected.Group("/serviceability")
+			serviceability.Use(cfg.AuthMiddleware.RequirePermission("serviceability.manage"))
+			{
+				serviceability.GET("/zones", cfg.ServiceabilityHandler.ListZones)
+				serviceability.POST("/zones", cfg.ServiceabilityHandler.CreateZone)
+				serviceability.PUT("/zones/:id", cfg.ServiceabilityHandler.UpdateZone)
+				serviceability.POST("/map", cfg.ServiceabilityHandler.MapPincode)
+				serviceability.GET("/geodata", cfg.ServiceabilityHandler.ListGeoData)
+				serviceability.POST("/geodata", cfg.ServiceabilityHandler.SaveGeoData)
+				serviceability.POST("/import", cfg.ServiceabilityHandler.ImportPincodes)
 			}
 		}
 	}

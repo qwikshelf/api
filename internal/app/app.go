@@ -95,6 +95,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	saleHandler := handler.NewSaleHandler(saleService)
 	collectionHandler := handler.NewCollectionHandler(collectionService)
 	dashboardHandler := handler.NewDashboardHandler(dashboardService, authService)
+	serviceabilityHandler := handler.NewServiceabilityHandler(deliveryService)
 	publicHandler := handler.NewPublicHandler(productVariantService, categoryService, saleService, userService, authService, deliveryService)
 
 	// Initialize middleware
@@ -119,6 +120,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 		SaleHandler:        saleHandler,
 		CollectionHandler:  collectionHandler,
 		DashboardHandler:   dashboardHandler,
+		ServiceabilityHandler: serviceabilityHandler,
 		PublicHandler:      publicHandler,
 	})
 

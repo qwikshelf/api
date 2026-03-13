@@ -8,13 +8,13 @@ import "time"
 // Username and Password are required.
 type LoginRequest struct {
 	Username string `json:"username" binding:"required,min=3"`
-	Password string `json:"password" binding:"required,min=6"`
+	Password string `json:"password" binding:"required,min=5"`
 }
 
 // RegisterRequest represents a registration request for the storefront
 type RegisterRequest struct {
 	Username string `json:"username" binding:"required,min=3,max=50"`
-	Password string `json:"password" binding:"required,min=6"`
+	Password string `json:"password" binding:"required,min=5"`
 	FullName string `json:"full_name" binding:"required"`
 	Phone    string `json:"phone,omitempty"`
 	Address  string `json:"address,omitempty"`
@@ -40,7 +40,7 @@ type RefreshRequest struct {
 // RoleID is required.
 type CreateUserRequest struct {
 	Username            string  `json:"username" binding:"required,min=3,max=50"`
-	Password            string  `json:"password" binding:"required,min=6"`
+	Password            string  `json:"password" binding:"required,min=5"`
 	FullName            string  `json:"full_name" binding:"required"`
 	Phone               string  `json:"phone,omitempty"`
 	Address             string  `json:"address,omitempty"`
@@ -52,7 +52,7 @@ type CreateUserRequest struct {
 // UpdateUserRequest represents a request to update a user
 type UpdateUserRequest struct {
 	Username            string  `json:"username,omitempty" binding:"omitempty,min=3,max=50"`
-	Password            string  `json:"password,omitempty" binding:"omitempty,min=6"`
+	Password            string  `json:"password,omitempty" binding:"omitempty,min=5"`
 	FullName            string  `json:"full_name,omitempty"`
 	Phone               string  `json:"phone,omitempty"`
 	Address             string  `json:"address,omitempty"`
