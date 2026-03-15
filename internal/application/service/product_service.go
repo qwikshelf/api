@@ -225,6 +225,11 @@ func (s *ProductVariantService) List(ctx context.Context, offset, limit int) ([]
 	return s.variantRepo.List(ctx, offset, limit)
 }
 
+// ListByCategory retrieves product variants by category with pagination
+func (s *ProductVariantService) ListByCategory(ctx context.Context, categoryID int64, offset, limit int) ([]entity.ProductVariant, int64, error) {
+	return s.variantRepo.ListByCategory(ctx, categoryID, offset, limit)
+}
+
 // Update updates a product variant
 func (s *ProductVariantService) Update(ctx context.Context, id int64, familyID *int64, name, sku, barcode *string, costPrice, sellingPrice *decimal.Decimal, isManufactured *bool, conversionFactor *decimal.Decimal) (*entity.ProductVariant, error) {
 	variant, err := s.variantRepo.GetByID(ctx, id)

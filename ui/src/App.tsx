@@ -26,6 +26,9 @@ const ProcurementDetailPage = lazy(() => import("@/pages/procurements/detail"));
 const POSPage = lazy(() => import("@/pages/sales/pos-page"));
 const CollectionPage = lazy(() => import("@/pages/collections/CollectionPage"));
 const SalesRecordPage = lazy(() => import("@/pages/sales/SalesRecordPage"));
+const ServiceabilityZonesPage = lazy(() => import("@/pages/serviceability/zones"));
+const PincodeImportPage = lazy(() => import("@/pages/serviceability/import"));
+const ServiceabilityMapPage = lazy(() => import("@/pages/serviceability/map"));
 
 function PageLoader() {
     return (
@@ -41,7 +44,7 @@ function App() {
     return (
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
             <TooltipProvider>
-                <BrowserRouter>
+                <BrowserRouter basename="/">
                     <Routes>
                         <Route path="/login" element={<LoginPage />} />
                         <Route
@@ -67,6 +70,9 @@ function App() {
                             <Route path="/procurements/:id" element={<PermissionGuard requireAll={["procurement.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ProcurementDetailPage /></Suspense></PermissionGuard>} />
                             <Route path="/sales/history" element={<PermissionGuard requireAll={["sales.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><SalesRecordPage /></Suspense></PermissionGuard>} />
                             <Route path="/collections" element={<PermissionGuard requireAll={["procurement.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><CollectionPage /></Suspense></PermissionGuard>} />
+                            <Route path="/serviceability/zones" element={<PermissionGuard requireAll={["serviceability.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ServiceabilityZonesPage /></Suspense></PermissionGuard>} />
+                            <Route path="/serviceability/import" element={<PermissionGuard requireAll={["serviceability.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><PincodeImportPage /></Suspense></PermissionGuard>} />
+                            <Route path="/serviceability/map" element={<PermissionGuard requireAll={["serviceability.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ServiceabilityMapPage /></Suspense></PermissionGuard>} />
                         </Route>
                     </Routes>
                 </BrowserRouter>

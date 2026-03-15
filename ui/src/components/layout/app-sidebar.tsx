@@ -15,7 +15,11 @@ import {
     CreditCard,
     ClipboardList,
     History,
+    MapPin,
+    UploadCloud,
+    Map as MapIcon,
 } from "lucide-react";
+import logo from "@/assets/logo.png";
 import {
     Sidebar,
     SidebarContent,
@@ -47,6 +51,9 @@ const navItems = [
     { title: "Sales History", icon: History, href: "/sales/history", permission: "sales.view" },
     { title: "Collections", icon: ClipboardList, href: "/collections", permission: "procurement.manage" }, // Map collection to procurement or related permission
     { title: "Procurements", icon: ShoppingCart, href: "/procurements", permission: "procurement.view" },
+    { title: "Delivery Zones", icon: MapPin, href: "/serviceability/zones", permission: "serviceability.manage" },
+    { title: "Pincode Import", icon: UploadCloud, href: "/serviceability/import", permission: "serviceability.manage" },
+    { title: "Serviceability Map", icon: MapIcon, href: "/serviceability/map", permission: "serviceability.manage" },
 ];
 
 export function AppSidebar() {
@@ -64,12 +71,9 @@ export function AppSidebar() {
         <Sidebar collapsible="icon">
             <SidebarHeader className="border-b border-sidebar-border">
                 <div className="flex items-center gap-2 px-2 py-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-                        QS
+                    <div className="flex h-10 w-fit items-center justify-center rounded-lg overflow-hidden">
+                        <img src={logo} alt="QwikShelf" className="w-auto object-contain" />
                     </div>
-                    {open && (
-                        <span className="font-semibold text-lg tracking-tight">QwikShelf</span>
-                    )}
                     <Button
                         variant="ghost"
                         size="icon"

@@ -23,12 +23,12 @@ func NewUserRepository(db *DB) *UserRepository {
 // Create creates a new user
 func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 	query := `
-		INSERT INTO users (username, password_hash, role_id, is_active, created_at)
-		VALUES ($1, $2, $3, $4, NOW())
+		INSERT INTO users (username, password_hash, role_id, is_active, full_name, phone, address, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
 		RETURNING id, created_at
 	`
 	return r.db.Pool.QueryRow(ctx, query,
-		user.Username, user.PasswordHash, user.RoleID, user.IsActive,
+		user.Username, user.PasswordHash, user.RoleID, user.IsActive, user.FullName, user.Phone, user.Address,
 	).Scan(&user.ID, &user.CreatedAt)
 }
 
@@ -36,6 +36,7 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 func (r *UserRepository) GetByID(ctx context.Context, id int64) (*entity.User, error) {
 	query := `
 		SELECT u.id, u.username, u.password_hash, u.role_id, u.is_active, u.created_at,
+		       u.full_name, u.phone, u.address,
 		       r.id, r.name, r.description
 		FROM users u
 		LEFT JOIN roles r ON u.role_id = r.id
@@ -44,6 +45,7 @@ func (r *UserRepository) GetByID(ctx context.Context, id int64) (*entity.User, e
 	user := &entity.User{Role: &entity.Role{}}
 	err := r.db.Pool.QueryRow(ctx, query, id).Scan(
 		&user.ID, &user.Username, &user.PasswordHash, &user.RoleID, &user.IsActive, &user.CreatedAt,
+		&user.FullName, &user.Phone, &user.Address,
 		&user.Role.ID, &user.Role.Name, &user.Role.Description,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -59,6 +61,7 @@ func (r *UserRepository) GetByID(ctx context.Context, id int64) (*entity.User, e
 func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*entity.User, error) {
 	query := `
 		SELECT u.id, u.username, u.password_hash, u.role_id, u.is_active, u.created_at,
+		       u.full_name, u.phone, u.address,
 		       r.id, r.name, r.description
 		FROM users u
 		LEFT JOIN roles r ON u.role_id = r.id
@@ -67,6 +70,7 @@ func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*e
 	user := &entity.User{Role: &entity.Role{}}
 	err := r.db.Pool.QueryRow(ctx, query, username).Scan(
 		&user.ID, &user.Username, &user.PasswordHash, &user.RoleID, &user.IsActive, &user.CreatedAt,
+		&user.FullName, &user.Phone, &user.Address,
 		&user.Role.ID, &user.Role.Name, &user.Role.Description,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -90,6 +94,7 @@ func (r *UserRepository) List(ctx context.Context, offset, limit int) ([]entity.
 	// Get users
 	query := `
 		SELECT u.id, u.username, u.password_hash, u.role_id, u.is_active, u.created_at,
+		       u.full_name, u.phone, u.address,
 		       r.id, r.name, r.description
 		FROM users u
 		LEFT JOIN roles r ON u.role_id = r.id
@@ -107,6 +112,7 @@ func (r *UserRepository) List(ctx context.Context, offset, limit int) ([]entity.
 		user := entity.User{Role: &entity.Role{}}
 		if err := rows.Scan(
 			&user.ID, &user.Username, &user.PasswordHash, &user.RoleID, &user.IsActive, &user.CreatedAt,
+			&user.FullName, &user.Phone, &user.Address,
 			&user.Role.ID, &user.Role.Name, &user.Role.Description,
 		); err != nil {
 			return nil, 0, err
@@ -121,11 +127,11 @@ func (r *UserRepository) List(ctx context.Context, offset, limit int) ([]entity.
 func (r *UserRepository) Update(ctx context.Context, user *entity.User) error {
 	query := `
 		UPDATE users
-		SET username = $1, password_hash = $2, role_id = $3, is_active = $4
-		WHERE id = $5
+		SET username = $1, password_hash = $2, role_id = $3, is_active = $4, full_name = $5, phone = $6, address = $7
+		WHERE id = $8
 	`
 	result, err := r.db.Pool.Exec(ctx, query,
-		user.Username, user.PasswordHash, user.RoleID, user.IsActive, user.ID,
+		user.Username, user.PasswordHash, user.RoleID, user.IsActive, user.FullName, user.Phone, user.Address, user.ID,
 	)
 	if err != nil {
 		return err

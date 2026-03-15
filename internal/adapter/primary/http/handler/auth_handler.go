@@ -305,7 +305,7 @@ func (h *UserHandler) Create(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.Create(c.Request.Context(), req.Username, req.Password, req.RoleID, req.IsActive, req.DirectPermissionIDs)
+	user, err := h.userService.Create(c.Request.Context(), req.Username, req.Password, req.FullName, req.Phone, req.Address, req.RoleID, req.IsActive, req.DirectPermissionIDs)
 	if err != nil {
 		switch err {
 		case domainErrors.ErrUsernameExists:
@@ -414,7 +414,7 @@ func (h *UserHandler) Update(c *gin.Context) {
 		return
 	}
 
-	var username, password *string
+	var username, password, fullName, phone, address *string
 	var roleID *int64
 	if req.Username != "" {
 		username = &req.Username
@@ -422,11 +422,20 @@ func (h *UserHandler) Update(c *gin.Context) {
 	if req.Password != "" {
 		password = &req.Password
 	}
+	if req.FullName != "" {
+		fullName = &req.FullName
+	}
+	if req.Phone != "" {
+		phone = &req.Phone
+	}
+	if req.Address != "" {
+		address = &req.Address
+	}
 	if req.RoleID != 0 {
 		roleID = &req.RoleID
 	}
 
-	user, err := h.userService.Update(c.Request.Context(), id, username, password, roleID, req.IsActive, req.DirectPermissionIDs)
+	user, err := h.userService.Update(c.Request.Context(), id, username, password, fullName, phone, address, roleID, req.IsActive, req.DirectPermissionIDs)
 	if err != nil {
 		switch err {
 		case domainErrors.ErrUserNotFound:

@@ -5,7 +5,7 @@ import {
     Package, Truck, TrendingUp, AlertTriangle,
     IndianRupee, Layers, Zap, CalendarClock,
     Tags, CircleDot, Plus, BoxesIcon,
-    Timer, ArrowRight, Users,
+    Timer, ArrowRight, Users, MapPin,
 } from "lucide-react";
 import {
     BarChart, Bar, PieChart, Pie, Cell,
@@ -276,6 +276,43 @@ export default function DashboardPage() {
         return () => clearInterval(t);
     }, []);
 
+    // Global Keyboard Shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            // Ignore if typing in an input or textarea
+            if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
+
+            // Only trigger if no modifier keys are pressed (to avoid breaking browser default shortcuts)
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+            switch (e.key.toLowerCase()) {
+                case 'a':
+                    e.preventDefault();
+                    navigate("/inventory");
+                    break;
+                case 'n':
+                    e.preventDefault();
+                    navigate("/procurements");
+                    break;
+                case 'm':
+                    e.preventDefault();
+                    navigate("/serviceability/map");
+                    break;
+                case 'p':
+                    e.preventDefault();
+                    navigate("/products");
+                    break;
+                case 's':
+                    e.preventDefault();
+                    navigate("/sales");
+                    break;
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [navigate]);
+
     const trend = (val: number) => {
         const fakePrev = val * 0.9;
         const diff = val - fakePrev;
@@ -365,6 +402,60 @@ export default function DashboardPage() {
                             <AvatarFallback>{(user?.username || "AD").slice(0, 2).toUpperCase()}</AvatarFallback>
                         </Avatar>
                     </div>
+                </div>
+            </div>
+
+            {/* ═══ Quick Action Panel (Command Center) ═══ */}
+            <div className="pt-2 pb-2">
+                <div className="flex items-center justify-between mb-4 px-2">
+                    <h2 className="text-sm font-black uppercase tracking-widest text-indigo-950/70 dark:text-white/70">Command Center</h2>
+                    <div className="h-px flex-1 bg-indigo-100 dark:bg-slate-800 ml-4" />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+                    <QuickAction
+                        icon={BoxesIcon}
+                        label="Adjust Stock"
+                        description="Update quantities"
+                        color="bg-blue-50 text-blue-600 border-blue-100 hover:bg-blue-100"
+                        onClick={() => navigate("/inventory")}
+                        hotkey="A"
+                        badge={stats.lowStockItems > 0 ? `${stats.lowStockItems} Low` : undefined}
+                        badgeColor="bg-amber-100 text-amber-700 border-amber-200"
+                    />
+                    <QuickAction
+                        icon={Truck}
+                        label="New PO"
+                        description="Order supplies"
+                        color="bg-emerald-50 text-emerald-600 border-emerald-100 hover:bg-emerald-100"
+                        onClick={() => navigate("/procurements")}
+                        hotkey="N"
+                        badge={stats.overduePOs > 0 ? `${stats.overduePOs} Overdue` : undefined}
+                        badgeColor="bg-rose-100 text-rose-700 border-rose-200"
+                    />
+                    <QuickAction
+                        icon={MapPin}
+                        label="Map/Zone"
+                        description="Serviceability"
+                        color="bg-purple-50 text-purple-600 border-purple-100 hover:bg-purple-100"
+                        onClick={() => navigate("/serviceability/map")}
+                        hotkey="M"
+                    />
+                    <QuickAction
+                        icon={Plus}
+                        label="Add Product"
+                        description="Create variant"
+                        color="bg-amber-50 text-amber-600 border-amber-100 hover:bg-amber-100"
+                        onClick={() => navigate("/products")}
+                        hotkey="P"
+                    />
+                    <QuickAction
+                        icon={IndianRupee}
+                        label="Record Sale"
+                        description="Manual transaction"
+                        color="bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100"
+                        onClick={() => navigate("/pos")}
+                        hotkey="S"
+                    />
                 </div>
             </div>
 
@@ -764,6 +855,40 @@ function MiniStat({ icon: Icon, label, value, color }: { icon: React.ElementType
                 <AnimatedNumber val={value} />
             </CardContent>
         </Card>
+    );
+}
+
+function QuickAction({
+    icon: Icon, label, description, color, onClick, hotkey, badge, badgeColor
+}: {
+    icon: React.ElementType; label: string; description: string; color: string; onClick: () => void;
+    hotkey?: string; badge?: string; badgeColor?: string;
+}) {
+    return (
+        <button
+            onClick={onClick}
+            className={`flex flex-col items-center justify-center p-4 rounded-[20px] border transition-all hover:scale-105 active:scale-95 group relative overflow-hidden ${color} h-28`}
+        >
+            <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors" />
+
+            {/* Hotkey Hint */}
+            {hotkey && (
+                <div className="absolute top-2 left-2 text-[9px] font-black uppercase tracking-widest opacity-40 group-hover:opacity-100 transition-opacity bg-white/20 px-1.5 py-0.5 rounded border border-white/10">
+                    {hotkey}
+                </div>
+            )}
+
+            {/* Actionable Badge */}
+            {badge && (
+                <div className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded-full border shadow-sm ${badgeColor || 'bg-white border-slate-200 text-slate-700'}`}>
+                    {badge}
+                </div>
+            )}
+
+            <Icon className="h-6 w-6 mb-2 group-hover:scale-110 transition-transform" />
+            <p className="text-xs font-bold uppercase tracking-wider">{label}</p>
+            <p className="text-[10px] opacity-70 mt-0.5 line-clamp-1">{description}</p>
+        </button>
     );
 }
 

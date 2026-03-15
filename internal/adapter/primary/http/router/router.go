@@ -28,7 +28,9 @@ type Config struct {
 	ProcurementHandler *handler.ProcurementHandler
 	SaleHandler        *handler.SaleHandler
 	CollectionHandler  *handler.CollectionHandler
-	DashboardHandler   *handler.DashboardHandler
+	DashboardHandler      *handler.DashboardHandler
+	ServiceabilityHandler *handler.ServiceabilityHandler
+	PublicHandler         *handler.PublicHandler
 }
 
 // SetupRoutes configures all API routes
@@ -55,6 +57,24 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 	v1 := r.Group("/api/v1")
 	{
 		// Public routes
+		public := v1.Group("/public")
+		{
+			public.GET("/products", cfg.PublicHandler.ListProducts)
+			public.GET("/products/:id", cfg.PublicHandler.GetProduct)
+			public.GET("/categories", cfg.PublicHandler.ListCategories)
+			public.POST("/orders", cfg.PublicHandler.CreateOrder)
+			public.POST("/register", cfg.PublicHandler.Register)
+			public.POST("/login", cfg.PublicHandler.Login)
+			public.GET("/serviceability", cfg.PublicHandler.CheckServiceability)
+
+			// Authenticated customer endpoints
+			me := public.Group("/my", cfg.AuthMiddleware.Authenticate())
+			{
+				me.GET("/orders", cfg.PublicHandler.GetMyOrders)
+				me.GET("/orders/:id", cfg.PublicHandler.GetOrderTracking)
+			}
+		}
+
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/login", cfg.AuthHandler.Login)
@@ -187,6 +207,19 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 			dashboard := protected.Group("/dashboard")
 			{
 				dashboard.GET("/stats", cfg.DashboardHandler.GetStats)
+			}
+
+			// Serviceability routes (Admin)
+			serviceability := protected.Group("/serviceability")
+			serviceability.Use(cfg.AuthMiddleware.RequirePermission("serviceability.manage"))
+			{
+				serviceability.GET("/zones", cfg.ServiceabilityHandler.ListZones)
+				serviceability.POST("/zones", cfg.ServiceabilityHandler.CreateZone)
+				serviceability.PUT("/zones/:id", cfg.ServiceabilityHandler.UpdateZone)
+				serviceability.POST("/map", cfg.ServiceabilityHandler.MapPincode)
+				serviceability.GET("/geodata", cfg.ServiceabilityHandler.ListGeoData)
+				serviceability.POST("/geodata", cfg.ServiceabilityHandler.SaveGeoData)
+				serviceability.POST("/import", cfg.ServiceabilityHandler.ImportPincodes)
 			}
 		}
 	}

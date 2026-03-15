@@ -25,7 +25,7 @@ func NewUserService(userRepo repository.UserRepository, roleRepo repository.Role
 }
 
 // Create creates a new user
-func (s *UserService) Create(ctx context.Context, username, password string, roleID int64, isActive bool, directPermissionIDs []int64) (*entity.User, error) {
+func (s *UserService) Create(ctx context.Context, username, password, fullName, phone, address string, roleID int64, isActive bool, directPermissionIDs []int64) (*entity.User, error) {
 	// Check if username exists
 	exists, err := s.userRepo.ExistsByUsername(ctx, username)
 	if err != nil {
@@ -50,6 +50,9 @@ func (s *UserService) Create(ctx context.Context, username, password string, rol
 	user := &entity.User{
 		Username:     username,
 		PasswordHash: hash,
+		FullName:     fullName,
+		Phone:        phone,
+		Address:      address,
 		RoleID:       roleID,
 		Role:         role,
 		IsActive:     isActive,
@@ -88,7 +91,7 @@ func (s *UserService) List(ctx context.Context, offset, limit int) ([]entity.Use
 }
 
 // Update updates an existing user
-func (s *UserService) Update(ctx context.Context, id int64, username, password *string, roleID *int64, isActive *bool, directPermissionIDs []int64) (*entity.User, error) {
+func (s *UserService) Update(ctx context.Context, id int64, username, password, fullName, phone, address *string, roleID *int64, isActive *bool, directPermissionIDs []int64) (*entity.User, error) {
 	user, err := s.userRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, domainErrors.ErrUserNotFound
@@ -111,6 +114,16 @@ func (s *UserService) Update(ctx context.Context, id int64, username, password *
 			return nil, err
 		}
 		user.PasswordHash = hash
+	}
+
+	if fullName != nil {
+		user.FullName = *fullName
+	}
+	if phone != nil {
+		user.Phone = *phone
+	}
+	if address != nil {
+		user.Address = *address
 	}
 
 	if roleID != nil {
@@ -143,4 +156,9 @@ func (s *UserService) Delete(ctx context.Context, id int64) error {
 		return domainErrors.ErrUserNotFound
 	}
 	return s.userRepo.Delete(ctx, id)
+}
+
+// GetRoleByName retrieves a role by its name
+func (s *UserService) GetRoleByName(ctx context.Context, name string) (*entity.Role, error) {
+	return s.roleRepo.GetByName(ctx, name)
 }

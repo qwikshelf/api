@@ -1,0 +1,176 @@
+{
+    "Navbar": {
+        "deliverTo": "वितरण",
+        "trackOrder": "ऑर्डर ट्रैक करें",
+        "helpCenter": "सहायता केंद्र",
+        "sell": "QwikShelf पर बेचें",
+        "searchPlaceholder": "ताजा दूध, घी, पनीर खोजें...",
+        "signIn": "साइन इन करें",
+        "account": "खाता और सूचियां",
+        "returns": "रिटर्न",
+        "orders": "और ऑर्डर",
+        "cart": "कार्ट",
+        "allCategories": "सभी श्रेणियां",
+        "flashDeals": "फ्लैश डील्स",
+        "tagline": "2024 से खेत की ताजगी आपके घर तक"
+    },
+    "Serviceability": {
+        "checkDelivery": "डिलीवरी चेक करें",
+        "enterPincode": "अपना पिनकोड दर्ज करें",
+        "apply": "लागू करें",
+        "serviceable": "क्षेत्र सेवा योग्य है",
+        "notServiceable": "क्षेत्र अभी सेवा योग्य नहीं है",
+        "pincodeRequired": "पिनकोड आवश्यक है",
+        "checking": "चेक कर रहे हैं...",
+        "deliverTo": "यहां पहुंचाएं",
+        "estimatedDelivery": "अनुमानित डिलीवरी",
+        "deliveryCharge": "डिलीवरी शुल्क",
+        "minOrder": "न्यूनतम ऑर्डर"
+    },
+    "Checkout": {
+        "title": "डिलीवरी विवरण",
+        "fullName": "पूरा नाम",
+        "phone": "फ़ोन नंबर",
+        "address": "पूरा डिलीवरी पता",
+        "paymentMethod": "भुगतान विधि",
+        "cod": "कैश ऑन डिलीवरी (COD)",
+        "codDesc": "डेयरी पहुंचने पर भुगतान करें",
+        "reviewOrder": "ऑर्डर की समीक्षा करें",
+        "subtotal": "सबटोटल",
+        "gst": "जीएसटी (5%)",
+        "shipping": "शिपिंग",
+        "free": "मुफ्त",
+        "total": "कुल योग",
+        "placeOrder": "ऑर्डर दें",
+        "placing": "ऑर्डर दे रहे हैं...",
+        "emptyCart": "आपकी कार्ट खाली है।",
+        "backToShopping": "खरीददारी पर वापस जाएं",
+        "backToCart": "कार्ट पर वापस जाएं",
+        "freshnessGuarantee": "ऑर्डर देकर, आप हमारी ताजगी की गारंटी से सहमत होते हैं",
+        "notServiceableWarning": "हम वर्तमान में इस पिनकोड पर डिलीवरी नहीं करते हैं। कृपया अपना स्थान बदलें।"
+    },
+    "Hero": {
+        "badge": "खेत से सीधा ताजा",
+        "title": "ताजगी, आपके दरवाजे पर",
+        "description": "हमारे ताजे डेयरी उत्पादों, शुद्ध घी और दैनिक आवश्यक वस्तुओं के साथ प्रकृति के शुद्ध स्वाद का अनुभव करें।",
+        "shopNow": "अभी खरीदें",
+        "watchVideo": "यह कैसे काम करता है",
+        "stats": {
+            "happyCustomers": "खुश ग्राहक",
+            "fastDelivery": "तेज डिलीवरी",
+            "purityGuaranteed": "शुद्धता की गारंटी"
+        }
+    },
+    "Auth": {
+        "loginTitle": "स्वागत है",
+        "loginSubtitle": "अपने ऑर्डर प्रबंधित करने के लिए साइन इन करें",
+        "signupTitle": "खाता बनाएं",
+        "signupSubtitle": "बेहतर खरीदारी अनुभव के लिए QwikShelf से जुड़ें",
+        "username": "यूज़रनेम (ईमेल या फोन)",
+        "password": "पासवर्ड",
+        "fullName": "पूरा नाम",
+        "phone": "फोन (वैकल्पिक)",
+        "address": "पता (वैकल्पिक)",
+        "signIn": "साइन इन करें",
+        "signUp": "साइन अप करें",
+        "noAccount": "खाता नहीं है?",
+        "hasAccount": "पहले से कोई खाता है?",
+        "forgotPassword": "पासवर्ड भूल गए?"
+    },
+    "Banners": {
+        "freshMilk": {
+            "title": "शुद्ध फार्म फ्रेश दूध",
+            "subtitle": "दुहने के 3 घंटे के भीतर सीधे खेत से आपके दरवाजे तक।",
+            "button": "अभी सब्सक्राइब करें"
+        },
+        "bilonaGhee": {
+            "title": "पारंपरिक बिलोना घी",
+            "subtitle": "अधिकतम पोषण के लिए प्राचीन वैदिक प्रक्रिया का उपयोग करके बनाया गया।",
+            "button": "घी खरीदें"
+        },
+        "paneerCurd": {
+            "title": "कलात्मक पनीर और दही",
+            "subtitle": "मुलायम, मलाईदार और 100% प्राकृतिक। कोई संरक्षक नहीं जोड़ा गया।",
+            "button": "संग्रह देखें"
+        },
+        "featuredDeal": "विशेष डील"
+    },
+    "Home": {
+        "TrustBadges": {
+            "freeDelivery": {
+                "title": "मुफ्त डिलीवरी",
+                "subtitle": "₹499 से अधिक के ऑर्डर पर"
+            },
+            "quickDelivery": {
+                "title": "त्वरित डिलीवरी",
+                "subtitle": "3 घंटे के भीतर"
+            },
+            "pure": {
+                "title": "100% शुद्ध",
+                "subtitle": "शून्य संरक्षक"
+            },
+            "farmFresh": {
+                "title": "फार्म फ्रेश",
+                "subtitle": "दैनिक संग्रह"
+            }
+        },
+        "Sections": {
+            "shopByCategory": "श्रेणी के अनुसार खरीदारी करें",
+            "viewAll": "सभी देखें",
+            "freshArrivals": "हमारे नए आगमन",
+            "freshArrivalsSubtitle": "नवीनतम खेत-से-मेज डेयरी उत्पाद दिखा रहे हैं"
+        }
+    },
+    "Account": {
+        "Sidebar": {
+            "myProfile": "मेरा प्रोफ़ाइल",
+            "orderHistory": "ऑर्डर का इतिहास",
+            "signOut": "साइन आउट"
+        },
+        "Profile": {
+            "personalInfo": "व्यक्तिगत जानकारी",
+            "fullName": "पूरा नाम",
+            "username": "यूज़रनेम",
+            "phone": "फोन नंबर",
+            "phoneNotProvided": "प्रदान नहीं किया गया",
+            "address": "डिलीवरी का पता",
+            "addressNotSaved": "कोई पता सहेजा नहीं गया",
+            "updateDetails": "अपने विवरण अपडेट करने की आवश्यकता है?",
+            "updateDetailsDesc": "सुरक्षा उद्देश्यों के लिए अपना पंजीकृत ईमेल या फोन नंबर बदलने के लिए हमारी सहायता टीम से संपर्क करें।",
+            "contactSupport": "सहायता से संपर्क करें"
+        },
+        "Orders": {
+            "yourOrders": "आपके ऑर्डर",
+            "fetchingOrders": "आपके ऑर्डर लाए जा रहे हैं...",
+            "noOrdersTitle": "अभी तक कोई ऑर्डर नहीं",
+            "noOrdersDesc": "ऐसा लगता है कि आपने अभी तक कोई ऑर्डर नहीं दिया है।",
+            "startShopping": "खरीदारी शुरू करें",
+            "orderNumber": "ऑर्डर #",
+            "status": "स्थिति",
+            "total": "कुल",
+            "confirmed": "पुष्टि हो गई"
+        },
+        "OrderDetails": {
+            "orderDetails": "ऑर्डर का विवरण",
+            "placedOn": "को दिया गया",
+            "statusTracker": {
+                "placed": "दिया गया",
+                "confirmed": "पुष्टि की गई",
+                "shipped": "भेजा गया",
+                "delivered": "वितरित"
+            },
+            "itemsSummary": "आइटम सारांश",
+            "variantId": "उत्पाद संस्करण आईडी",
+            "qty": "मात्रा",
+            "subtotal": "उप-कुल",
+            "taxFees": "टैक्स और शुल्क",
+            "totalAmount": "कुल राशि",
+            "closeDetails": "विवरण बंद करें"
+        }
+    },
+    "Product": {
+        "addToCart": "कार्ट में डालें",
+        "defaultCategory": "डेयरी",
+        "mrp": "एमआरपी"
+    }
+}

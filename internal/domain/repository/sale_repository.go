@@ -12,4 +12,5 @@ type SaleRepository interface {
 	Create(ctx context.Context, sale *entity.Sale) error
 	GetByID(ctx context.Context, id int64) (*entity.Sale, error)
 	List(ctx context.Context, warehouseID *int64, startDate, endDate *time.Time, offset, limit int) ([]entity.Sale, int64, error)
+	ListByCustomer(ctx context.Context, customerID int64, offset, limit int) ([]entity.Sale, int64, error)
 }

@@ -11,6 +11,7 @@ type Sale struct {
 	ID                int64           `json:"id"`
 	WarehouseID       int64           `json:"warehouse_id"`
 	Warehouse         *Warehouse      `json:"warehouse,omitempty"`
+	CustomerID        *int64          `json:"customer_id,omitempty"`
 	CustomerName      string          `json:"customer_name"`
 	TotalAmount       decimal.Decimal `json:"total_amount"`
 	TaxAmount         decimal.Decimal `json:"tax_amount"`

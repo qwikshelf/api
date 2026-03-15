@@ -31,12 +31,12 @@ func (r *SaleRepository) Create(ctx context.Context, sale *entity.Sale) error {
 	defer tx.Rollback(ctx)
 
 	query := `
-		INSERT INTO sales (warehouse_id, customer_name, total_amount, tax_amount, discount_amount, payment_method, processed_by_user_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO sales (warehouse_id, customer_id, customer_name, total_amount, tax_amount, discount_amount, payment_method, processed_by_user_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id, created_at
 	`
 	err = tx.QueryRow(ctx, query,
-		sale.WarehouseID, sale.CustomerName, sale.TotalAmount, sale.TaxAmount, sale.DiscountAmount,
+		sale.WarehouseID, sale.CustomerID, sale.CustomerName, sale.TotalAmount, sale.TaxAmount, sale.DiscountAmount,
 		sale.PaymentMethod, sale.ProcessedByUserID,
 	).Scan(&sale.ID, &sale.CreatedAt)
 	if err != nil {
@@ -65,12 +65,12 @@ func (r *SaleRepository) Create(ctx context.Context, sale *entity.Sale) error {
 // GetByID retrieves a sale with its items
 func (r *SaleRepository) GetByID(ctx context.Context, id int64) (*entity.Sale, error) {
 	query := `
-		SELECT id, warehouse_id, customer_name, total_amount, tax_amount, discount_amount, payment_method, processed_by_user_id, created_at
+		SELECT id, warehouse_id, customer_id, customer_name, total_amount, tax_amount, discount_amount, payment_method, processed_by_user_id, created_at
 		FROM sales WHERE id = $1
 	`
 	s := &entity.Sale{}
 	err := r.db.Pool.QueryRow(ctx, query, id).Scan(
-		&s.ID, &s.WarehouseID, &s.CustomerName, &s.TotalAmount, &s.TaxAmount, &s.DiscountAmount,
+		&s.ID, &s.WarehouseID, &s.CustomerID, &s.CustomerName, &s.TotalAmount, &s.TaxAmount, &s.DiscountAmount,
 		&s.PaymentMethod, &s.ProcessedByUserID, &s.CreatedAt,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -169,6 +169,40 @@ func (r *SaleRepository) List(ctx context.Context, warehouseID *int64, startDate
 		var s entity.Sale
 		if err := rows.Scan(
 			&s.ID, &s.WarehouseID, &s.CustomerName, &s.TotalAmount, &s.TaxAmount, &s.DiscountAmount,
+			&s.PaymentMethod, &s.ProcessedByUserID, &s.CreatedAt,
+		); err != nil {
+			return nil, 0, err
+		}
+		sales = append(sales, s)
+	}
+	return sales, total, rows.Err()
+}
+
+// ListByCustomer retrieves all sales for a specific customer
+func (r *SaleRepository) ListByCustomer(ctx context.Context, customerID int64, offset, limit int) ([]entity.Sale, int64, error) {
+	var total int64
+	countQuery := `SELECT COUNT(*) FROM sales WHERE customer_id = $1`
+	if err := r.db.Pool.QueryRow(ctx, countQuery, customerID).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	query := `
+		SELECT id, warehouse_id, customer_id, customer_name, total_amount, tax_amount, discount_amount, payment_method, processed_by_user_id, created_at
+		FROM sales WHERE customer_id = $1
+		ORDER BY created_at DESC
+		LIMIT $2 OFFSET $3
+	`
+	rows, err := r.db.Pool.Query(ctx, query, customerID, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var sales []entity.Sale
+	for rows.Next() {
+		var s entity.Sale
+		if err := rows.Scan(
+			&s.ID, &s.WarehouseID, &s.CustomerID, &s.CustomerName, &s.TotalAmount, &s.TaxAmount, &s.DiscountAmount,
 			&s.PaymentMethod, &s.ProcessedByUserID, &s.CreatedAt,
 		); err != nil {
 			return nil, 0, err

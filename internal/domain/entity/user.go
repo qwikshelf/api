@@ -27,6 +27,9 @@ type User struct {
 	ID           int64     `json:"id"`
 	Username     string    `json:"username"`
 	PasswordHash string    `json:"-"` // Never expose password hash in JSON
+	FullName     string    `json:"full_name"`
+	Phone        string    `json:"phone,omitempty"`
+	Address      string    `json:"address,omitempty"`
 	RoleID       int64     `json:"role_id"`
 	Role         *Role     `json:"role,omitempty"`
 	IsActive     bool      `json:"is_active"`

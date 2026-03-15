@@ -379,6 +379,51 @@ func (r *ProductVariantRepository) ListByFamily(ctx context.Context, familyID in
 	return variants, rows.Err()
 }
 
+// ListByCategory retrieves product variants by category with pagination
+func (r *ProductVariantRepository) ListByCategory(ctx context.Context, categoryID int64, offset, limit int) ([]entity.ProductVariant, int64, error) {
+	var total int64
+	countQuery := `
+		SELECT COUNT(*) 
+		FROM product_variants pv
+		JOIN product_families pf ON pv.family_id = pf.id
+		WHERE pf.category_id = $1
+	`
+	if err := r.db.Pool.QueryRow(ctx, countQuery, categoryID).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	query := `
+		SELECT pv.id, pv.family_id, pv.name, pv.sku, pv.barcode, pv.unit, pv.cost_price, pv.selling_price, pv.is_manufactured, pv.conversion_factor, pf.name as family_name
+		FROM product_variants pv
+		JOIN product_families pf ON pv.family_id = pf.id
+		WHERE pf.category_id = $1
+		ORDER BY pv.id
+		LIMIT $2 OFFSET $3
+	`
+	rows, err := r.db.Pool.Query(ctx, query, categoryID, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var variants []entity.ProductVariant
+	for rows.Next() {
+		var v entity.ProductVariant
+		var barcode *string
+		if err := rows.Scan(
+			&v.ID, &v.FamilyID, &v.Name, &v.SKU, &barcode, &v.Unit,
+			&v.CostPrice, &v.SellingPrice, &v.IsManufactured, &v.ConversionFactor, &v.FamilyName,
+		); err != nil {
+			return nil, 0, err
+		}
+		if barcode != nil {
+			v.Barcode = *barcode
+		}
+		variants = append(variants, v)
+	}
+	return variants, total, rows.Err()
+}
+
 // Update updates a product variant
 func (r *ProductVariantRepository) Update(ctx context.Context, variant *entity.ProductVariant) error {
 	var barcode interface{} = variant.Barcode

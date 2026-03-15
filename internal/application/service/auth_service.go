@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -61,7 +62,10 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (*Lo
 	user, err := s.userRepo.GetByUsername(ctx, username)
 
 	if err != nil {
-		return nil, domainErrors.ErrInvalidCredentials
+		if errors.Is(err, domainErrors.ErrUserNotFound) {
+			return nil, domainErrors.ErrInvalidCredentials
+		}
+		return nil, err
 	}
 
 	// Check if user is active
