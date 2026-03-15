@@ -19,6 +19,7 @@ import {
     UploadCloud,
     Map as MapIcon,
 } from "lucide-react";
+import logo from "@/assets/logo.png";
 import {
     Sidebar,
     SidebarContent,
@@ -70,12 +71,9 @@ export function AppSidebar() {
         <Sidebar collapsible="icon">
             <SidebarHeader className="border-b border-sidebar-border">
                 <div className="flex items-center gap-2 px-2 py-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm">
-                        QS
+                    <div className="flex h-10 w-fit items-center justify-center rounded-lg overflow-hidden">
+                        <img src={logo} alt="QwikShelf" className="w-auto object-contain" />
                     </div>
-                    {open && (
-                        <span className="font-semibold text-lg tracking-tight">QwikShelf</span>
-                    )}
                     <Button
                         variant="ghost"
                         size="icon"

@@ -5,8 +5,9 @@ import { authApi } from "@/api/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 export default function LoginPage() {
     const navigate = useNavigate();
@@ -40,15 +41,12 @@ export default function LoginPage() {
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-secondary/30 p-4">
             <Card className="w-full max-w-md shadow-xl border-0 bg-card/80 backdrop-blur-sm">
                 <CardHeader className="text-center space-y-4 pb-2">
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-xl shadow-lg">
-                        QS
+                    <div className="mx-auto flex h-20 w-auto items-center justify-center overflow-hidden">
+                        <img src={logo} alt="QwikShelf" className="h-auto w-auto object-contain" />
                     </div>
-                    <div>
-                        <CardTitle className="text-2xl font-bold">QwikShelf</CardTitle>
-                        <CardDescription className="mt-1">
-                            Sign in to your warehouse dashboard
-                        </CardDescription>
-                    </div>
+                    <CardDescription className="text-base">
+                        Sign in to your warehouse dashboard
+                    </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-4">

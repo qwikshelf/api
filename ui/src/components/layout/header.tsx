@@ -3,6 +3,7 @@ import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
+import logo from "@/assets/logo.png";
 
 export function AppHeader() {
     const { theme, setTheme } = useTheme();
@@ -11,6 +12,7 @@ export function AppHeader() {
         <header className="flex h-14 items-center gap-4 border-b bg-background px-4">
             <SidebarTrigger className="-ml-1" />
             <Separator orientation="vertical" className="h-6" />
+            <img src={logo} alt="QwikShelf" className="h-8 w-auto object-contain md:hidden" />
             <div className="flex-1" />
             <Button
                 variant="ghost"
