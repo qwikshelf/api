@@ -36,7 +36,7 @@ func (r *UserRepository) Create(ctx context.Context, user *entity.User) error {
 func (r *UserRepository) GetByID(ctx context.Context, id int64) (*entity.User, error) {
 	query := `
 		SELECT u.id, u.username, u.password_hash, u.role_id, u.is_active, u.created_at,
-		       u.full_name, u.phone, u.address,
+		       COALESCE(u.full_name, ''), COALESCE(u.phone, ''), COALESCE(u.address, ''),
 		       r.id, r.name, r.description
 		FROM users u
 		LEFT JOIN roles r ON u.role_id = r.id
@@ -61,7 +61,7 @@ func (r *UserRepository) GetByID(ctx context.Context, id int64) (*entity.User, e
 func (r *UserRepository) GetByUsername(ctx context.Context, username string) (*entity.User, error) {
 	query := `
 		SELECT u.id, u.username, u.password_hash, u.role_id, u.is_active, u.created_at,
-		       u.full_name, u.phone, u.address,
+		       COALESCE(u.full_name, ''), COALESCE(u.phone, ''), COALESCE(u.address, ''),
 		       r.id, r.name, r.description
 		FROM users u
 		LEFT JOIN roles r ON u.role_id = r.id
@@ -94,7 +94,7 @@ func (r *UserRepository) List(ctx context.Context, offset, limit int) ([]entity.
 	// Get users
 	query := `
 		SELECT u.id, u.username, u.password_hash, u.role_id, u.is_active, u.created_at,
-		       u.full_name, u.phone, u.address,
+		       COALESCE(u.full_name, ''), COALESCE(u.phone, ''), COALESCE(u.address, ''),
 		       r.id, r.name, r.description
 		FROM users u
 		LEFT JOIN roles r ON u.role_id = r.id
