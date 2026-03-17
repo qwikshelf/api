@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Navigate, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth-store";
 import { authApi } from "@/api/auth";
 import { Button } from "@/components/ui/button";
@@ -11,13 +11,31 @@ import logo from "@/assets/logo.png";
 
 export default function LoginPage() {
     const navigate = useNavigate();
-    const { accessToken, setAuth } = useAuthStore();
+    const location = useLocation();
+    const { accessToken, user, setAuth, logout } = useAuthStore();
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    if (accessToken) return <Navigate to="/" replace />;
+    // Initial check for error passed via navigation state
+    useEffect(() => {
+        const stateError = (location.state as { error?: string })?.error;
+        if (stateError) {
+            setError(stateError);
+            // Clear the state to avoid showing it after manual refresh
+            window.history.replaceState({}, document.title);
+        }
+    }, [location]);
+
+    // If a customer is somehow logged in and lands here, clear their session
+    useEffect(() => {
+        if (accessToken && user?.role?.name === "customer") {
+            logout();
+        }
+    }, [accessToken, user, logout]);
+
+    if (accessToken && user?.role?.name !== "customer") return <Navigate to="/" replace />;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

@@ -395,7 +395,7 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-3 pl-4 border-l ml-2">
                         <div className="text-right hidden sm:block">
                             <p className="text-sm font-bold leading-none">{user?.username || "Admin"}</p>
-                            <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-semibold">System Administrator</p>
+                            <p className="text-[10px] text-muted-foreground mt-1 uppercase tracking-wider font-semibold">{user?.role?.name || "Admin"}</p>
                         </div>
                         <Avatar className="h-10 w-10 border-2 border-primary/10 shadow-sm ring-2 ring-background">
                             <AvatarImage src={`https://avatar.iran.liara.run/username?username=${user?.username || "Admin"}`} />

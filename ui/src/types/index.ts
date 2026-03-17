@@ -19,6 +19,8 @@ export interface LoginResponse {
 export interface CreateUserRequest {
     username: string;
     password: string;
+    full_name: string;
+    phone?: string;
     role_id: number;
     is_active: boolean;
     direct_permission_ids?: number[];
@@ -27,6 +29,8 @@ export interface CreateUserRequest {
 export interface UpdateUserRequest {
     username?: string;
     password?: string;
+    full_name?: string;
+    phone?: string;
     role_id?: number;
     is_active?: boolean;
     direct_permission_ids?: number[];
@@ -35,6 +39,8 @@ export interface UpdateUserRequest {
 export interface UserResponse {
     id: number;
     username: string;
+    full_name?: string;
+    phone?: string;
     role_id: number;
     role?: RoleResponse;
     is_active: boolean;

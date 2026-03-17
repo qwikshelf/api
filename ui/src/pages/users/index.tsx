@@ -28,7 +28,7 @@ export default function UsersPage() {
     const [deleteOpen, setDeleteOpen] = useState(false);
     const [editing, setEditing] = useState<UserResponse | null>(null);
     const [deleting, setDeleting] = useState<UserResponse | null>(null);
-    const [form, setForm] = useState({ username: "", password: "", role_id: 0, is_active: true });
+    const [form, setForm] = useState({ full_name: "", phone: "", username: "", password: "", role_id: 0, is_active: true });
     const [saving, setSaving] = useState(false);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -92,6 +92,8 @@ export default function UsersPage() {
         try {
             if (editing) {
                 await usersApi.update(editing.id, {
+                    full_name: form.full_name,
+                    phone: form.phone,
                     username: form.username,
                     role_id: form.role_id,
                     is_active: form.is_active,
@@ -125,13 +127,20 @@ export default function UsersPage() {
 
     const openCreate = () => {
         setEditing(null);
-        setForm({ username: "", password: "", role_id: roles[0]?.id || 0, is_active: true });
+        setForm({ full_name: "", phone: "", username: "", password: "", role_id: roles[0]?.id || 0, is_active: true });
         setSelectedDirectPermIds([]);
         setDialogOpen(true);
     };
     const openEdit = (u: UserResponse) => {
         setEditing(u);
-        setForm({ username: u.username, password: "", role_id: u.role_id, is_active: u.is_active });
+        setForm({ 
+            full_name: u.full_name || "", 
+            phone: u.phone || "",
+            username: u.username, 
+            password: "", 
+            role_id: u.role_id, 
+            is_active: u.is_active 
+        });
         // selectedDirectPermIds is asynchronously populated by the useEffect watching form.role_id
         setDialogOpen(true);
     };
@@ -145,7 +154,9 @@ export default function UsersPage() {
 
     const columns: Column<UserResponse>[] = [
         { header: "ID", accessorKey: "id", className: "w-20" },
+        { header: "Full Name", accessorKey: "full_name" },
         { header: "Username", accessorKey: "username" },
+        { header: "Phone", accessorKey: "phone" },
         { header: "Role", cell: (row) => <Badge variant="secondary">{row.role?.name || `Role #${row.role_id}`}</Badge> },
         {
             header: "Status",
@@ -190,8 +201,16 @@ export default function UsersPage() {
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
+                            <Label>Full Name</Label>
+                            <Input value={form.full_name} onChange={(e) => setForm({ ...form, full_name: e.target.value })} placeholder="Full Name" />
+                        </div>
+                        <div className="space-y-2">
                             <Label>Username</Label>
                             <Input value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} placeholder="Username" />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Phone Number</Label>
+                            <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="Phone Number" />
                         </div>
                         <div className="space-y-2">
                             <Label>Password {editing && <span className="text-muted-foreground text-xs">(leave blank to keep current)</span>}</Label>

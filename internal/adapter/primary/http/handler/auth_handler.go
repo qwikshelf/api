@@ -54,6 +54,12 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	// Block customers from admin login
+	if result.User.Role != nil && result.User.Role.Name == "customer" {
+		response.Forbidden(c, "Customers are not allowed to access the admin dashboard")
+		return
+	}
+
 	resp := dto.LoginResponse{
 		AccessToken:  result.AccessToken,
 		RefreshToken: result.RefreshToken,
@@ -176,6 +182,11 @@ func (h *AuthHandler) Me(c *gin.Context) {
 		return
 	}
 
+	if user.Role != nil && user.Role.Name == "customer" {
+		response.Forbidden(c, "Customers are not allowed to access the admin dashboard")
+		return
+	}
+
 	resp := dto.UserResponse{
 		ID:        user.ID,
 		Username:  user.Username,
@@ -247,6 +258,8 @@ func (h *UserHandler) List(c *gin.Context) {
 		userResp := dto.UserResponse{
 			ID:        u.ID,
 			Username:  u.Username,
+			FullName:  u.FullName,
+			Phone:     u.Phone,
 			RoleID:    u.RoleID,
 			IsActive:  u.IsActive,
 			CreatedAt: u.CreatedAt,
