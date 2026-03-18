@@ -109,7 +109,7 @@ func (s *DashboardService) GetStats(ctx context.Context, user *entity.User) (*Da
 	// Sales Stats (Total Sales, Accounts Receivable)
 	if canViewSales {
 		_ = pool.QueryRow(ctx, "SELECT COALESCE(SUM(total_amount), 0) FROM sales").Scan(&stats.TotalSalesValue)
-		_ = pool.QueryRow(ctx, "SELECT COALESCE(SUM(total_amount), 0) FROM sales WHERE payment_method = 'credit'").Scan(&stats.AccountsReceivable)
+		_ = pool.QueryRow(ctx, "SELECT COALESCE(SUM(total_amount), 0) FROM sales WHERE payment_method IN ('credit', 'other')").Scan(&stats.AccountsReceivable)
 	}
 
 	return stats, nil

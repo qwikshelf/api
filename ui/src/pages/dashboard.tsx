@@ -136,7 +136,9 @@ export default function DashboardPage() {
             const today = new Date();
 
             /* ── Core computed stats from arrays for specific UI widgets ── */
+            console.log(d)
             const healthyPct = d.totalSKUs > 0 ? Math.round(((d.totalSKUs - d.lowStockItems - d.outOfStockItems) / d.totalSKUs) * 100) : 0;
+            console.log("healthyPct", healthyPct);
             const lowPct = d.totalSKUs > 0 ? Math.round((d.lowStockItems / d.totalSKUs) * 100) : 0;
             const outPct = d.totalSKUs > 0 ? Math.round((d.outOfStockItems / d.totalSKUs) * 100) : 0;
 
