@@ -34,9 +34,14 @@ func (r *WarehouseRepository) Create(ctx context.Context, warehouse *entity.Ware
 
 // GetByID retrieves a warehouse by ID
 func (r *WarehouseRepository) GetByID(ctx context.Context, id int64) (*entity.Warehouse, error) {
-	query := `SELECT id, name, type, address FROM warehouses WHERE id = $1`
+	query := `
+		SELECT w.id, w.name, w.type, w.address, dz.id as zone_id 
+		FROM warehouses w
+		LEFT JOIN delivery_zones dz ON dz.warehouse_id = w.id
+		WHERE w.id = $1
+	`
 	w := &entity.Warehouse{}
-	err := r.db.Pool.QueryRow(ctx, query, id).Scan(&w.ID, &w.Name, &w.Type, &w.Address)
+	err := r.db.Pool.QueryRow(ctx, query, id).Scan(&w.ID, &w.Name, &w.Type, &w.Address, &w.ZoneID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domainErrors.ErrWarehouseNotFound
 	}
@@ -48,7 +53,12 @@ func (r *WarehouseRepository) GetByID(ctx context.Context, id int64) (*entity.Wa
 
 // List retrieves all warehouses
 func (r *WarehouseRepository) List(ctx context.Context) ([]entity.Warehouse, error) {
-	query := `SELECT id, name, type, address FROM warehouses ORDER BY id`
+	query := `
+		SELECT w.id, w.name, w.type, w.address, dz.id as zone_id 
+		FROM warehouses w
+		LEFT JOIN delivery_zones dz ON dz.warehouse_id = w.id
+		ORDER BY w.id
+	`
 	rows, err := r.db.Pool.Query(ctx, query)
 	if err != nil {
 		return nil, err
@@ -58,7 +68,7 @@ func (r *WarehouseRepository) List(ctx context.Context) ([]entity.Warehouse, err
 	var warehouses []entity.Warehouse
 	for rows.Next() {
 		var w entity.Warehouse
-		if err := rows.Scan(&w.ID, &w.Name, &w.Type, &w.Address); err != nil {
+		if err := rows.Scan(&w.ID, &w.Name, &w.Type, &w.Address, &w.ZoneID); err != nil {
 			return nil, err
 		}
 		warehouses = append(warehouses, w)
@@ -68,7 +78,13 @@ func (r *WarehouseRepository) List(ctx context.Context) ([]entity.Warehouse, err
 
 // ListByType retrieves warehouses by type
 func (r *WarehouseRepository) ListByType(ctx context.Context, warehouseType entity.WarehouseType) ([]entity.Warehouse, error) {
-	query := `SELECT id, name, type, address FROM warehouses WHERE type = $1 ORDER BY id`
+	query := `
+		SELECT w.id, w.name, w.type, w.address, dz.id as zone_id 
+		FROM warehouses w
+		LEFT JOIN delivery_zones dz ON dz.warehouse_id = w.id
+		WHERE w.type = $1 
+		ORDER BY w.id
+	`
 	rows, err := r.db.Pool.Query(ctx, query, warehouseType)
 	if err != nil {
 		return nil, err
@@ -78,7 +94,7 @@ func (r *WarehouseRepository) ListByType(ctx context.Context, warehouseType enti
 	var warehouses []entity.Warehouse
 	for rows.Next() {
 		var w entity.Warehouse
-		if err := rows.Scan(&w.ID, &w.Name, &w.Type, &w.Address); err != nil {
+		if err := rows.Scan(&w.ID, &w.Name, &w.Type, &w.Address, &w.ZoneID); err != nil {
 			return nil, err
 		}
 		warehouses = append(warehouses, w)
@@ -125,20 +141,29 @@ func NewSupplierRepository(db *DB) *SupplierRepository {
 // Create creates a new supplier
 func (r *SupplierRepository) Create(ctx context.Context, supplier *entity.Supplier) error {
 	query := `
-		INSERT INTO suppliers (name, phone, location)
-		VALUES ($1, $2, $3)
+		INSERT INTO suppliers (name, phone, location, latitude, longitude, zone_id)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING id
 	`
 	return r.db.Pool.QueryRow(ctx, query,
 		supplier.Name, supplier.Phone, supplier.Location,
+		supplier.Latitude, supplier.Longitude, supplier.ZoneID,
 	).Scan(&supplier.ID)
 }
 
 // GetByID retrieves a supplier by ID
 func (r *SupplierRepository) GetByID(ctx context.Context, id int64) (*entity.Supplier, error) {
-	query := `SELECT id, name, phone, location FROM suppliers WHERE id = $1`
+	query := `
+		SELECT s.id, s.name, s.phone, s.location, s.latitude, s.longitude, s.zone_id, COALESCE(dz.name, '') as zone_name 
+		FROM suppliers s
+		LEFT JOIN delivery_zones dz ON s.zone_id = dz.id
+		WHERE s.id = $1
+	`
 	s := &entity.Supplier{}
-	err := r.db.Pool.QueryRow(ctx, query, id).Scan(&s.ID, &s.Name, &s.Phone, &s.Location)
+	err := r.db.Pool.QueryRow(ctx, query, id).Scan(
+		&s.ID, &s.Name, &s.Phone, &s.Location,
+		&s.Latitude, &s.Longitude, &s.ZoneID, &s.ZoneName,
+	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domainErrors.ErrSupplierNotFound
 	}
@@ -155,7 +180,12 @@ func (r *SupplierRepository) List(ctx context.Context, offset, limit int) ([]ent
 		return nil, 0, err
 	}
 
-	query := `SELECT id, name, phone, location FROM suppliers ORDER BY id LIMIT $1 OFFSET $2`
+	query := `
+		SELECT s.id, s.name, s.phone, s.location, s.latitude, s.longitude, s.zone_id, COALESCE(dz.name, '') as zone_name 
+		FROM suppliers s
+		LEFT JOIN delivery_zones dz ON s.zone_id = dz.id
+		ORDER BY s.id LIMIT $1 OFFSET $2
+	`
 	rows, err := r.db.Pool.Query(ctx, query, limit, offset)
 	if err != nil {
 		return nil, 0, err
@@ -165,7 +195,10 @@ func (r *SupplierRepository) List(ctx context.Context, offset, limit int) ([]ent
 	var suppliers []entity.Supplier
 	for rows.Next() {
 		var s entity.Supplier
-		if err := rows.Scan(&s.ID, &s.Name, &s.Phone, &s.Location); err != nil {
+		if err := rows.Scan(
+			&s.ID, &s.Name, &s.Phone, &s.Location,
+			&s.Latitude, &s.Longitude, &s.ZoneID, &s.ZoneName,
+		); err != nil {
 			return nil, 0, err
 		}
 		suppliers = append(suppliers, s)
@@ -175,8 +208,16 @@ func (r *SupplierRepository) List(ctx context.Context, offset, limit int) ([]ent
 
 // Update updates a supplier
 func (r *SupplierRepository) Update(ctx context.Context, supplier *entity.Supplier) error {
-	query := `UPDATE suppliers SET name = $1, phone = $2, location = $3 WHERE id = $4`
-	result, err := r.db.Pool.Exec(ctx, query, supplier.Name, supplier.Phone, supplier.Location, supplier.ID)
+	query := `
+		UPDATE suppliers 
+		SET name = $1, phone = $2, location = $3, latitude = $4, longitude = $5, zone_id = $6 
+		WHERE id = $7
+	`
+	result, err := r.db.Pool.Exec(ctx, query,
+		supplier.Name, supplier.Phone, supplier.Location,
+		supplier.Latitude, supplier.Longitude, supplier.ZoneID,
+		supplier.ID,
+	)
 	if err != nil {
 		return err
 	}
@@ -274,4 +315,57 @@ func (r *SupplierRepository) RemoveVariant(ctx context.Context, supplierID, vari
 	query := `DELETE FROM supplier_variants WHERE supplier_id = $1 AND variant_id = $2`
 	_, err := r.db.Pool.Exec(ctx, query, supplierID, variantID)
 	return err
+}
+
+// ListByZone retrieves all suppliers in a specific zone
+func (r *SupplierRepository) ListByZone(ctx context.Context, zoneID int64) ([]entity.Supplier, error) {
+	query := `
+		SELECT s.id, s.name, s.phone, s.location, s.latitude, s.longitude, s.zone_id, COALESCE(dz.name, '') as zone_name 
+		FROM suppliers s
+		LEFT JOIN delivery_zones dz ON s.zone_id = dz.id
+		WHERE s.zone_id = $1 
+		   OR s.id IN (
+			   SELECT s2.id 
+			   FROM suppliers s2
+			   JOIN pincode_geodata pg ON ST_Contains(pg.boundary, s2.geom)
+			   JOIN serviceable_pincodes sp ON sp.pincode = pg.pincode
+			   WHERE sp.zone_id = $1
+		   )
+		ORDER BY s.name
+	`
+	rows, err := r.db.Pool.Query(ctx, query, zoneID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var suppliers []entity.Supplier
+	for rows.Next() {
+		var s entity.Supplier
+		if err := rows.Scan(
+			&s.ID, &s.Name, &s.Phone, &s.Location,
+			&s.Latitude, &s.Longitude, &s.ZoneID, &s.ZoneName,
+		); err != nil {
+			return nil, err
+		}
+		suppliers = append(suppliers, s)
+	}
+	return suppliers, rows.Err()
+}
+
+// GetZoneByCoordinates finds the delivery zone ID for a given coordinate
+func (r *SupplierRepository) GetZoneByCoordinates(ctx context.Context, lat, lng float64) (int64, error) {
+	query := `
+		SELECT sp.zone_id 
+		FROM pincode_geodata pg
+		JOIN serviceable_pincodes sp ON sp.pincode = pg.pincode
+		WHERE ST_Contains(pg.boundary, ST_SetSRID(ST_MakePoint($1, $2), 4326))
+		LIMIT 1
+	`
+	var zoneID int64
+	err := r.db.Pool.QueryRow(ctx, query, lng, lat).Scan(&zoneID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, domainErrors.ErrNotFound
+	}
+	return zoneID, err
 }

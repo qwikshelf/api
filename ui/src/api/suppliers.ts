@@ -8,10 +8,10 @@ export const suppliersApi = {
     get: (id: number) =>
         api.get<ApiResponse<SupplierResponse>>(`/suppliers/${id}`),
 
-    create: (data: { name: string; phone?: string; location?: string }) =>
+    create: (data: { name: string; phone?: string; location?: string; latitude?: number; longitude?: number; zone_id?: number }) =>
         api.post<ApiResponse<SupplierResponse>>("/suppliers", data),
 
-    update: (id: number, data: { name?: string; phone?: string; location?: string }) =>
+    update: (id: number, data: { name?: string; phone?: string; location?: string; latitude?: number; longitude?: number; zone_id?: number }) =>
         api.put<ApiResponse<SupplierResponse>>(`/suppliers/${id}`, data),
 
     delete: (id: number) =>

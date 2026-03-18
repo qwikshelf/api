@@ -133,9 +133,22 @@ export default function CreateProcurementPage() {
                             <Select value={supplierId ? String(supplierId) : ""} onValueChange={(v) => setSupplierId(Number(v))}>
                                 <SelectTrigger><SelectValue placeholder="Select supplier" /></SelectTrigger>
                                 <SelectContent>
-                                    {suppliers.map((s) => (
-                                        <SelectItem key={s.id} value={String(s.id)}>{s.name}</SelectItem>
-                                    ))}
+                                    {suppliers
+                                        .sort((a, b) => {
+                                            const aInZone = a.zone_id === warehouses.find(w => w.id === warehouseId)?.zone_id;
+                                            const bInZone = b.zone_id === warehouses.find(w => w.id === warehouseId)?.zone_id;
+                                            if (aInZone && !bInZone) return -1;
+                                            if (!aInZone && bInZone) return 1;
+                                            return a.name.localeCompare(b.name);
+                                        })
+                                        .map((s) => {
+                                            const isLocal = s.zone_id === warehouses.find(w => w.id === warehouseId)?.zone_id;
+                                            return (
+                                                <SelectItem key={s.id} value={String(s.id)}>
+                                                    {s.name} {isLocal && " (Recommended - Local)"}
+                                                </SelectItem>
+                                            );
+                                        })}
                                 </SelectContent>
                             </Select>
                         </div>

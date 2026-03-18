@@ -21,6 +21,8 @@ type SupplierRepository interface {
 	Create(ctx context.Context, supplier *entity.Supplier) error
 	GetByID(ctx context.Context, id int64) (*entity.Supplier, error)
 	List(ctx context.Context, offset, limit int) ([]entity.Supplier, int64, error)
+	ListByZone(ctx context.Context, zoneID int64) ([]entity.Supplier, error)
+	GetZoneByCoordinates(ctx context.Context, lat, lng float64) (int64, error)
 	Update(ctx context.Context, supplier *entity.Supplier) error
 	Delete(ctx context.Context, id int64) error
 

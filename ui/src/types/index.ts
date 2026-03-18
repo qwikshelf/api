@@ -136,6 +136,7 @@ export interface WarehouseResponse {
     name: string;
     type: WarehouseType;
     address?: string;
+    zone_id?: number;
 }
 
 // --- Serviceability ---
@@ -174,6 +175,10 @@ export interface SupplierResponse {
     name: string;
     phone?: string;
     location?: string;
+    latitude?: number;
+    longitude?: number;
+    zone_id?: number;
+    zone_name?: string;
 }
 
 export interface SupplierVariantResponse {

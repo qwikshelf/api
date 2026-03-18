@@ -100,11 +100,14 @@ func NewSupplierService(supplierRepo repository.SupplierRepository) *SupplierSer
 }
 
 // Create creates a new supplier
-func (s *SupplierService) Create(ctx context.Context, name, phone, location string) (*entity.Supplier, error) {
+func (s *SupplierService) Create(ctx context.Context, name, phone, location string, lat, lng float64, zoneID *int64) (*entity.Supplier, error) {
 	supplier := &entity.Supplier{
-		Name:     name,
-		Phone:    phone,
-		Location: location,
+		Name:      name,
+		Phone:     phone,
+		Location:  location,
+		Latitude:  &lat,
+		Longitude: &lng,
+		ZoneID:    zoneID,
 	}
 
 	if err := s.supplierRepo.Create(ctx, supplier); err != nil {
@@ -128,7 +131,7 @@ func (s *SupplierService) List(ctx context.Context, offset, limit int) ([]entity
 }
 
 // Update updates a supplier
-func (s *SupplierService) Update(ctx context.Context, id int64, name, phone, location *string) (*entity.Supplier, error) {
+func (s *SupplierService) Update(ctx context.Context, id int64, name, phone, location *string, lat, lng *float64, zoneID *int64) (*entity.Supplier, error) {
 	supplier, err := s.supplierRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, domainErrors.ErrSupplierNotFound
@@ -142,6 +145,15 @@ func (s *SupplierService) Update(ctx context.Context, id int64, name, phone, loc
 	}
 	if location != nil {
 		supplier.Location = *location
+	}
+	if lat != nil {
+		supplier.Latitude = lat
+	}
+	if lng != nil {
+		supplier.Longitude = lng
+	}
+	if zoneID != nil {
+		supplier.ZoneID = zoneID
 	}
 
 	if err := s.supplierRepo.Update(ctx, supplier); err != nil {
