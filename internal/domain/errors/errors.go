@@ -36,6 +36,9 @@ var (
 	// Supplier errors
 	ErrSupplierNotFound = errors.New("supplier not found")
 
+	// Customer errors
+	ErrCustomerNotFound = errors.New("customer not found")
+
 	// Inventory errors
 	ErrInsufficientStock = errors.New("insufficient stock")
 	ErrInvalidQuantity   = errors.New("invalid quantity")
@@ -60,6 +63,7 @@ func IsNotFound(err error) bool {
 		errors.Is(err, ErrProductVariantNotFound) ||
 		errors.Is(err, ErrWarehouseNotFound) ||
 		errors.Is(err, ErrSupplierNotFound) ||
+		errors.Is(err, ErrCustomerNotFound) ||
 		errors.Is(err, ErrTransferNotFound) ||
 		errors.Is(err, ErrProcurementNotFound) ||
 		errors.Is(err, ErrProductionRunNotFound)

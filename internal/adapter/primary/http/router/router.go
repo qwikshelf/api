@@ -27,6 +27,7 @@ type Config struct {
 	InventoryHandler   *handler.InventoryHandler
 	ProcurementHandler *handler.ProcurementHandler
 	SaleHandler        *handler.SaleHandler
+	CustomerHandler    *handler.CustomerHandler
 	CollectionHandler  *handler.CollectionHandler
 	DashboardHandler      *handler.DashboardHandler
 	ServiceabilityHandler *handler.ServiceabilityHandler
@@ -97,6 +98,16 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 				users.GET("/:id", cfg.UserHandler.Get)
 				users.PUT("/:id", cfg.UserHandler.Update)
 				users.DELETE("/:id", cfg.UserHandler.Delete)
+			}
+
+			// Customer routes
+			customers := protected.Group("/customers")
+			{
+				customers.GET("", cfg.CustomerHandler.List)
+				customers.POST("", cfg.CustomerHandler.Create)
+				customers.GET("/:id", cfg.CustomerHandler.Get)
+				customers.PUT("/:id", cfg.CustomerHandler.Update)
+				customers.DELETE("/:id", cfg.CustomerHandler.Delete)
 			}
 
 			// Role routes

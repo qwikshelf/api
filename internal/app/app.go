@@ -61,6 +61,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	inventoryRepo := postgres.NewInventoryRepository(db)
 	procurementRepo := postgres.NewProcurementRepository(db)
 	saleRepo := postgres.NewSaleRepository(db)
+	customerRepo := postgres.NewCustomerRepository(db)
 	collectionRepo := postgres.NewCollectionRepository(db)
 	pincodeRepo := postgres.NewPincodeRepository(db)
 
@@ -77,6 +78,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	inventoryService := service.NewInventoryService(inventoryRepo, warehouseRepo, productVariantRepo)
 	procurementService := service.NewProcurementService(procurementRepo, supplierRepo, inventoryRepo, warehouseRepo, productVariantRepo)
 	saleService := service.NewSaleService(saleRepo, inventoryRepo, productVariantRepo, warehouseRepo)
+	customerService := service.NewCustomerService(customerRepo)
 	collectionService := service.NewCollectionService(collectionRepo, inventoryRepo, productVariantRepo, warehouseRepo, supplierRepo)
 	dashboardService := service.NewDashboardService(db)
 	deliveryService := service.NewDeliveryService(pincodeRepo)
@@ -93,6 +95,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	inventoryHandler := handler.NewInventoryHandler(inventoryService)
 	procurementHandler := handler.NewProcurementHandler(procurementService)
 	saleHandler := handler.NewSaleHandler(saleService)
+	customerHandler := handler.NewCustomerHandler(customerService)
 	collectionHandler := handler.NewCollectionHandler(collectionService)
 	dashboardHandler := handler.NewDashboardHandler(dashboardService, authService)
 	serviceabilityHandler := handler.NewServiceabilityHandler(deliveryService)
@@ -118,6 +121,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 		InventoryHandler:   inventoryHandler,
 		ProcurementHandler: procurementHandler,
 		SaleHandler:        saleHandler,
+		CustomerHandler:    customerHandler,
 		CollectionHandler:  collectionHandler,
 		DashboardHandler:   dashboardHandler,
 		ServiceabilityHandler: serviceabilityHandler,

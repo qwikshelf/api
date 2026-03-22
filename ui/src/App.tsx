@@ -11,6 +11,8 @@ import LoginPage from "@/pages/login";
 
 // Lazy-load all page components for code splitting
 const DashboardPage = lazy(() => import("@/pages/dashboard"));
+const CustomersPage = lazy(() => import("@/pages/customers"));
+const CustomerDetailPage = lazy(() => import("@/pages/customers/detail"));
 const CategoriesPage = lazy(() => import("@/pages/categories"));
 const WarehousesPage = lazy(() => import("@/pages/warehouses"));
 const RolesPage = lazy(() => import("@/pages/roles"));
@@ -56,6 +58,8 @@ function App() {
                         >
                             <Route path="/" element={<Suspense fallback={<PageLoader />}><DashboardPage /></Suspense>} />
                             <Route path="/pos" element={<Suspense fallback={<PageLoader />}><POSPage /></Suspense>} />
+                            <Route path="/customers" element={<Suspense fallback={<PageLoader />}><CustomersPage /></Suspense>} />
+                            <Route path="/customers/:id" element={<Suspense fallback={<PageLoader />}><CustomerDetailPage /></Suspense>} />
                             <Route path="/categories" element={<PermissionGuard requireAll={["products.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><CategoriesPage /></Suspense></PermissionGuard>} />
                             <Route path="/warehouses" element={<PermissionGuard requireAll={["warehouses.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><WarehousesPage /></Suspense></PermissionGuard>} />
                             <Route path="/roles" element={<PermissionGuard requireAll={["roles.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><RolesPage /></Suspense></PermissionGuard>} />
