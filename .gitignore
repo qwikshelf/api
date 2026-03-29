@@ -33,3 +33,4 @@ go.work.sum
 *.log
 *.pem
 bin/
+*.DS_Store
