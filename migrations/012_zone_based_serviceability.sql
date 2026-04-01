@@ -52,8 +52,8 @@ CREATE INDEX idx_pincode_geodata_center ON pincode_geodata USING GIST (center);
 CREATE INDEX idx_serviceable_pincodes_zone_id ON serviceable_pincodes(zone_id);
 
 -- 4. Permissions
-INSERT INTO permissions (name, slug, description) 
-VALUES ('Manage Serviceability', 'serviceability.manage', 'Allows managing delivery zones, pincode mapping and geodata')
+INSERT INTO permissions (slug, description) 
+VALUES ('serviceability.manage', 'Allows managing delivery zones, pincode mapping and geodata')
 ON CONFLICT (slug) DO NOTHING;
 
 -- Assign to Admin role (ID 1 assumed)

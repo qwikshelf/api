@@ -50,6 +50,9 @@ var (
 
 	// Production errors
 	ErrProductionRunNotFound = errors.New("production run not found")
+
+	// Subscription errors
+	ErrSubscriptionNotFound = errors.New("subscription not found")
 )
 
 // IsNotFound checks if the error is a not found error
@@ -66,7 +69,8 @@ func IsNotFound(err error) bool {
 		errors.Is(err, ErrCustomerNotFound) ||
 		errors.Is(err, ErrTransferNotFound) ||
 		errors.Is(err, ErrProcurementNotFound) ||
-		errors.Is(err, ErrProductionRunNotFound)
+		errors.Is(err, ErrProductionRunNotFound) ||
+		errors.Is(err, ErrSubscriptionNotFound)
 }
 
 // IsConflict checks if the error is a conflict error

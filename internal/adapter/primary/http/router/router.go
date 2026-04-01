@@ -32,6 +32,7 @@ type Config struct {
 	DashboardHandler      *handler.DashboardHandler
 	ServiceabilityHandler *handler.ServiceabilityHandler
 	PublicHandler         *handler.PublicHandler
+	SubscriptionHandler   *handler.SubscriptionHandler
 }
 
 // SetupRoutes configures all API routes
@@ -218,6 +219,18 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 			dashboard := protected.Group("/dashboard")
 			{
 				dashboard.GET("/stats", cfg.DashboardHandler.GetStats)
+			}
+
+			subscriptions := protected.Group("/subscriptions")
+			{
+				subscriptions.GET("", cfg.SubscriptionHandler.List)
+				subscriptions.POST("", cfg.SubscriptionHandler.Create)
+				subscriptions.GET("/roster", cfg.SubscriptionHandler.GetDailyRoster)
+				subscriptions.GET("/:id", cfg.SubscriptionHandler.Get)
+				subscriptions.PUT("/:id", cfg.SubscriptionHandler.Update)
+				subscriptions.PATCH("/:id/status", cfg.SubscriptionHandler.UpdateStatus)
+				subscriptions.DELETE("/:id", cfg.SubscriptionHandler.Delete)
+				subscriptions.POST("/:id/deliveries", cfg.SubscriptionHandler.RecordDelivery)
 			}
 
 			// Serviceability routes (Admin)

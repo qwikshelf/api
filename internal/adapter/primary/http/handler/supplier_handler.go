@@ -89,6 +89,11 @@ func (h *SupplierHandler) Create(c *gin.Context) {
 		response.BadRequest(c, "Invalid request body")
 		return
 	}
+	
+	if req.ZoneID != nil && *req.ZoneID == 0 {
+		req.ZoneID = nil
+	}
+
 	supplier, err := h.supplierService.Create(c.Request.Context(), req.Name, req.Phone, req.Location, req.Latitude, req.Longitude, req.ZoneID)
 	if err != nil {
 		response.InternalErrorDebug(c, "Failed to create supplier", err)
@@ -184,6 +189,11 @@ func (h *SupplierHandler) Update(c *gin.Context) {
 	if req.Location != "" {
 		location = &req.Location
 	}
+	
+	if req.ZoneID != nil && *req.ZoneID == 0 {
+		req.ZoneID = nil
+	}
+
 	supplier, err := h.supplierService.Update(c.Request.Context(), id, name, phone, location, req.Latitude, req.Longitude, req.ZoneID)
 	if err != nil {
 		if err == domainErrors.ErrSupplierNotFound {

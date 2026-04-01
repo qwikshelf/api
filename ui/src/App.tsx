@@ -31,6 +31,8 @@ const SalesRecordPage = lazy(() => import("@/pages/sales/SalesRecordPage"));
 const ServiceabilityZonesPage = lazy(() => import("@/pages/serviceability/zones"));
 const PincodeImportPage = lazy(() => import("@/pages/serviceability/import"));
 const ServiceabilityMapPage = lazy(() => import("@/pages/serviceability/map"));
+const DeliveriesPage = lazy(() => import("@/pages/deliveries"));
+const SubscriptionsPage = lazy(() => import("@/pages/subscriptions"));
 
 function PageLoader() {
     return (
@@ -77,6 +79,8 @@ function App() {
                             <Route path="/serviceability/zones" element={<PermissionGuard requireAll={["serviceability.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ServiceabilityZonesPage /></Suspense></PermissionGuard>} />
                             <Route path="/serviceability/import" element={<PermissionGuard requireAll={["serviceability.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><PincodeImportPage /></Suspense></PermissionGuard>} />
                             <Route path="/serviceability/map" element={<PermissionGuard requireAll={["serviceability.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ServiceabilityMapPage /></Suspense></PermissionGuard>} />
+                            <Route path="/deliveries" element={<PermissionGuard requireAll={["subscriptions.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><DeliveriesPage /></Suspense></PermissionGuard>} />
+                            <Route path="/subscriptions" element={<PermissionGuard requireAll={["subscriptions.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><SubscriptionsPage /></Suspense></PermissionGuard>} />
                         </Route>
                     </Routes>
                 </BrowserRouter>

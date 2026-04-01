@@ -1,10 +1,12 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowLeft, MapPin, Receipt, Package, Calendar, Phone, Mail, Building, Landmark, Hash, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, MapPin, Receipt, Package, Calendar, Phone, Mail, Building, Landmark, Hash, AlertCircle, Loader2, RefreshCw, PlusCircle } from "lucide-react";
 import { customerApi } from "@/api/customers";
 import { salesApi } from "@/api/sales";
+import { subscriptionsApi } from "@/api/subscriptions";
 import type { CustomerResponse } from "@/types";
+import type { SubscriptionResponse } from "@/types/subscription";
 import { DataTable, type Column } from "@/components/shared/data-table";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +24,8 @@ import {
 } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { SubscriptionCard } from "@/components/subscriptions/SubscriptionCard";
+import { SubscriptionFormModal } from "@/components/subscriptions/SubscriptionFormModal";
 
 export default function CustomerDetailPage() {
     const { id } = useParams<{ id: string }>();
@@ -32,6 +36,10 @@ export default function CustomerDetailPage() {
     const [salesData, setSalesData] = useState<any[]>([]);
     const [salesLoading, setSalesLoading] = useState(false);
     const [totalPages, setTotalPages] = useState(1);
+    const [subscriptions, setSubscriptions] = useState<SubscriptionResponse[]>([]);
+    const [subsLoading, setSubsLoading] = useState(false);
+    const [showSubForm, setShowSubForm] = useState(false);
+    const [editingSub, setEditingSub] = useState<SubscriptionResponse | null>(null);
 
     useEffect(() => {
         if (!id) return;
@@ -57,6 +65,21 @@ export default function CustomerDetailPage() {
             .catch(() => toast.error("Failed to load sales history"))
             .finally(() => setSalesLoading(false));
     }, [id, salesPage]);
+
+    const loadSubscriptions = useCallback(async () => {
+        if (!id) return;
+        setSubsLoading(true);
+        try {
+            const res = await subscriptionsApi.list({ customer_id: parseInt(id) });
+            setSubscriptions(res.data.data || []);
+        } catch {
+            toast.error("Failed to load subscriptions");
+        } finally {
+            setSubsLoading(false);
+        }
+    }, [id]);
+
+    useEffect(() => { loadSubscriptions(); }, [id, loadSubscriptions]);
 
     // Aggregate Product Consumption exactly like standard D2C/CRM behaviour
     const productFootprint = useMemo(() => {
@@ -175,12 +198,55 @@ export default function CustomerDetailPage() {
                 </Card>
             </div>
 
-            <Tabs defaultValue="billing" className="w-full mt-8">
+            <Tabs defaultValue="subscriptions" className="w-full mt-8">
                 <TabsList className="mb-4">
+                    <TabsTrigger value="subscriptions" className="flex gap-2"><RefreshCw className="h-4 w-4"/>Subscriptions</TabsTrigger>
                     <TabsTrigger value="billing" className="flex gap-2"><Receipt className="h-4 w-4"/> Billing History</TabsTrigger>
                     <TabsTrigger value="products" className="flex gap-2"><Package className="h-4 w-4"/> Product Footprint</TabsTrigger>
                 </TabsList>
                 
+                {/* Subscriptions Tab */}
+                <TabsContent value="subscriptions" className="space-y-3">
+                    <div className="flex justify-end">
+                        <Button
+                            size="sm"
+                            className="gap-2"
+                            onClick={() => { setEditingSub(null); setShowSubForm(true); }}
+                        >
+                            <PlusCircle className="h-4 w-4" /> Add Subscription
+                        </Button>
+                    </div>
+
+                    {subsLoading ? (
+                        <div className="flex items-center justify-center py-12 text-muted-foreground gap-2">
+                            <Loader2 className="h-5 w-5 animate-spin" /> Loading subscriptions...
+                        </div>
+                    ) : subscriptions.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground border rounded-xl bg-white">
+                            <RefreshCw className="h-10 w-10 text-slate-200 mb-3" />
+                            <p className="font-medium text-slate-600">No subscriptions yet</p>
+                            <p className="text-sm mt-1">Add a recurring product delivery plan for this customer.</p>
+                            <Button
+                                variant="outline" size="sm" className="mt-4"
+                                onClick={() => { setEditingSub(null); setShowSubForm(true); }}
+                            >
+                                <PlusCircle className="h-4 w-4 mr-2" /> Create First Subscription
+                            </Button>
+                        </div>
+                    ) : (
+                        <div className="space-y-2">
+                            {subscriptions.map(sub => (
+                                <SubscriptionCard
+                                    key={sub.id}
+                                    subscription={sub}
+                                    onEdit={(s) => { setEditingSub(s); setShowSubForm(true); }}
+                                    onRefresh={loadSubscriptions}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </TabsContent>
+
                 <TabsContent value="billing" className="space-y-4">
                     <div className="bg-white border rounded-lg shadow-sm">
                         <DataTable
@@ -207,6 +273,15 @@ export default function CustomerDetailPage() {
                     </div>
                 </TabsContent>
             </Tabs>
+
+            {/* Subscription Form Modal */}
+            <SubscriptionFormModal
+                open={showSubForm}
+                onClose={() => { setShowSubForm(false); setEditingSub(null); }}
+                onSaved={loadSubscriptions}
+                customerId={parseInt(id!)}
+                editSubscription={editingSub}
+            />
         </div>
     );
 }

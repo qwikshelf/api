@@ -152,9 +152,8 @@ func (s *SupplierService) Update(ctx context.Context, id int64, name, phone, loc
 	if lng != nil {
 		supplier.Longitude = lng
 	}
-	if zoneID != nil {
-		supplier.ZoneID = zoneID
-	}
+	// Always update ZoneID to allow clearing the zone assignment to NULL
+	supplier.ZoneID = zoneID
 
 	if err := s.supplierRepo.Update(ctx, supplier); err != nil {
 		return nil, err
