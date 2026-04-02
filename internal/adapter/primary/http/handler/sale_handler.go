@@ -172,11 +172,26 @@ func (h *SaleHandler) List(c *gin.Context) {
 		}
 	}
 
+	var customerID *int64
+	if cid, err := strconv.ParseInt(c.Query("customer_id"), 10, 64); err == nil {
+		customerID = &cid
+	}
+
 	// For debugging
-	fmt.Printf("Fetching sales history filters -> Warehouse: %v, Start: %v, End: %v\n", warehouseID, startDate, endDate)
+	fmt.Printf("Fetching sales history filters -> Customer: %v, Warehouse: %v, Start: %v, End: %v\n", customerID, warehouseID, startDate, endDate)
 
 	offset := (page - 1) * perPage
-	sales, total, err := h.saleService.List(c.Request.Context(), warehouseID, startDate, endDate, offset, perPage)
+
+	var sales []entity.Sale
+	var total int64
+	var err error
+
+	if customerID != nil {
+		sales, total, err = h.saleService.ListByCustomer(c.Request.Context(), *customerID, offset, perPage)
+	} else {
+		sales, total, err = h.saleService.List(c.Request.Context(), warehouseID, startDate, endDate, offset, perPage)
+	}
+
 	if err != nil {
 		response.InternalErrorDebug(c, "Failed to list sales history", err)
 		return

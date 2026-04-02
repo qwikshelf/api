@@ -18,6 +18,9 @@ import {
     MapPin,
     UploadCloud,
     Map as MapIcon,
+    UserSquare,
+    CalendarDays,
+    ListTodo,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import {
@@ -40,6 +43,9 @@ import { cn } from "@/lib/utils";
 const navItems = [
     { title: "Dashboard", icon: LayoutDashboard, href: "/" },
     { title: "POS", icon: CreditCard, href: "/pos" },
+    { title: "Customers", icon: UserSquare, href: "/customers" },
+    { title: "Daily Deliveries", icon: CalendarDays, href: "/deliveries", permission: "subscriptions.view" },
+    { title: "Subscriptions", icon: ListTodo, href: "/subscriptions", permission: "subscriptions.view" },
     { title: "Users", icon: Users, href: "/users", permission: "users.view" },
     { title: "Roles", icon: Shield, href: "/roles", permission: "roles.view" },
     { title: "Warehouses", icon: Warehouse, href: "/warehouses", permission: "warehouses.view" },

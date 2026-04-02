@@ -53,7 +53,9 @@ export default function SuppliersPage() {
     useEffect(() => { load(); }, [load]);
 
     useEffect(() => {
-        serviceabilityApi.listZones().then(res => setZones(res.data.data || []));
+        serviceabilityApi.listZones()
+            .then(res => setZones(res.data.data || []))
+            .catch(() => toast.error("Failed to load delivery zones"));
     }, []);
 
     const handleSave = async () => {
@@ -64,7 +66,7 @@ export default function SuppliersPage() {
                 ...form,
                 latitude: form.latitude ? parseFloat(form.latitude) : undefined,
                 longitude: form.longitude ? parseFloat(form.longitude) : undefined,
-                zone_id: form.zone_id ? parseInt(form.zone_id) : undefined,
+                zone_id: form.zone_id && form.zone_id !== "0" ? parseInt(form.zone_id, 10) : null,
             };
             if (editing) {
                 await suppliersApi.update(editing.id, data);

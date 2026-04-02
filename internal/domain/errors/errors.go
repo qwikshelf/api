@@ -36,6 +36,9 @@ var (
 	// Supplier errors
 	ErrSupplierNotFound = errors.New("supplier not found")
 
+	// Customer errors
+	ErrCustomerNotFound = errors.New("customer not found")
+
 	// Inventory errors
 	ErrInsufficientStock = errors.New("insufficient stock")
 	ErrInvalidQuantity   = errors.New("invalid quantity")
@@ -47,6 +50,9 @@ var (
 
 	// Production errors
 	ErrProductionRunNotFound = errors.New("production run not found")
+
+	// Subscription errors
+	ErrSubscriptionNotFound = errors.New("subscription not found")
 )
 
 // IsNotFound checks if the error is a not found error
@@ -60,9 +66,11 @@ func IsNotFound(err error) bool {
 		errors.Is(err, ErrProductVariantNotFound) ||
 		errors.Is(err, ErrWarehouseNotFound) ||
 		errors.Is(err, ErrSupplierNotFound) ||
+		errors.Is(err, ErrCustomerNotFound) ||
 		errors.Is(err, ErrTransferNotFound) ||
 		errors.Is(err, ErrProcurementNotFound) ||
-		errors.Is(err, ErrProductionRunNotFound)
+		errors.Is(err, ErrProductionRunNotFound) ||
+		errors.Is(err, ErrSubscriptionNotFound)
 }
 
 // IsConflict checks if the error is a conflict error

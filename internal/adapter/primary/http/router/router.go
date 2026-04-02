@@ -27,10 +27,12 @@ type Config struct {
 	InventoryHandler   *handler.InventoryHandler
 	ProcurementHandler *handler.ProcurementHandler
 	SaleHandler        *handler.SaleHandler
+	CustomerHandler    *handler.CustomerHandler
 	CollectionHandler  *handler.CollectionHandler
 	DashboardHandler      *handler.DashboardHandler
 	ServiceabilityHandler *handler.ServiceabilityHandler
 	PublicHandler         *handler.PublicHandler
+	SubscriptionHandler   *handler.SubscriptionHandler
 }
 
 // SetupRoutes configures all API routes
@@ -97,6 +99,17 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 				users.GET("/:id", cfg.UserHandler.Get)
 				users.PUT("/:id", cfg.UserHandler.Update)
 				users.DELETE("/:id", cfg.UserHandler.Delete)
+			}
+
+			// Customer routes
+			customers := protected.Group("/customers")
+			{
+				customers.GET("", cfg.CustomerHandler.List)
+				customers.POST("", cfg.AuthMiddleware.RequirePermission("customers.manage"), cfg.CustomerHandler.Create)
+				customers.POST("/bulk", cfg.AuthMiddleware.RequirePermission("customers.manage"), cfg.CustomerHandler.CreateBulk)
+				customers.GET("/:id", cfg.CustomerHandler.Get)
+				customers.PUT("/:id", cfg.CustomerHandler.Update)
+				customers.DELETE("/:id", cfg.CustomerHandler.Delete)
 			}
 
 			// Role routes
@@ -207,6 +220,18 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 			dashboard := protected.Group("/dashboard")
 			{
 				dashboard.GET("/stats", cfg.DashboardHandler.GetStats)
+			}
+
+			subscriptions := protected.Group("/subscriptions")
+			{
+				subscriptions.GET("", cfg.SubscriptionHandler.List)
+				subscriptions.POST("", cfg.SubscriptionHandler.Create)
+				subscriptions.GET("/roster", cfg.SubscriptionHandler.GetDailyRoster)
+				subscriptions.GET("/:id", cfg.SubscriptionHandler.Get)
+				subscriptions.PUT("/:id", cfg.SubscriptionHandler.Update)
+				subscriptions.PATCH("/:id/status", cfg.SubscriptionHandler.UpdateStatus)
+				subscriptions.DELETE("/:id", cfg.SubscriptionHandler.Delete)
+				subscriptions.POST("/:id/deliveries", cfg.SubscriptionHandler.RecordDelivery)
 			}
 
 			// Serviceability routes (Admin)

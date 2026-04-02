@@ -305,3 +305,43 @@ export interface PaginationMeta {
     total: number;
     total_pages: number;
 }
+
+// --- Customers ---
+export interface CustomerResponse {
+    id: number;
+    name: string;
+    phone: string;
+    email?: string;
+    address?: string;
+    gst_number?: string;
+    credit_limit: number;
+    payment_terms: string;
+    customer_category: string;
+    delivery_route?: string;
+    internal_notes?: string;
+    zone_id?: number;
+    zone_name: string;
+    latitude?: number;
+    longitude?: number;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateCustomerRequest {
+    name: string;
+    phone: string;
+    email?: string;
+    address?: string;
+    gst_number?: string;
+    credit_limit: number;
+    payment_terms?: string;
+    customer_category?: string;
+    delivery_route?: string;
+    internal_notes?: string;
+    zone_id?: number;
+    latitude?: number;
+    longitude?: number;
+}
+
+export interface UpdateCustomerRequest extends Partial<CreateCustomerRequest> {}
+
