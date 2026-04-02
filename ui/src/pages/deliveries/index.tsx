@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { Calendar, CheckCircle2, XCircle, AlertCircle, RefreshCw, Loader2, StickyNote, PlayCircle } from "lucide-react";
+import { Calendar, CheckCircle2, XCircle, AlertCircle, RefreshCw, Loader2, StickyNote } from "lucide-react";
 
 import { subscriptionsApi } from "@/api/subscriptions";
 import type { DailyRosterItemResponse } from "@/types/subscription";
