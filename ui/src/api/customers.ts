@@ -11,6 +11,9 @@ export const customerApi = {
     create: (data: CreateCustomerRequest) =>
         api.post<ApiResponse<CustomerResponse>>("/customers", data),
 
+    createBulk: (data: Partial<CustomerResponse>[]) =>
+        api.post<ApiResponse<{ total: number; success: number; failed: number; errors: any[] }>>("/customers/bulk", data),
+
     update: (id: number, data: UpdateCustomerRequest) =>
         api.put<ApiResponse<CustomerResponse>>(`/customers/${id}`, data),
 

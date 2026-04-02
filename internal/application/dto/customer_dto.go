@@ -53,3 +53,15 @@ type UpdateCustomerRequest struct {
 	Latitude         *float64 `json:"latitude"`
 	Longitude        *float64 `json:"longitude"`
 }
+
+type BulkImportError struct {
+	Row     int    `json:"row"`
+	Message string `json:"message"`
+}
+
+type BulkImportResponse struct {
+	Total       int               `json:"total"`
+	Success     int               `json:"success"`
+	Failed      int               `json:"failed"`
+	Errors      []BulkImportError `json:"errors,omitempty"`
+}

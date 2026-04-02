@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Eye, MapPin, Crosshair } from "lucide-react";
+import { Pencil, Trash2, Eye, MapPin, Crosshair, UploadCloud, PlusCircle } from "lucide-react";
 import { customerApi } from "@/api/customers";
 import { serviceabilityApi } from "@/api/serviceability";
+import { PermissionGuard } from "@/components/shared/permission-guard";
 import type { CustomerResponse, DeliveryZone } from "@/types";
 import { PageHeader } from "@/components/shared/page-header";
 import { DataTable, type Column } from "@/components/shared/data-table";
@@ -219,7 +220,20 @@ export default function CustomersPage() {
     return (
         <div>
             <PageHeader title="Customers (CRM)" description="Manage your client base, contact info, and operational terms.">
-                <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Add Customer</Button>
+                <div className="flex gap-2 relative">
+                    <Button 
+                        variant="outline" 
+                        className="bg-zinc-50 hover:bg-zinc-100/80"
+                        onClick={() => navigate("/customers/import")}
+                    >
+                        <UploadCloud className="mr-2 h-4 w-4" /> Import CSV
+                    </Button>
+                    <PermissionGuard requireAll={["customers.manage"]}>
+                        <Button onClick={openCreate}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Add Customer
+                        </Button>
+                    </PermissionGuard>
+                </div>
             </PageHeader>
 
             <DataTable

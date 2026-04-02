@@ -112,6 +112,52 @@ func (h *CustomerHandler) Create(c *gin.Context) {
 	response.Created(c, "Customer created", mapCustomerToResponse(created))
 }
 
+// @Summary      Bulk create customers
+// @Description  Creates a batch of new customers, handles partial success natively
+// @Tags         Customers
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request  body      []dto.CreateCustomerRequest  true  "Array of Customer details"
+// @Success      201      {object}  response.Response{data=dto.BulkImportResponse}
+// @Router       /customers/bulk [post]
+func (h *CustomerHandler) CreateBulk(c *gin.Context) {
+	var reqs []dto.CreateCustomerRequest
+	if err := c.ShouldBindJSON(&reqs); err != nil {
+		response.BadRequest(c, "Invalid request body array")
+		return
+	}
+
+	var entities []entity.Customer
+	for _, req := range reqs {
+		customer := entity.Customer{
+			Name:             req.Name,
+			Phone:            req.Phone,
+			Email:            req.Email,
+			Address:          req.Address,
+			GSTNumber:        req.GSTNumber,
+			CreditLimit:      req.CreditLimit,
+			PaymentTerms:     req.PaymentTerms,
+			CustomerCategory: req.CustomerCategory,
+			DeliveryRoute:    req.DeliveryRoute,
+			InternalNotes:    req.InternalNotes,
+			ZoneID:           req.ZoneID,
+			Latitude:         req.Latitude,
+			Longitude:        req.Longitude,
+		}
+		if customer.PaymentTerms == "" {
+			customer.PaymentTerms = "cash"
+		}
+		if customer.CustomerCategory == "" {
+			customer.CustomerCategory = "retail"
+		}
+		entities = append(entities, customer)
+	}
+
+	resp := h.customerService.CreateBulk(c.Request.Context(), entities)
+	response.Created(c, "Bulk process completed", resp)
+}
+
 // @Summary      Get customer
 // @Description  Returns a single customer by ID
 // @Tags         Customers

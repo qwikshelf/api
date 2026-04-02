@@ -34,3 +34,4 @@ go.work.sum
 *.pem
 bin/
 *.DS_Store
+*.csv

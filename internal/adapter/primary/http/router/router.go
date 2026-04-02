@@ -105,7 +105,8 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 			customers := protected.Group("/customers")
 			{
 				customers.GET("", cfg.CustomerHandler.List)
-				customers.POST("", cfg.CustomerHandler.Create)
+				customers.POST("", cfg.AuthMiddleware.RequirePermission("customers.manage"), cfg.CustomerHandler.Create)
+				customers.POST("/bulk", cfg.AuthMiddleware.RequirePermission("customers.manage"), cfg.CustomerHandler.CreateBulk)
 				customers.GET("/:id", cfg.CustomerHandler.Get)
 				customers.PUT("/:id", cfg.CustomerHandler.Update)
 				customers.DELETE("/:id", cfg.CustomerHandler.Delete)

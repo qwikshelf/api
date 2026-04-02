@@ -33,6 +33,7 @@ const PincodeImportPage = lazy(() => import("@/pages/serviceability/import"));
 const ServiceabilityMapPage = lazy(() => import("@/pages/serviceability/map"));
 const DeliveriesPage = lazy(() => import("@/pages/deliveries"));
 const SubscriptionsPage = lazy(() => import("@/pages/subscriptions"));
+const CustomerImportPage = lazy(() => import("@/pages/customers/import"));
 
 function PageLoader() {
     return (
@@ -61,6 +62,7 @@ function App() {
                             <Route path="/" element={<Suspense fallback={<PageLoader />}><DashboardPage /></Suspense>} />
                             <Route path="/pos" element={<Suspense fallback={<PageLoader />}><POSPage /></Suspense>} />
                             <Route path="/customers" element={<Suspense fallback={<PageLoader />}><CustomersPage /></Suspense>} />
+                            <Route path="/customers/import" element={<PermissionGuard requireAll={["customers.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><CustomerImportPage /></Suspense></PermissionGuard>} />
                             <Route path="/customers/:id" element={<Suspense fallback={<PageLoader />}><CustomerDetailPage /></Suspense>} />
                             <Route path="/categories" element={<PermissionGuard requireAll={["products.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><CategoriesPage /></Suspense></PermissionGuard>} />
                             <Route path="/warehouses" element={<PermissionGuard requireAll={["warehouses.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><WarehousesPage /></Suspense></PermissionGuard>} />
