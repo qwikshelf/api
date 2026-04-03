@@ -134,7 +134,7 @@ Resources:
       SecurityGroupIds: [!Ref WebServerSecurityGroup]
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
-          Ebs: { VolumeSize: 30, VolumeType: gp3, DeleteOnTermination: true }
+          Ebs: { VolumeSize: 100, VolumeType: gp3, DeleteOnTermination: true }
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
@@ -153,8 +153,8 @@ Resources:
           chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
           ln -s /usr/local/lib/docker/cli-plugins/docker-compose /usr/local/bin/docker-compose
           
-          # Optimization: Create 2GB Swap for Postgres stability
-          fallocate -l 2G /swapfile
+          # Optimization: Create 8GB Swap for Postgres stability
+          fallocate -l 8G /swapfile
           chmod 600 /swapfile
           mkswap /swapfile
           swapon /swapfile
