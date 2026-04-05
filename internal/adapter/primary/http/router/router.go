@@ -33,11 +33,13 @@ type Config struct {
 	ServiceabilityHandler *handler.ServiceabilityHandler
 	PublicHandler         *handler.PublicHandler
 	SubscriptionHandler   *handler.SubscriptionHandler
+	AuditMiddleware       *middleware.AuditMiddleware
 }
 
 // SetupRoutes configures all API routes
 func SetupRoutes(r *gin.Engine, cfg *Config) {
 	// Apply global middleware
+	r.Use(cfg.AuditMiddleware.Audit())
 	r.Use(middleware.RequestLogger())
 	r.Use(middleware.RecoveryLogger())
 	r.Use(middleware.CORS())

@@ -41,7 +41,10 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	result, err := h.authService.Login(c.Request.Context(), req.Username, req.Password)
+	deviceInfo := c.Request.UserAgent()
+	ipAddress := c.ClientIP()
+
+	result, err := h.authService.Login(c.Request.Context(), req.Username, req.Password, deviceInfo, ipAddress)
 	if err != nil {
 		switch err {
 		case domainErrors.ErrInvalidCredentials:
