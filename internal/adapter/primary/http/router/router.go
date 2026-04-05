@@ -80,7 +80,6 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/login", cfg.AuthHandler.Login)
-			auth.POST("/logout", cfg.AuthHandler.Logout)
 			auth.POST("/refresh", cfg.AuthHandler.Refresh)
 		}
 
@@ -88,8 +87,9 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 		protected := v1.Group("")
 		protected.Use(cfg.AuthMiddleware.Authenticate())
 		{
-			// Auth profile
+			// Auth profile and logout
 			protected.GET("/auth/me", cfg.AuthHandler.Me)
+			protected.POST("/auth/logout", cfg.AuthHandler.Logout)
 
 			// User routes
 			users := protected.Group("/users")

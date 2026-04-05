@@ -105,7 +105,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	subscriptionHandler := handler.NewSubscriptionHandler(subscriptionService)
 
 	// Initialize middleware
-	authMiddleware := middleware.NewAuthMiddleware(cfg.JWT.Secret)
+	authMiddleware := middleware.NewAuthMiddleware(cfg.JWT.Secret, authService)
 
 	// Setup router
 	engine := gin.New()
