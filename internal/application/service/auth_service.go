@@ -235,6 +235,35 @@ func (s *AuthService) ValidateToken(tokenString string) (*Claims, error) {
 	return claims, nil
 }
 
+// Logout revokes the current session in the database
+func (s *AuthService) Logout(ctx context.Context, sessionID string) error {
+	if sessionID == "" {
+		return nil
+	}
+	
+	session, err := s.sessionRepo.GetByID(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+	
+	session.IsRevoked = true
+	return s.sessionRepo.Update(ctx, session)
+}
+
+// IsSessionValid checks if the session is not revoked and not expired
+func (s *AuthService) IsSessionValid(ctx context.Context, sessionID string) (bool, error) {
+	if sessionID == "" {
+		return false, nil
+	}
+	
+	session, err := s.sessionRepo.GetByID(ctx, sessionID)
+	if err != nil {
+		return false, err
+	}
+	
+	return session.IsValid(), nil
+}
+
 // GetUserByID retrieves a user by ID and their permissions (for /me endpoint)
 func (s *AuthService) GetUserByID(ctx context.Context, id int64) (*entity.User, []entity.Permission, error) {
 	user, err := s.userRepo.GetByID(ctx, id)
