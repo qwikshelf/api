@@ -57,7 +57,7 @@ type LoginResult struct {
 }
 
 // Login authenticates a user and returns a JWT token
-func (s *AuthService) Login(ctx context.Context, username, password string) (*LoginResult, error) {
+func (s *AuthService) Login(ctx context.Context, username, password, deviceInfo, ipAddress string) (*LoginResult, error) {
 	// Get user by username
 	user, err := s.userRepo.GetByUsername(ctx, username)
 
@@ -92,6 +92,8 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (*Lo
 	session := &entity.UserSession{
 		UserID:           user.ID,
 		RefreshTokenHash: refreshHash,
+		DeviceInfo:       deviceInfo,
+		IPAddress:        ipAddress,
 		ExpiresAt:        refreshExpiresAt,
 	}
 
