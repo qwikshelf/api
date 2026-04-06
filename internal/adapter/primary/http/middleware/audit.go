@@ -28,6 +28,13 @@ func (m *AuditMiddleware) Audit() gin.HandlerFunc {
 		// 1. Capture metadata
 		method := c.Request.Method
 		path := c.Request.URL.Path
+
+		// Skip audit for OPTIONS requests (CORS preflight) and health checks
+		if method == "OPTIONS" || path == "/health" || path == "/favicon.ico" {
+			c.Next()
+			return
+		}
+
 		query := c.Request.URL.RawQuery
 		ip := c.ClientIP()
 		ua := c.Request.UserAgent()
