@@ -53,6 +53,10 @@ var (
 
 	// Subscription errors
 	ErrSubscriptionNotFound = errors.New("subscription not found")
+
+	// Expense errors
+	ErrExpenseCategoryNotFound = errors.New("expense category not found")
+	ErrExpenseNotFound         = errors.New("expense not found")
 )
 
 // IsNotFound checks if the error is a not found error
@@ -70,7 +74,9 @@ func IsNotFound(err error) bool {
 		errors.Is(err, ErrTransferNotFound) ||
 		errors.Is(err, ErrProcurementNotFound) ||
 		errors.Is(err, ErrProductionRunNotFound) ||
-		errors.Is(err, ErrSubscriptionNotFound)
+		errors.Is(err, ErrSubscriptionNotFound) ||
+		errors.Is(err, ErrExpenseCategoryNotFound) ||
+		errors.Is(err, ErrExpenseNotFound)
 }
 
 // IsConflict checks if the error is a conflict error

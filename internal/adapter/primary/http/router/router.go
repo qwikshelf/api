@@ -34,6 +34,7 @@ type Config struct {
 	PublicHandler         *handler.PublicHandler
 	SubscriptionHandler   *handler.SubscriptionHandler
 	AuditMiddleware       *middleware.AuditMiddleware
+	ExpenseHandler        *handler.ExpenseHandler
 }
 
 // SetupRoutes configures all API routes
@@ -130,15 +131,21 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 				permissions.GET("", cfg.AuthMiddleware.RequirePermission("roles.view"), cfg.RoleHandler.ListPermissions)
 			}
 
-			// Warehouse routes
-			warehouses := protected.Group("/warehouses")
+			// Expense routes
+			expenses := protected.Group("/expenses")
 			{
-				warehouses.GET("", cfg.WarehouseHandler.List)
-				warehouses.POST("", cfg.WarehouseHandler.Create)
-				warehouses.GET("/:id", cfg.WarehouseHandler.Get)
-				warehouses.PUT("/:id", cfg.WarehouseHandler.Update)
-				warehouses.DELETE("/:id", cfg.WarehouseHandler.Delete)
+				expenses.GET("", cfg.AuthMiddleware.RequirePermission("expenses.view"), cfg.ExpenseHandler.ListExpenses)
+				expenses.POST("", cfg.AuthMiddleware.RequirePermission("expenses.create"), cfg.ExpenseHandler.CreateExpense)
+				expenses.DELETE("/:id", cfg.AuthMiddleware.RequirePermission("expenses.delete"), cfg.ExpenseHandler.DeleteExpense)
+
+				categories := expenses.Group("/categories")
+				{
+					categories.GET("", cfg.AuthMiddleware.RequirePermission("expenses.view"), cfg.ExpenseHandler.ListCategories)
+					categories.POST("", cfg.AuthMiddleware.RequirePermission("expense_categories.manage"), cfg.ExpenseHandler.CreateCategory)
+				}
 			}
+
+			// Warehouse routes
 
 			// Supplier routes
 			suppliers := protected.Group("/suppliers")
