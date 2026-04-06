@@ -21,6 +21,7 @@ import {
     UserSquare,
     CalendarDays,
     ListTodo,
+    Receipt,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import {
@@ -54,6 +55,7 @@ const navItems = [
     { title: "Products", icon: Package, href: "/products", permission: "products.view" },
     { title: "Suppliers", icon: Truck, href: "/suppliers", permission: "suppliers.view" },
     { title: "Inventory", icon: BoxesIcon, href: "/inventory", permission: "inventory.view" },
+    { title: "Expenses", icon: Receipt, href: "/expenses", permission: "expenses.view" },
     { title: "Sales History", icon: History, href: "/sales/history", permission: "sales.view" },
     { title: "Collections", icon: ClipboardList, href: "/collections", permission: "procurement.manage" }, // Map collection to procurement or related permission
     { title: "Procurements", icon: ShoppingCart, href: "/procurements", permission: "procurement.view" },

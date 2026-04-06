@@ -66,6 +66,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 	pincodeRepo := postgres.NewPincodeRepository(db)
 	subscriptionRepo := postgres.NewSubscriptionRepository(db)
 	auditRepo := postgres.NewAuditLogRepository(db)
+	expenseRepo := postgres.NewPostgresExpenseRepository(db)
+	expenseCategoryRepo := postgres.NewPostgresExpenseCategoryRepository(db)
 
 	// Initialize services
 	hasher := bcrypt.NewHasher()
@@ -86,6 +88,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	deliveryService := service.NewDeliveryService(pincodeRepo)
 	subscriptionService := service.NewSubscriptionService(subscriptionRepo)
 	auditService := service.NewAuditService(auditRepo)
+	expenseService := service.NewExpenseService(expenseRepo, expenseCategoryRepo)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService)
@@ -105,6 +108,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	serviceabilityHandler := handler.NewServiceabilityHandler(deliveryService)
 	publicHandler := handler.NewPublicHandler(productVariantService, categoryService, saleService, userService, authService, deliveryService)
 	subscriptionHandler := handler.NewSubscriptionHandler(subscriptionService)
+	expenseHandler := handler.NewExpenseHandler(auditService, expenseService)
 
 	// Initialize middleware
 	authMiddleware := middleware.NewAuthMiddleware(cfg.JWT.Secret, authService)
@@ -134,6 +138,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 		PublicHandler:         publicHandler,
 		SubscriptionHandler:   subscriptionHandler,
 		AuditMiddleware:       auditMiddleware,
+		ExpenseHandler:        expenseHandler,
 	})
 
 	return &App{

@@ -14,8 +14,9 @@ type Warehouse struct {
 	ID      int64         `json:"id"`
 	Name    string        `json:"name"`
 	Type    WarehouseType `json:"type"`
-	Address string        `json:"address,omitempty"`
-	ZoneID  *int64        `json:"zone_id,omitempty"`
+	Address  string        `json:"address,omitempty"`
+	ZoneID   *int64        `json:"zone_id,omitempty"`
+	IsActive bool          `json:"is_active"`
 }
 
 // IsValid checks if the warehouse type is valid
