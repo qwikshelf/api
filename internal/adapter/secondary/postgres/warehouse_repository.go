@@ -35,13 +35,13 @@ func (r *WarehouseRepository) Create(ctx context.Context, warehouse *entity.Ware
 // GetByID retrieves a warehouse by ID
 func (r *WarehouseRepository) GetByID(ctx context.Context, id int64) (*entity.Warehouse, error) {
 	query := `
-		SELECT w.id, w.name, w.type, w.address, dz.id as zone_id 
+		SELECT w.id, w.name, w.type, w.address, dz.id as zone_id, w.is_active
 		FROM warehouses w
 		LEFT JOIN delivery_zones dz ON dz.warehouse_id = w.id
 		WHERE w.id = $1
 	`
 	w := &entity.Warehouse{}
-	err := r.db.Pool.QueryRow(ctx, query, id).Scan(&w.ID, &w.Name, &w.Type, &w.Address, &w.ZoneID)
+	err := r.db.Pool.QueryRow(ctx, query, id).Scan(&w.ID, &w.Name, &w.Type, &w.Address, &w.ZoneID, &w.IsActive)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, domainErrors.ErrWarehouseNotFound
 	}
@@ -54,9 +54,10 @@ func (r *WarehouseRepository) GetByID(ctx context.Context, id int64) (*entity.Wa
 // List retrieves all warehouses
 func (r *WarehouseRepository) List(ctx context.Context) ([]entity.Warehouse, error) {
 	query := `
-		SELECT w.id, w.name, w.type, w.address, dz.id as zone_id 
+		SELECT w.id, w.name, w.type, w.address, dz.id as zone_id, w.is_active
 		FROM warehouses w
 		LEFT JOIN delivery_zones dz ON dz.warehouse_id = w.id
+		WHERE w.is_active = TRUE
 		ORDER BY w.id
 	`
 	rows, err := r.db.Pool.Query(ctx, query)
@@ -68,7 +69,7 @@ func (r *WarehouseRepository) List(ctx context.Context) ([]entity.Warehouse, err
 	var warehouses []entity.Warehouse
 	for rows.Next() {
 		var w entity.Warehouse
-		if err := rows.Scan(&w.ID, &w.Name, &w.Type, &w.Address, &w.ZoneID); err != nil {
+		if err := rows.Scan(&w.ID, &w.Name, &w.Type, &w.Address, &w.ZoneID, &w.IsActive); err != nil {
 			return nil, err
 		}
 		warehouses = append(warehouses, w)
@@ -79,10 +80,10 @@ func (r *WarehouseRepository) List(ctx context.Context) ([]entity.Warehouse, err
 // ListByType retrieves warehouses by type
 func (r *WarehouseRepository) ListByType(ctx context.Context, warehouseType entity.WarehouseType) ([]entity.Warehouse, error) {
 	query := `
-		SELECT w.id, w.name, w.type, w.address, dz.id as zone_id 
+		SELECT w.id, w.name, w.type, w.address, dz.id as zone_id, w.is_active
 		FROM warehouses w
 		LEFT JOIN delivery_zones dz ON dz.warehouse_id = w.id
-		WHERE w.type = $1 
+		WHERE w.type = $1 AND w.is_active = TRUE
 		ORDER BY w.id
 	`
 	rows, err := r.db.Pool.Query(ctx, query, warehouseType)
@@ -94,7 +95,7 @@ func (r *WarehouseRepository) ListByType(ctx context.Context, warehouseType enti
 	var warehouses []entity.Warehouse
 	for rows.Next() {
 		var w entity.Warehouse
-		if err := rows.Scan(&w.ID, &w.Name, &w.Type, &w.Address, &w.ZoneID); err != nil {
+		if err := rows.Scan(&w.ID, &w.Name, &w.Type, &w.Address, &w.ZoneID, &w.IsActive); err != nil {
 			return nil, err
 		}
 		warehouses = append(warehouses, w)
@@ -117,7 +118,7 @@ func (r *WarehouseRepository) Update(ctx context.Context, warehouse *entity.Ware
 
 // Delete deletes a warehouse
 func (r *WarehouseRepository) Delete(ctx context.Context, id int64) error {
-	query := `DELETE FROM warehouses WHERE id = $1`
+	query := `UPDATE warehouses SET is_active = FALSE WHERE id = $1`
 	result, err := r.db.Pool.Exec(ctx, query, id)
 	if err != nil {
 		return err

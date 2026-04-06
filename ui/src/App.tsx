@@ -34,6 +34,8 @@ const ServiceabilityMapPage = lazy(() => import("@/pages/serviceability/map"));
 const DeliveriesPage = lazy(() => import("@/pages/deliveries"));
 const SubscriptionsPage = lazy(() => import("@/pages/subscriptions"));
 const CustomerImportPage = lazy(() => import("@/pages/customers/import"));
+const ExpensesPage = lazy(() => import("@/pages/expenses"));
+const ExpenseCategoriesPage = lazy(() => import("@/pages/expenses/categories"));
 
 function PageLoader() {
     return (
@@ -73,6 +75,8 @@ function App() {
                             <Route path="/suppliers" element={<PermissionGuard requireAll={["suppliers.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><SuppliersPage /></Suspense></PermissionGuard>} />
                             <Route path="/suppliers/:id" element={<PermissionGuard requireAll={["suppliers.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><SupplierDetailPage /></Suspense></PermissionGuard>} />
                             <Route path="/inventory" element={<PermissionGuard requireAll={["inventory.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><InventoryPage /></Suspense></PermissionGuard>} />
+                            <Route path="/expenses" element={<PermissionGuard requireAll={["expenses.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ExpensesPage /></Suspense></PermissionGuard>} />
+                            <Route path="/expenses/categories" element={<PermissionGuard requireAll={["expense_categories.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ExpenseCategoriesPage /></Suspense></PermissionGuard>} />
                             <Route path="/procurements" element={<PermissionGuard requireAll={["procurement.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ProcurementsPage /></Suspense></PermissionGuard>} />
                             <Route path="/procurements/new" element={<PermissionGuard requireAll={["procurement.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><CreateProcurementPage /></Suspense></PermissionGuard>} />
                             <Route path="/procurements/:id" element={<PermissionGuard requireAll={["procurement.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ProcurementDetailPage /></Suspense></PermissionGuard>} />

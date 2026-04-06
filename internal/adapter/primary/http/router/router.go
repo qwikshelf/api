@@ -146,6 +146,14 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 			}
 
 			// Warehouse routes
+			warehouses := protected.Group("/warehouses")
+			{
+				warehouses.GET("", cfg.AuthMiddleware.RequirePermission("warehouses.view"), cfg.WarehouseHandler.List)
+				warehouses.POST("", cfg.AuthMiddleware.RequirePermission("warehouses.manage"), cfg.WarehouseHandler.Create)
+				warehouses.GET("/:id", cfg.AuthMiddleware.RequirePermission("warehouses.view"), cfg.WarehouseHandler.Get)
+				warehouses.PUT("/:id", cfg.AuthMiddleware.RequirePermission("warehouses.manage"), cfg.WarehouseHandler.Update)
+				warehouses.DELETE("/:id", cfg.AuthMiddleware.RequirePermission("warehouses.manage"), cfg.WarehouseHandler.Delete)
+			}
 
 			// Supplier routes
 			suppliers := protected.Group("/suppliers")
