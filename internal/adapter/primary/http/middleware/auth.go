@@ -7,24 +7,30 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 
+	"github.com/qwikshelf/api/internal/application/service"
 	"github.com/qwikshelf/api/pkg/response"
 )
 
 // AuthMiddleware handles JWT authentication
 type AuthMiddleware struct {
-	secret string
+	secret      string
+	authService *service.AuthService
 }
 
 // NewAuthMiddleware creates a new auth middleware
-func NewAuthMiddleware(secret string) *AuthMiddleware {
-	return &AuthMiddleware{secret: secret}
+func NewAuthMiddleware(secret string, authService *service.AuthService) *AuthMiddleware {
+	return &AuthMiddleware{
+		secret:      secret,
+		authService: authService,
+	}
 }
 
 // Claims represents JWT claims
 type Claims struct {
-	UserID   int64  `json:"user_id"`
-	Username string `json:"username"`
-	RoleID   int64  `json:"role_id"`
+	UserID    int64  `json:"user_id"`
+	Username  string `json:"username"`
+	RoleID    int64  `json:"role_id"`
+	SessionID string `json:"jti,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -48,7 +54,7 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 
 		tokenString := parts[1]
 
-		// Parse and validate token
+		// Parse and validate token signature
 		token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, jwt.ErrSignatureInvalid
@@ -69,10 +75,22 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 			return
 		}
 
-		// Set user info in context
+		// Option 2: Stateful Session Check
+		// Check if the session is still valid in the database
+		if claims.SessionID != "" && m.authService != nil {
+			valid, err := m.authService.IsSessionValid(c.Request.Context(), claims.SessionID)
+			if err != nil || !valid {
+				response.Unauthorized(c, "Session has been revoked or expired")
+				c.Abort()
+				return
+			}
+		}
+
+		// Set user info and session ID in context
 		c.Set("user_id", claims.UserID)
 		c.Set("username", claims.Username)
 		c.Set("role_id", claims.RoleID)
+		c.Set("session_id", claims.SessionID)
 
 		c.Next()
 	}
@@ -148,9 +166,19 @@ func (m *AuthMiddleware) OptionalAuth() gin.HandlerFunc {
 
 		claims, ok := token.Claims.(*Claims)
 		if ok && token.Valid {
+			// Check if the session is still valid in the database
+			if claims.SessionID != "" && m.authService != nil {
+				valid, err := m.authService.IsSessionValid(c.Request.Context(), claims.SessionID)
+				if err != nil || !valid {
+					c.Next()
+					return
+				}
+			}
+
 			c.Set("user_id", claims.UserID)
 			c.Set("username", claims.Username)
 			c.Set("role_id", claims.RoleID)
+			c.Set("session_id", claims.SessionID)
 		}
 
 		c.Next()

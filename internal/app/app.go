@@ -65,6 +65,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	collectionRepo := postgres.NewCollectionRepository(db)
 	pincodeRepo := postgres.NewPincodeRepository(db)
 	subscriptionRepo := postgres.NewSubscriptionRepository(db)
+	auditRepo := postgres.NewAuditLogRepository(db)
 
 	// Initialize services
 	hasher := bcrypt.NewHasher()
@@ -84,6 +85,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	dashboardService := service.NewDashboardService(db)
 	deliveryService := service.NewDeliveryService(pincodeRepo)
 	subscriptionService := service.NewSubscriptionService(subscriptionRepo)
+	auditService := service.NewAuditService(auditRepo)
 
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authService)
@@ -105,7 +107,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 	subscriptionHandler := handler.NewSubscriptionHandler(subscriptionService)
 
 	// Initialize middleware
-	authMiddleware := middleware.NewAuthMiddleware(cfg.JWT.Secret)
+	authMiddleware := middleware.NewAuthMiddleware(cfg.JWT.Secret, authService)
+	auditMiddleware := middleware.NewAuditMiddleware(auditService)
 
 	// Setup router
 	engine := gin.New()
@@ -130,6 +133,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 		ServiceabilityHandler: serviceabilityHandler,
 		PublicHandler:         publicHandler,
 		SubscriptionHandler:   subscriptionHandler,
+		AuditMiddleware:       auditMiddleware,
 	})
 
 	return &App{

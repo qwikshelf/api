@@ -41,7 +41,10 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	result, err := h.authService.Login(c.Request.Context(), req.Username, req.Password)
+	deviceInfo := c.Request.UserAgent()
+	ipAddress := c.ClientIP()
+
+	result, err := h.authService.Login(c.Request.Context(), req.Username, req.Password, deviceInfo, ipAddress)
 	if err != nil {
 		switch err {
 		case domainErrors.ErrInvalidCredentials:
@@ -94,12 +97,21 @@ func (h *AuthHandler) Login(c *gin.Context) {
 
 // Logout handles user logout
 // @Summary      User logout
-// @Description  Logout the current user (client-side token removal)
+// @Description  Logout the current user and invalidate their session
 // @Tags         Auth
 // @Produce      json
+// @Security     BearerAuth
 // @Success      200  {object}  response.Response
 // @Router       /auth/logout [post]
 func (h *AuthHandler) Logout(c *gin.Context) {
+	sessionID, _ := c.Get("session_id")
+	if sid, ok := sessionID.(string); ok && sid != "" {
+		if err := h.authService.Logout(c.Request.Context(), sid); err != nil {
+			response.InternalErrorDebug(c, "Failed to revoke session", err)
+			return
+		}
+	}
+
 	response.OK(c, "Logout successful", nil)
 }
 

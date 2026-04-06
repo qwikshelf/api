@@ -57,7 +57,7 @@ type LoginResult struct {
 }
 
 // Login authenticates a user and returns a JWT token
-func (s *AuthService) Login(ctx context.Context, username, password string) (*LoginResult, error) {
+func (s *AuthService) Login(ctx context.Context, username, password, deviceInfo, ipAddress string) (*LoginResult, error) {
 	// Get user by username
 	user, err := s.userRepo.GetByUsername(ctx, username)
 
@@ -92,6 +92,8 @@ func (s *AuthService) Login(ctx context.Context, username, password string) (*Lo
 	session := &entity.UserSession{
 		UserID:           user.ID,
 		RefreshTokenHash: refreshHash,
+		DeviceInfo:       deviceInfo,
+		IPAddress:        ipAddress,
 		ExpiresAt:        refreshExpiresAt,
 	}
 
@@ -233,6 +235,35 @@ func (s *AuthService) ValidateToken(tokenString string) (*Claims, error) {
 	}
 
 	return claims, nil
+}
+
+// Logout revokes the current session in the database
+func (s *AuthService) Logout(ctx context.Context, sessionID string) error {
+	if sessionID == "" {
+		return nil
+	}
+	
+	session, err := s.sessionRepo.GetByID(ctx, sessionID)
+	if err != nil {
+		return err
+	}
+	
+	session.IsRevoked = true
+	return s.sessionRepo.Update(ctx, session)
+}
+
+// IsSessionValid checks if the session is not revoked and not expired
+func (s *AuthService) IsSessionValid(ctx context.Context, sessionID string) (bool, error) {
+	if sessionID == "" {
+		return false, nil
+	}
+	
+	session, err := s.sessionRepo.GetByID(ctx, sessionID)
+	if err != nil {
+		return false, err
+	}
+	
+	return session.IsValid(), nil
 }
 
 // GetUserByID retrieves a user by ID and their permissions (for /me endpoint)
