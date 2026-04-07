@@ -54,7 +54,7 @@ func (r *WarehouseRepository) GetByID(ctx context.Context, id int64) (*entity.Wa
 // List retrieves all warehouses
 func (r *WarehouseRepository) List(ctx context.Context) ([]entity.Warehouse, error) {
 	query := `
-		SELECT w.id, w.name, w.type, w.address, dz.id as zone_id, w.is_active
+		SELECT DISTINCT ON (w.id) w.id, w.name, w.type, w.address, dz.id as zone_id, w.is_active
 		FROM warehouses w
 		LEFT JOIN delivery_zones dz ON dz.warehouse_id = w.id
 		WHERE w.is_active = TRUE
@@ -80,7 +80,7 @@ func (r *WarehouseRepository) List(ctx context.Context) ([]entity.Warehouse, err
 // ListByType retrieves warehouses by type
 func (r *WarehouseRepository) ListByType(ctx context.Context, warehouseType entity.WarehouseType) ([]entity.Warehouse, error) {
 	query := `
-		SELECT w.id, w.name, w.type, w.address, dz.id as zone_id, w.is_active
+		SELECT DISTINCT ON (w.id) w.id, w.name, w.type, w.address, dz.id as zone_id, w.is_active
 		FROM warehouses w
 		LEFT JOIN delivery_zones dz ON dz.warehouse_id = w.id
 		WHERE w.type = $1 AND w.is_active = TRUE
