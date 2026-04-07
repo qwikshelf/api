@@ -82,8 +82,8 @@ tools:
 	@echo "Installing development tools..."
 	@go install github.com/air-verse/air@latest
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-	@go install golang.org/x/tools/cmd/goimports@latest
-	@go install -tags 'postgres,file' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+	go install golang.org/x/tools/cmd/goimports@latest
+	@go install github.com/rubenv/sql-migrate/...@latest
 	@go install github.com/swaggo/swag/cmd/swag@latest
 	@echo "Tools installed successfully"
 
@@ -104,17 +104,17 @@ test-cover:
 .PHONY: migrate-up migrate-down migrate-create migrate-force
 
 migrate-up:
-	@migrate -path $(MIGRATE_PATH) -database "$(DATABASE_URL)" up
+	@sql-migrate up -env=development
 
 migrate-down:
-	@migrate -path $(MIGRATE_PATH) -database "$(DATABASE_URL)" down 1
+	@sql-migrate down -env=development -limit=1
 
 migrate-create:
-	@migrate create -ext sql -dir $(MIGRATE_PATH) -seq $(NAME)
-	@echo "Created migration: $(NAME)"
+	@sql-migrate new -env=development $(NAME)
+	@echo "Created migration: migrations/*_$(NAME).sql"
 
-migrate-force:
-	@migrate -path $(MIGRATE_PATH) -database "$(DATABASE_URL)" force $(VERSION)
+migrate-status: build
+	@$(BUILD_DIR)/$(APP_NAME) --migrate-status
 
 # --- Docker & Deployment ---
 

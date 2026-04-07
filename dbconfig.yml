@@ -1,0 +1,5 @@
+development:
+  dialect: postgres
+  datasource: "host=localhost port=5432 user=admin password=admin dbname=api sslmode=disable"
+  dir: migrations
+  table: gorp_migrations
