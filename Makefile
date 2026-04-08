@@ -117,6 +117,10 @@ migrate-create:
 	@sql-migrate new -env=$(MIGRATE_ENV) $(NAME)
 	@echo "Created migration: migrations/*_$(NAME).sql"
 
+docker-migrate-up:
+	@echo "Running migrations inside the container..."
+	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) exec -T api sql-migrate up -env=$(MIGRATE_ENV)
+
 migrate-status: build
 	@$(BUILD_DIR)/$(APP_NAME) --migrate-status
 
@@ -128,7 +132,7 @@ docker-build:
 
 up:
 	@echo "Starting containers..."
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) up -d
+	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) up -d --build
 
 start: up
 

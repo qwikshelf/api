@@ -17,13 +17,11 @@ git fetch origin main
 git reset --hard origin main
 
 echo "🏗️ Building and restarting containers..."
-# Use the Makefile for consistency
-make build
-
-echo "🔄 Running database migrations..."
-make migrate-up
-
+# Use the Makefile for consistency. This now automatically rebuilding images.
 make up
+
+echo "🔄 Running database migrations inside container..."
+make docker-migrate-up
 
 echo "✅ Deployment successful!"
 docker ps
