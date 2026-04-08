@@ -14,7 +14,7 @@ cd "$PROJECT_ROOT"
 
 echo "📥 Pulling latest changes from main..."
 git fetch origin main
-git reset --hard origin main
+git reset --hard origin/main
 
 echo "🏗️ Building and restarting containers..."
 # Use the Makefile for consistency. This now automatically rebuilding images.
