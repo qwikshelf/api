@@ -161,6 +161,22 @@ func (a *App) Run() error {
 
 	// Start server
 	go func() {
+		// Log migration status
+		if stats, current, dirty, err := a.CheckMigrations(context.Background()); err == nil {
+			latest := 0
+			if len(stats) > 0 {
+				latest = stats[len(stats)-1].Version
+			}
+			msg := logger.Info().Int("current_version", current).Int("latest_available", latest)
+			if dirty {
+				msg.Msg("Database migration status: DIRTY (Fix required)")
+			} else if current < latest {
+				msg.Msg("Database migration status: PENDING (Run 'make migrate-up')")
+			} else {
+				msg.Msg("Database migration status: UP-TO-DATE")
+			}
+		}
+
 		logger.Info().Int("port", a.cfg.App.Port).Str("name", a.cfg.App.Name).Msg("Starting server")
 		logger.Info().Str("url", fmt.Sprintf("http://localhost:%d/swagger/index.html", a.cfg.App.Port)).Msg("Swagger UI")
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {

@@ -19,6 +19,10 @@ git reset --hard origin main
 echo "🏗️ Building and restarting containers..."
 # Use the Makefile for consistency
 make build
+
+echo "🔄 Running database migrations..."
+make migrate-up
+
 make up
 
 echo "✅ Deployment successful!"

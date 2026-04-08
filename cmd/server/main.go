@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
+	"flag"
 	"log"
+	"os"
 
 	"github.com/joho/godotenv"
 
@@ -34,7 +37,11 @@ import (
 // @description                 Enter your JWT token with the `Bearer ` prefix, e.g. `Bearer eyJhbGci...`
 
 func main() {
-	// Load .env file in development
+	// 1. Flag parsing
+	showStatus := flag.Bool("migrate-status", false, "Show database migration status and exit")
+	flag.Parse()
+
+	// 2. Load .env file in development
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found, using environment variables")
 	}
@@ -60,6 +67,14 @@ func main() {
 	application, err := app.NewApp(cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize application: %v", err)
+	}
+
+	// 3. Handle status check if requested
+	if *showStatus {
+		if err := application.PrintMigrationStatus(context.Background()); err != nil {
+			log.Fatalf("Migration status check failed: %v", err)
+		}
+		os.Exit(0)
 	}
 
 	if err := application.Run(); err != nil {
