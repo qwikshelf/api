@@ -15,9 +15,9 @@ CREATE INDEX idx_serviceable_pincodes_lookup ON serviceable_pincodes(pincode) WH
 -- Seed with some initial data (example local pincodes)
 INSERT INTO serviceable_pincodes (pincode, warehouse_id, is_active, min_order_amount, delivery_charge, estimated_delivery_text)
 VALUES 
-('110001', 1, true, 299.00, 20.00, 'Within 3 Hours'),
-('110002', 1, true, 299.00, 20.00, 'Within 3 Hours'),
-('110003', 1, true, 499.00, 0.00, 'Same Day');
+('110001', NULL, true, 299.00, 20.00, 'Within 3 Hours'),
+('110002', NULL, true, 299.00, 20.00, 'Within 3 Hours'),
+('110003', NULL, true, 499.00, 0.00, 'Same Day');
 
 -- +migrate Down
 DROP TABLE IF EXISTS serviceable_pincodes;
