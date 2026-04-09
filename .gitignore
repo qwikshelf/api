@@ -32,6 +32,11 @@ go.work.sum
 # .vscode/
 *.log
 *.pem
-bin/
 *.DS_Store
 *.csv
+
+# Production Persistence
+deploy/proxy/data/
+deploy/proxy/letsencrypt/
+logs/
+bin/
