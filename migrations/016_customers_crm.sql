@@ -19,16 +19,17 @@ CREATE TABLE customers (
 );
 
 -- Migrate existing users that are customers to the new customers table, preserving IDs if possible
+-- Handle schema differences: users only has username, not first/last name
 INSERT INTO customers (id, name, phone, email, created_at, updated_at)
 SELECT u.id, 
-       COALESCE(NULLIF(TRIM(u.first_name || ' ' || u.last_name), ''), u.username, 'Unknown Customer'), 
-       COALESCE(NULLIF(TRIM(u.phone), ''), 'N/A-' || u.id), 
-       u.email, 
+       u.username, 
+       'N/A-' || u.id, 
+       'none@qwikshelf.local', 
        u.created_at, 
-       u.updated_at
+       u.created_at
 FROM users u
 JOIN roles r ON u.role_id = r.id
-WHERE r.slug = 'customer'
+WHERE r.name = 'Customer'
 ON CONFLICT (phone) DO NOTHING;
 
 -- Sync the sequence so new inserts don't collide
@@ -42,6 +43,8 @@ ALTER TABLE sales DROP CONSTRAINT IF EXISTS sales_customer_id_fkey;
 ALTER TABLE sales ADD CONSTRAINT sales_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL;
 
 -- +migrate Down
+-- Reverting this is complex if data is moved, so we just drop the table 
+-- but try to preserve sales integrity if possible
 ALTER TABLE sales DROP CONSTRAINT IF EXISTS sales_customer_id_fkey;
 ALTER TABLE sales ADD CONSTRAINT sales_customer_id_fkey FOREIGN KEY (customer_id) REFERENCES users(id) ON DELETE SET NULL;
 
