@@ -9,6 +9,7 @@ ALTER TABLE suppliers ADD COLUMN geom geometry(Point, 4326);
 CREATE INDEX idx_suppliers_geom ON suppliers USING GIST (geom);
 CREATE INDEX idx_suppliers_zone_id ON suppliers(zone_id);
 
+-- +migrate StatementBegin
 -- Trigger function to update geometry from lat/lon
 CREATE OR REPLACE FUNCTION update_supplier_geom() 
 RETURNS TRIGGER AS $$
@@ -26,6 +27,7 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER trg_update_supplier_geom
 BEFORE INSERT OR UPDATE OF latitude, longitude ON suppliers
 FOR EACH ROW EXECUTE FUNCTION update_supplier_geom();
+-- +migrate StatementEnd
 
 -- +migrate Down
 DROP TRIGGER IF EXISTS trg_update_supplier_geom ON suppliers;

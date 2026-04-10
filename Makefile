@@ -13,8 +13,14 @@ DEPLOY_DIR := deploy
 COMPOSE_FILE := $(DEPLOY_DIR)/docker-compose.yml
 PROJECT_NAME := qwikshelf-ws
 
-# Database URL construction for migrations
+# Database URL construction for migrations (Legacy for direct psql access)
 DATABASE_URL := postgres://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=$(DB_SSL_MODE)
+
+# Migration Environment
+MIGRATE_ENV ?= $(APP_ENV)
+ifeq ($(MIGRATE_ENV),)
+	MIGRATE_ENV := development
+endif
 
 # Default target
 .PHONY: help
@@ -101,22 +107,22 @@ test-cover:
 
 # --- Database & Migrations ---
 
-.PHONY: migrate-up migrate-down migrate-create migrate-force
-
 migrate-up:
-	@sql-migrate up -env=development
+	@sql-migrate up -env=$(MIGRATE_ENV)
 
 migrate-down:
-	@sql-migrate down -env=development -limit=1
+	@sql-migrate down -env=$(MIGRATE_ENV) -limit=1
 
 migrate-create:
-	@sql-migrate new -env=development $(NAME)
+	@sql-migrate new -env=$(MIGRATE_ENV) $(NAME)
 	@echo "Created migration: migrations/*_$(NAME).sql"
+
+docker-migrate-up:
+	@echo "Running migrations inside the container..."
+	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) exec -T api sql-migrate up -env=$(MIGRATE_ENV)
 
 migrate-status: build
 	@$(BUILD_DIR)/$(APP_NAME) --migrate-status
-
-# --- Docker & Deployment ---
 
 .PHONY: docker-build up down start stop logs ps shell-api shell-db deploy clean
 
@@ -126,7 +132,7 @@ docker-build:
 
 up:
 	@echo "Starting containers..."
-	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) up -d
+	docker-compose -f $(COMPOSE_FILE) -p $(PROJECT_NAME) up -d --build
 
 start: up
 

@@ -1,5 +1,11 @@
 development:
   dialect: postgres
-  datasource: "host=localhost port=5432 user=admin password=admin dbname=api sslmode=disable"
+  datasource: "host=${DB_HOST} port=${DB_PORT} user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_NAME} sslmode=${DB_SSL_MODE}"
+  dir: migrations
+  table: gorp_migrations
+
+production:
+  dialect: postgres
+  datasource: "host=${DB_HOST} port=${DB_PORT} user=${DB_USER} password=${DB_PASSWORD} dbname=${DB_NAME} sslmode=${DB_SSL_MODE}"
   dir: migrations
   table: gorp_migrations

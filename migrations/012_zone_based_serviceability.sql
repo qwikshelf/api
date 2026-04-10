@@ -19,7 +19,7 @@ CREATE TABLE delivery_zones (
 
 -- Create a default zone to migrate existing data
 INSERT INTO delivery_zones (name, warehouse_id, min_order_amount, delivery_charge, estimated_delivery_text)
-VALUES ('Default Central Zone', 1, 0, 0, 'Standard Delivery');
+VALUES ('Default Central Zone', NULL, 0, 0, 'Standard Delivery');
 
 -- 2. Refactor serviceable_pincodes
 -- Add zone_id column

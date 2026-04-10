@@ -14,7 +14,7 @@ services:
       - ./proxy/data:/data
       - ./proxy/letsencrypt:/etc/letsencrypt
     networks:
-      - qwikshelf-network
+      - frontend-edge
 
   # --- Database ---
   db:
@@ -30,8 +30,13 @@ services:
     # Port 5432 is exposed for local development access
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${DB_USER} -d $${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     networks:
-      - qwikshelf-network
+      - backend-secure
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -43,7 +48,8 @@ services:
     container_name: qwikshelf-api
     restart: always
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     env_file:
       - .env
     environment:
@@ -52,12 +58,22 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${DB_NAME}
+      - DB_SSL_MODE=${DB_SSL_MODE}
       - PORT=8080
       - JWT_SECRET=${JWT_SECRET}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
-    # API port is handled by Proxy, no public exposure needed
+    # Persistence for logs
+    volumes:
+      - ../logs:/root/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     networks:
-      - qwikshelf-network
+      - frontend-edge
+      - backend-secure
 
   # --- Adminer (DB Management) ---
   adminer:
@@ -65,7 +81,8 @@ services:
     container_name: qwikshelf-adminer
     restart: always
     networks:
-      - qwikshelf-network
+      - frontend-edge
+      - backend-secure
     environment:
       ADMINER_DEFAULT_SERVER: db
 
@@ -77,13 +94,16 @@ services:
     container_name: qwikshelf-ui
     restart: always
     depends_on:
-      - api
-    # UI port is handled by Proxy, no public exposure needed
+      api:
+        condition: service_healthy
     networks:
-      - qwikshelf-network
+      - frontend-edge
 
 networks:
-  qwikshelf-network:
+  frontend-edge:
+    driver: bridge
+  backend-secure:
+    internal: true
     driver: bridge
 
 volumes:

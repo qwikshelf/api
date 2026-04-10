@@ -7,6 +7,7 @@ INSERT INTO roles (name, description) VALUES ('field agent', 'Handles procuremen
 
 -- 3. Assign basic permissions to the new 'field agent' role
 -- The new role will likely get an ID (since it's SERIAL). Let's fetch the ID dynamically for safety.
+-- +migrate StatementBegin
 DO $$
 DECLARE
     field_agent_id INTEGER;
@@ -26,6 +27,7 @@ BEGIN
     )
     ON CONFLICT DO NOTHING;
 END $$;
+-- +migrate StatementEnd
 
 
 -- +migrate Down
