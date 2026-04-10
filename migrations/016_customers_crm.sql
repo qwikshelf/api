@@ -19,17 +19,16 @@ CREATE TABLE customers (
 );
 
 -- Migrate existing users that are customers to the new customers table, preserving IDs if possible
--- Handle schema differences: users only has username, not first/last name
 INSERT INTO customers (id, name, phone, email, created_at, updated_at)
 SELECT u.id, 
-       u.username, 
-       'N/A-' || u.id, 
-       'none@qwikshelf.local', 
+       COALESCE(NULLIF(TRIM(u.full_name), ''), u.username, 'Unknown Customer'), 
+       COALESCE(NULLIF(TRIM(u.phone), ''), 'N/A-' || u.id), 
+       u.email, 
        u.created_at, 
-       u.created_at
+       u.updated_at
 FROM users u
 JOIN roles r ON u.role_id = r.id
-WHERE r.name = 'Customer'
+WHERE r.slug = 'customer'
 ON CONFLICT (phone) DO NOTHING;
 
 -- Sync the sequence so new inserts don't collide
