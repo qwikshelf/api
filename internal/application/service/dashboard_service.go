@@ -15,7 +15,19 @@ func NewDashboardService(db *postgres.DB) *DashboardService {
 	return &DashboardService{db: db}
 }
 
-// DashboardStats contains raw aggregates
+// TrendPoint represents a data point in a time-series chart
+type TrendPoint struct {
+	Date  string  `json:"date"`
+	Value float64 `json:"value"`
+}
+
+// TopProduct represents a product ranked by performance
+type TopProduct struct {
+	Name  string  `json:"name"`
+	Value float64 `json:"value"`
+}
+
+// DashboardStats contains raw aggregates and trends
 type DashboardStats struct {
 	TotalProducts         int64
 	TotalWarehouses       int64
@@ -35,10 +47,13 @@ type DashboardStats struct {
 	AccountsReceivable    float64
 	TotalMilkBought       float64
 	ClosingInventoryValue float64
+	SalesTrend            []TrendPoint
+	CollectionTrend       []TrendPoint
+	TopProducts           []TopProduct
 }
 
 // GetStats calculates the dashboard aggregates, respecting the user's permissions
-func (s *DashboardService) GetStats(ctx context.Context, user *entity.User) (*DashboardStats, error) {
+func (s *DashboardService) GetStats(ctx context.Context, user *entity.User, days int) (*DashboardStats, error) {
 	stats := &DashboardStats{}
 	pool := s.db.Pool
 
@@ -106,10 +121,58 @@ func (s *DashboardService) GetStats(ctx context.Context, user *entity.User) (*Da
 		_ = pool.QueryRow(ctx, "SELECT COALESCE(SUM(weight), 0) FROM collections").Scan(&stats.TotalMilkBought)
 	}
 
-	// Sales Stats (Total Sales, Accounts Receivable)
+	// Sales Stats (Total Sales, Accounts Receivable, Trend)
 	if canViewSales {
 		_ = pool.QueryRow(ctx, "SELECT COALESCE(SUM(total_amount), 0) FROM sales").Scan(&stats.TotalSalesValue)
 		_ = pool.QueryRow(ctx, "SELECT COALESCE(SUM(total_amount), 0) FROM sales WHERE payment_method IN ('credit', 'other')").Scan(&stats.AccountsReceivable)
+
+		// Sales Trend (Dynamic days)
+		rows, _ := pool.Query(ctx, `
+			SELECT TO_CHAR(created_at, 'YYYY-MM-DD') as date, COALESCE(SUM(total_amount), 0) as total
+			FROM sales
+			WHERE created_at >= NOW() - (INTERVAL '1 day' * $1)
+			GROUP BY 1
+			ORDER BY 1
+		`, days)
+		for rows.Next() {
+			var p TrendPoint
+			if err := rows.Scan(&p.Date, &p.Value); err == nil {
+				stats.SalesTrend = append(stats.SalesTrend, p)
+			}
+		}
+
+		// Top Products by sales
+		pRows, _ := pool.Query(ctx, `
+			SELECT pv.name, COALESCE(SUM(si.line_total), 0) as total
+			FROM sale_items si
+			JOIN product_variants pv ON si.variant_id = pv.id
+			GROUP BY pv.name
+			ORDER BY total DESC
+			LIMIT 5
+		`)
+		for pRows.Next() {
+			var tp TopProduct
+			if err := pRows.Scan(&tp.Name, &tp.Value); err == nil {
+				stats.TopProducts = append(stats.TopProducts, tp)
+			}
+		}
+	}
+
+	// Collection Trend (Dynamic days)
+	if canViewProcurement {
+		cRows, _ := pool.Query(ctx, `
+			SELECT TO_CHAR(created_at, 'YYYY-MM-DD') as date, COALESCE(SUM(weight), 0) as total
+			FROM collections
+			WHERE created_at >= NOW() - (INTERVAL '1 day' * $1)
+			GROUP BY 1
+			ORDER BY 1
+		`, days)
+		for cRows.Next() {
+			var p TrendPoint
+			if err := cRows.Scan(&p.Date, &p.Value); err == nil {
+				stats.CollectionTrend = append(stats.CollectionTrend, p)
+			}
+		}
 	}
 
 	return stats, nil

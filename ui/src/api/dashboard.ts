@@ -20,8 +20,11 @@ export interface DashboardStatsResponse {
     accountsReceivable: number;
     totalMilkBought: number;
     closingInventoryValue: number;
+    salesTrend: { date: string; value: number }[];
+    collectionTrend: { date: string; value: number }[];
+    topProducts: { name: string; value: number }[];
 }
 
 export const dashboardApi = {
-    getStats: () => api.get<ApiResponse<DashboardStatsResponse>>("/dashboard/stats"),
+    getStats: (days: number = 7) => api.get<ApiResponse<DashboardStatsResponse>>(`/dashboard/stats?days=${days}`),
 };
