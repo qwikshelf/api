@@ -3,6 +3,8 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 
+	"strconv"
+
 	"github.com/qwikshelf/api/internal/adapter/primary/http/dto"
 	"github.com/qwikshelf/api/internal/adapter/primary/http/middleware"
 	"github.com/qwikshelf/api/internal/application/service"
@@ -36,7 +38,16 @@ func (h *DashboardHandler) GetStats(c *gin.Context) {
 		return
 	}
 
-	stats, err := h.dashboardService.GetStats(c.Request.Context(), user)
+	// Dynamic interval logic
+	daysStr := c.DefaultQuery("days", "7")
+	var days int
+	if d, err := strconv.Atoi(daysStr); err == nil && d > 0 {
+		days = d
+	} else {
+		days = 7
+	}
+
+	stats, err := h.dashboardService.GetStats(c.Request.Context(), user, days)
 	if err != nil {
 		response.InternalErrorDebug(c, "Failed to fetch dashboard metrics", err)
 		return
@@ -61,6 +72,17 @@ func (h *DashboardHandler) GetStats(c *gin.Context) {
 		AccountsReceivable:    stats.AccountsReceivable,
 		TotalMilkBought:       stats.TotalMilkBought,
 		ClosingInventoryValue: stats.ClosingInventoryValue,
+	}
+
+	// Map Trends
+	for _, p := range stats.SalesTrend {
+		resp.SalesTrend = append(resp.SalesTrend, dto.TrendPointDTO{Date: p.Date, Value: p.Value})
+	}
+	for _, p := range stats.CollectionTrend {
+		resp.CollectionTrend = append(resp.CollectionTrend, dto.TrendPointDTO{Date: p.Date, Value: p.Value})
+	}
+	for _, p := range stats.TopProducts {
+		resp.TopProducts = append(resp.TopProducts, dto.TopProductDTO{Name: p.Name, Value: p.Value})
 	}
 
 	response.OK(c, "Dashboard metrics retrieved successfully", resp)

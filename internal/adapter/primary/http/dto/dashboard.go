@@ -18,6 +18,19 @@ type DashboardStatsResponse struct {
 	InventoryValue        float64 `json:"inventoryValue"`
 	TotalSalesValue       float64 `json:"totalSalesValue"`
 	AccountsReceivable    float64 `json:"accountsReceivable"`
-	TotalMilkBought       float64 `json:"totalMilkBought"`
-	ClosingInventoryValue float64 `json:"closingInventoryValue"`
+	TotalMilkBought       float64           `json:"totalMilkBought"`
+	ClosingInventoryValue float64           `json:"closingInventoryValue"`
+	SalesTrend            []TrendPointDTO   `json:"salesTrend"`
+	CollectionTrend       []TrendPointDTO   `json:"collectionTrend"`
+	TopProducts           []TopProductDTO   `json:"topProducts"`
+}
+
+type TrendPointDTO struct {
+	Date  string  `json:"date"`
+	Value float64 `json:"value"`
+}
+
+type TopProductDTO struct {
+	Name  string  `json:"name"`
+	Value float64 `json:"value"`
 }
