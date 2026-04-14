@@ -27,10 +27,11 @@ func NewAuthMiddleware(secret string, authService *service.AuthService) *AuthMid
 
 // Claims represents JWT claims
 type Claims struct {
-	UserID    int64  `json:"user_id"`
-	Username  string `json:"username"`
-	RoleID    int64  `json:"role_id"`
-	SessionID string `json:"jti,omitempty"`
+	UserID      int64    `json:"user_id"`
+	Username    string   `json:"username"`
+	RoleID      int64    `json:"role_id"`
+	Permissions []string `json:"permissions,omitempty"`
+	SessionID   string   `json:"jti,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -91,6 +92,7 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 		c.Set("username", claims.Username)
 		c.Set("role_id", claims.RoleID)
 		c.Set("session_id", claims.SessionID)
+		c.Set("permissions", claims.Permissions)
 
 		c.Next()
 	}
@@ -121,16 +123,37 @@ func GetRoleID(c *gin.Context) int64 {
 }
 
 // RequirePermission returns a middleware that checks for a specific permission
-// Note: This requires loading permissions for the user, simplified for now
 func (m *AuthMiddleware) RequirePermission(permission string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// For now, just check if user is authenticated
-		// TODO: Implement permission checking
-		if GetUserID(c) == 0 {
+		perms, exists := c.Get("permissions")
+		if !exists {
 			response.Forbidden(c, "Permission denied")
 			c.Abort()
 			return
 		}
+
+		permList, ok := perms.([]string)
+		if !ok {
+			response.Forbidden(c, "Invalid permissions format")
+			c.Abort()
+			return
+		}
+
+		// Check if user has the required permission
+		found := false
+		for _, p := range permList {
+			if p == permission || p == "*" { // "*" allows everything for superusers
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			response.Forbidden(c, "You do not have permission to perform this action")
+			c.Abort()
+			return
+		}
+
 		c.Next()
 	}
 }

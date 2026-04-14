@@ -35,7 +35,7 @@ func (r *WarehouseRepository) Create(ctx context.Context, warehouse *entity.Ware
 // GetByID retrieves a warehouse by ID
 func (r *WarehouseRepository) GetByID(ctx context.Context, id int64) (*entity.Warehouse, error) {
 	query := `
-		SELECT w.id, w.name, w.type, w.address, dz.id as zone_id, w.is_active
+		SELECT w.id, w.name, w.type, COALESCE(w.address, ''), dz.id as zone_id, w.is_active
 		FROM warehouses w
 		LEFT JOIN delivery_zones dz ON dz.warehouse_id = w.id
 		WHERE w.id = $1
@@ -54,7 +54,7 @@ func (r *WarehouseRepository) GetByID(ctx context.Context, id int64) (*entity.Wa
 // List retrieves all warehouses
 func (r *WarehouseRepository) List(ctx context.Context) ([]entity.Warehouse, error) {
 	query := `
-		SELECT DISTINCT ON (w.id) w.id, w.name, w.type, w.address, dz.id as zone_id, w.is_active
+		SELECT DISTINCT ON (w.id) w.id, w.name, w.type, COALESCE(w.address, ''), dz.id as zone_id, w.is_active
 		FROM warehouses w
 		LEFT JOIN delivery_zones dz ON dz.warehouse_id = w.id
 		WHERE w.is_active = TRUE
@@ -80,7 +80,7 @@ func (r *WarehouseRepository) List(ctx context.Context) ([]entity.Warehouse, err
 // ListByType retrieves warehouses by type
 func (r *WarehouseRepository) ListByType(ctx context.Context, warehouseType entity.WarehouseType) ([]entity.Warehouse, error) {
 	query := `
-		SELECT DISTINCT ON (w.id) w.id, w.name, w.type, w.address, dz.id as zone_id, w.is_active
+		SELECT DISTINCT ON (w.id) w.id, w.name, w.type, COALESCE(w.address, ''), dz.id as zone_id, w.is_active
 		FROM warehouses w
 		LEFT JOIN delivery_zones dz ON dz.warehouse_id = w.id
 		WHERE w.type = $1 AND w.is_active = TRUE
@@ -155,7 +155,7 @@ func (r *SupplierRepository) Create(ctx context.Context, supplier *entity.Suppli
 // GetByID retrieves a supplier by ID
 func (r *SupplierRepository) GetByID(ctx context.Context, id int64) (*entity.Supplier, error) {
 	query := `
-		SELECT s.id, s.name, s.phone, s.location, s.latitude, s.longitude, s.zone_id, COALESCE(dz.name, '') as zone_name 
+		SELECT s.id, s.name, COALESCE(s.phone, ''), COALESCE(s.location, ''), s.latitude, s.longitude, s.zone_id, COALESCE(dz.name, '') as zone_name 
 		FROM suppliers s
 		LEFT JOIN delivery_zones dz ON s.zone_id = dz.id
 		WHERE s.id = $1
@@ -182,7 +182,7 @@ func (r *SupplierRepository) List(ctx context.Context, offset, limit int) ([]ent
 	}
 
 	query := `
-		SELECT s.id, s.name, s.phone, s.location, s.latitude, s.longitude, s.zone_id, COALESCE(dz.name, '') as zone_name 
+		SELECT s.id, s.name, COALESCE(s.phone, ''), COALESCE(s.location, ''), s.latitude, s.longitude, s.zone_id, COALESCE(dz.name, '') as zone_name 
 		FROM suppliers s
 		LEFT JOIN delivery_zones dz ON s.zone_id = dz.id
 		ORDER BY s.id LIMIT $1 OFFSET $2
@@ -255,7 +255,7 @@ func (r *SupplierRepository) AddVariant(ctx context.Context, sv *entity.Supplier
 // GetVariants retrieves all variants for a supplier with full product and supplier details
 func (r *SupplierRepository) GetVariants(ctx context.Context, supplierID int64) ([]entity.SupplierVariant, error) {
 	query := `
-		SELECT sv.supplier_id, s.name, s.phone, s.location,
+		SELECT sv.supplier_id, s.name, COALESCE(s.phone, ''), COALESCE(s.location, ''),
 		       sv.variant_id, pv.name, pv.sku, pf.name,
 		       sv.agreed_cost, sv.is_preferred
 		FROM supplier_variants sv
@@ -321,7 +321,7 @@ func (r *SupplierRepository) RemoveVariant(ctx context.Context, supplierID, vari
 // ListByZone retrieves all suppliers in a specific zone
 func (r *SupplierRepository) ListByZone(ctx context.Context, zoneID int64) ([]entity.Supplier, error) {
 	query := `
-		SELECT s.id, s.name, s.phone, s.location, s.latitude, s.longitude, s.zone_id, COALESCE(dz.name, '') as zone_name 
+		SELECT s.id, s.name, COALESCE(s.phone, ''), COALESCE(s.location, ''), s.latitude, s.longitude, s.zone_id, COALESCE(dz.name, '') as zone_name 
 		FROM suppliers s
 		LEFT JOIN delivery_zones dz ON s.zone_id = dz.id
 		WHERE s.zone_id = $1 

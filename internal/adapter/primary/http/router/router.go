@@ -97,22 +97,22 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 			// User routes
 			users := protected.Group("/users")
 			{
-				users.GET("", cfg.UserHandler.List)
-				users.POST("", cfg.UserHandler.Create)
-				users.GET("/:id", cfg.UserHandler.Get)
-				users.PUT("/:id", cfg.UserHandler.Update)
-				users.DELETE("/:id", cfg.UserHandler.Delete)
+				users.GET("", cfg.AuthMiddleware.RequirePermission("users.view"), cfg.UserHandler.List)
+				users.POST("", cfg.AuthMiddleware.RequirePermission("users.manage"), cfg.UserHandler.Create)
+				users.GET("/:id", cfg.AuthMiddleware.RequirePermission("users.view"), cfg.UserHandler.Get)
+				users.PUT("/:id", cfg.AuthMiddleware.RequirePermission("users.manage"), cfg.UserHandler.Update)
+				users.DELETE("/:id", cfg.AuthMiddleware.RequirePermission("users.manage"), cfg.UserHandler.Delete)
 			}
 
 			// Customer routes
 			customers := protected.Group("/customers")
 			{
-				customers.GET("", cfg.CustomerHandler.List)
+				customers.GET("", cfg.AuthMiddleware.RequirePermission("customers.view"), cfg.CustomerHandler.List)
 				customers.POST("", cfg.AuthMiddleware.RequirePermission("customers.manage"), cfg.CustomerHandler.Create)
 				customers.POST("/bulk", cfg.AuthMiddleware.RequirePermission("customers.manage"), cfg.CustomerHandler.CreateBulk)
-				customers.GET("/:id", cfg.CustomerHandler.Get)
-				customers.PUT("/:id", cfg.CustomerHandler.Update)
-				customers.DELETE("/:id", cfg.CustomerHandler.Delete)
+				customers.GET("/:id", cfg.AuthMiddleware.RequirePermission("customers.view"), cfg.CustomerHandler.Get)
+				customers.PUT("/:id", cfg.AuthMiddleware.RequirePermission("customers.manage"), cfg.CustomerHandler.Update)
+				customers.DELETE("/:id", cfg.AuthMiddleware.RequirePermission("customers.manage"), cfg.CustomerHandler.Delete)
 			}
 
 			// Role routes
@@ -158,97 +158,97 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 			// Supplier routes
 			suppliers := protected.Group("/suppliers")
 			{
-				suppliers.GET("", cfg.SupplierHandler.List)
-				suppliers.POST("", cfg.SupplierHandler.Create)
-				suppliers.GET("/:id", cfg.SupplierHandler.Get)
-				suppliers.PUT("/:id", cfg.SupplierHandler.Update)
-				suppliers.DELETE("/:id", cfg.SupplierHandler.Delete)
-				suppliers.GET("/:id/variants", cfg.SupplierHandler.ListVariants)
-				suppliers.POST("/:id/variants", cfg.SupplierHandler.AddVariant)
-				suppliers.DELETE("/:id/variants/:variantId", cfg.SupplierHandler.RemoveVariant)
+				suppliers.GET("", cfg.AuthMiddleware.RequirePermission("suppliers.view"), cfg.SupplierHandler.List)
+				suppliers.POST("", cfg.AuthMiddleware.RequirePermission("suppliers.manage"), cfg.SupplierHandler.Create)
+				suppliers.GET("/:id", cfg.AuthMiddleware.RequirePermission("suppliers.view"), cfg.SupplierHandler.Get)
+				suppliers.PUT("/:id", cfg.AuthMiddleware.RequirePermission("suppliers.manage"), cfg.SupplierHandler.Update)
+				suppliers.DELETE("/:id", cfg.AuthMiddleware.RequirePermission("suppliers.manage"), cfg.SupplierHandler.Delete)
+				suppliers.GET("/:id/variants", cfg.AuthMiddleware.RequirePermission("suppliers.view"), cfg.SupplierHandler.ListVariants)
+				suppliers.POST("/:id/variants", cfg.AuthMiddleware.RequirePermission("suppliers.manage"), cfg.SupplierHandler.AddVariant)
+				suppliers.DELETE("/:id/variants/:variantId", cfg.AuthMiddleware.RequirePermission("suppliers.manage"), cfg.SupplierHandler.RemoveVariant)
 			}
 
 			// Category routes
 			categories := protected.Group("/categories")
 			{
-				categories.GET("", cfg.CategoryHandler.List)
-				categories.POST("", cfg.CategoryHandler.Create)
-				categories.GET("/:id", cfg.CategoryHandler.Get)
-				categories.PUT("/:id", cfg.CategoryHandler.Update)
-				categories.DELETE("/:id", cfg.CategoryHandler.Delete)
+				categories.GET("", cfg.AuthMiddleware.RequirePermission("categories.view"), cfg.CategoryHandler.List)
+				categories.POST("", cfg.AuthMiddleware.RequirePermission("categories.manage"), cfg.CategoryHandler.Create)
+				categories.GET("/:id", cfg.AuthMiddleware.RequirePermission("categories.view"), cfg.CategoryHandler.Get)
+				categories.PUT("/:id", cfg.AuthMiddleware.RequirePermission("categories.manage"), cfg.CategoryHandler.Update)
+				categories.DELETE("/:id", cfg.AuthMiddleware.RequirePermission("categories.manage"), cfg.CategoryHandler.Delete)
 			}
 
 			// Product family routes
 			families := protected.Group("/product-families")
 			{
-				families.GET("", cfg.FamilyHandler.List)
-				families.POST("", cfg.FamilyHandler.Create)
-				families.GET("/:id", cfg.FamilyHandler.Get)
-				families.PUT("/:id", cfg.FamilyHandler.Update)
-				families.DELETE("/:id", cfg.FamilyHandler.Delete)
+				families.GET("", cfg.AuthMiddleware.RequirePermission("families.view"), cfg.FamilyHandler.List)
+				families.POST("", cfg.AuthMiddleware.RequirePermission("families.manage"), cfg.FamilyHandler.Create)
+				families.GET("/:id", cfg.AuthMiddleware.RequirePermission("families.view"), cfg.FamilyHandler.Get)
+				families.PUT("/:id", cfg.AuthMiddleware.RequirePermission("families.manage"), cfg.FamilyHandler.Update)
+				families.DELETE("/:id", cfg.AuthMiddleware.RequirePermission("families.manage"), cfg.FamilyHandler.Delete)
 			}
 
 			// Product variant routes
 			products := protected.Group("/products")
 			{
-				products.GET("", cfg.VariantHandler.List)
-				products.POST("", cfg.VariantHandler.Create)
-				products.GET("/:id", cfg.VariantHandler.Get)
-				products.PUT("/:id", cfg.VariantHandler.Update)
-				products.DELETE("/:id", cfg.VariantHandler.Delete)
+				products.GET("", cfg.AuthMiddleware.RequirePermission("products.view"), cfg.VariantHandler.List)
+				products.POST("", cfg.AuthMiddleware.RequirePermission("products.manage"), cfg.VariantHandler.Create)
+				products.GET("/:id", cfg.AuthMiddleware.RequirePermission("products.view"), cfg.VariantHandler.Get)
+				products.PUT("/:id", cfg.AuthMiddleware.RequirePermission("products.manage"), cfg.VariantHandler.Update)
+				products.DELETE("/:id", cfg.AuthMiddleware.RequirePermission("products.manage"), cfg.VariantHandler.Delete)
 			}
 
 			// Inventory routes
 			inventory := protected.Group("/inventory")
 			{
-				inventory.GET("", cfg.InventoryHandler.List)
-				inventory.GET("/warehouse/:warehouseId", cfg.InventoryHandler.ListByWarehouse)
-				inventory.POST("/adjust", cfg.InventoryHandler.Adjust)
-				inventory.POST("/transfer", cfg.InventoryHandler.Transfer)
+				inventory.GET("", cfg.AuthMiddleware.RequirePermission("inventory.view"), cfg.InventoryHandler.List)
+				inventory.GET("/warehouse/:warehouseId", cfg.AuthMiddleware.RequirePermission("inventory.view"), cfg.InventoryHandler.ListByWarehouse)
+				inventory.POST("/adjust", cfg.AuthMiddleware.RequirePermission("inventory.manage"), cfg.InventoryHandler.Adjust)
+				inventory.POST("/transfer", cfg.AuthMiddleware.RequirePermission("inventory.manage"), cfg.InventoryHandler.Transfer)
 			}
 
 			// Procurement routes
 			procurements := protected.Group("/procurements")
 			{
-				procurements.GET("", cfg.ProcurementHandler.List)
-				procurements.POST("", cfg.ProcurementHandler.Create)
-				procurements.GET("/:id", cfg.ProcurementHandler.Get)
-				procurements.GET("/supplier/:supplierId", cfg.ProcurementHandler.ListBySupplier)
-				procurements.PATCH("/:id/status", cfg.ProcurementHandler.UpdateStatus)
-				procurements.PATCH("/:id/receive", cfg.ProcurementHandler.ReceiveItems)
+				procurements.GET("", cfg.AuthMiddleware.RequirePermission("procurement.view"), cfg.ProcurementHandler.List)
+				procurements.POST("", cfg.AuthMiddleware.RequirePermission("procurement.manage"), cfg.ProcurementHandler.Create)
+				procurements.GET("/:id", cfg.AuthMiddleware.RequirePermission("procurement.view"), cfg.ProcurementHandler.Get)
+				procurements.GET("/supplier/:supplierId", cfg.AuthMiddleware.RequirePermission("procurement.view"), cfg.ProcurementHandler.ListBySupplier)
+				procurements.PATCH("/:id/status", cfg.AuthMiddleware.RequirePermission("procurement.manage"), cfg.ProcurementHandler.UpdateStatus)
+				procurements.PATCH("/:id/receive", cfg.AuthMiddleware.RequirePermission("procurement.manage"), cfg.ProcurementHandler.ReceiveItems)
 			}
 
 			// Sale routes
 			sales := protected.Group("/sales")
 			{
-				sales.GET("", cfg.SaleHandler.List)
-				sales.POST("", cfg.SaleHandler.Create)
-				sales.GET("/:id", cfg.SaleHandler.Get)
+				sales.GET("", cfg.AuthMiddleware.RequirePermission("sales.view"), cfg.SaleHandler.List)
+				sales.POST("", cfg.AuthMiddleware.RequirePermission("sales.manage"), cfg.SaleHandler.Create)
+				sales.GET("/:id", cfg.AuthMiddleware.RequirePermission("sales.view"), cfg.SaleHandler.Get)
 			}
 
 			// Collection routes
 			collections := protected.Group("/collections")
 			{
-				collections.GET("", cfg.CollectionHandler.List)
-				collections.POST("", cfg.CollectionHandler.Record)
+				collections.GET("", cfg.AuthMiddleware.RequirePermission("collections.view"), cfg.CollectionHandler.List)
+				collections.POST("", cfg.AuthMiddleware.RequirePermission("collections.manage"), cfg.CollectionHandler.Record)
 			}
 
 			// Dashboard routes
 			dashboard := protected.Group("/dashboard")
 			{
-				dashboard.GET("/stats", cfg.DashboardHandler.GetStats)
+				dashboard.GET("/stats", cfg.AuthMiddleware.RequirePermission("dashboard.view"), cfg.DashboardHandler.GetStats)
 			}
 
 			subscriptions := protected.Group("/subscriptions")
 			{
-				subscriptions.GET("", cfg.SubscriptionHandler.List)
-				subscriptions.POST("", cfg.SubscriptionHandler.Create)
-				subscriptions.GET("/roster", cfg.SubscriptionHandler.GetDailyRoster)
-				subscriptions.GET("/:id", cfg.SubscriptionHandler.Get)
-				subscriptions.PUT("/:id", cfg.SubscriptionHandler.Update)
-				subscriptions.PATCH("/:id/status", cfg.SubscriptionHandler.UpdateStatus)
-				subscriptions.DELETE("/:id", cfg.SubscriptionHandler.Delete)
-				subscriptions.POST("/:id/deliveries", cfg.SubscriptionHandler.RecordDelivery)
+				subscriptions.GET("", cfg.AuthMiddleware.RequirePermission("subscriptions.view"), cfg.SubscriptionHandler.List)
+				subscriptions.POST("", cfg.AuthMiddleware.RequirePermission("subscriptions.manage"), cfg.SubscriptionHandler.Create)
+				subscriptions.GET("/roster", cfg.AuthMiddleware.RequirePermission("subscriptions.view"), cfg.SubscriptionHandler.GetDailyRoster)
+				subscriptions.GET("/:id", cfg.AuthMiddleware.RequirePermission("subscriptions.view"), cfg.SubscriptionHandler.Get)
+				subscriptions.PUT("/:id", cfg.AuthMiddleware.RequirePermission("subscriptions.manage"), cfg.SubscriptionHandler.Update)
+				subscriptions.PATCH("/:id/status", cfg.AuthMiddleware.RequirePermission("subscriptions.manage"), cfg.SubscriptionHandler.UpdateStatus)
+				subscriptions.DELETE("/:id", cfg.AuthMiddleware.RequirePermission("subscriptions.manage"), cfg.SubscriptionHandler.Delete)
+				subscriptions.POST("/:id/deliveries", cfg.AuthMiddleware.RequirePermission("subscriptions.manage"), cfg.SubscriptionHandler.RecordDelivery)
 			}
 
 			// Serviceability routes (Admin)

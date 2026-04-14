@@ -9,6 +9,7 @@ interface AuthState {
     setAuth: (accessToken: string, refreshToken: string, user: UserResponse) => void;
     logout: () => void;
     isAuthenticated: () => boolean;
+    hasPermission: (permission: string) => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -20,6 +21,15 @@ export const useAuthStore = create<AuthState>()(
             setAuth: (accessToken, refreshToken, user) => set({ accessToken, refreshToken, user }),
             logout: () => set({ accessToken: null, refreshToken: null, user: null }),
             isAuthenticated: () => !!get().accessToken,
+            hasPermission: (permission: string) => {
+                const user = get().user;
+                if (!user) return false;
+                
+                // Superuser check
+                if (user.permissions?.some(p => p.slug === "*")) return true;
+                
+                return !!user.permissions?.some(p => p.slug === permission);
+            },
         }),
         {
             name: "qwikshelf-auth",

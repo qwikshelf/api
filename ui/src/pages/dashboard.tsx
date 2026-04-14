@@ -22,6 +22,7 @@ import { procurementsApi } from "@/api/procurements";
 import { categoriesApi } from "@/api/categories";
 import { productFamiliesApi } from "@/api/product-families";
 import { dashboardApi } from "@/api/dashboard";
+import { RequirePermission } from "@/components/shared/auth-guard";
 import {
     Avatar,
     AvatarFallback,
@@ -428,11 +429,13 @@ export default function DashboardPage() {
             </div>
 
             {/* ═══ KPI Stat Cards ═══ */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                {statCards.map((card, i) => (
-                    <ModernStatCard key={i} {...card} />
-                ))}
-            </div>
+            <RequirePermission permission="dashboard.view">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    {statCards.map((card, i) => (
+                        <ModernStatCard key={i} {...card} />
+                    ))}
+                </div>
+            </RequirePermission>
 
             {/* ═══ ROW 1: Dual-Line Comparison (Full Width) ═══ */}
             <Card className="border-0 shadow-sm bg-white dark:bg-slate-900 rounded-[24px]">

@@ -67,7 +67,7 @@ const navItems = [
 export function AppSidebar() {
     const location = useLocation();
     const navigate = useNavigate();
-    const { logout, user } = useAuthStore();
+    const { logout, user, hasPermission } = useAuthStore();
     const { toggleSidebar, open } = useSidebar();
 
     const handleLogout = () => {
@@ -99,12 +99,8 @@ export function AppSidebar() {
                     <SidebarGroupContent>
                         <SidebarMenu>
                             {navItems.filter(item => {
-                                if (item.href === "/pos" || item.href === "/") return true;
                                 if (!item.permission) return true;
-                                if (user?.role?.name === "admin") return true;
-
-                                const userPermissions = user?.permissions?.map(p => typeof p === 'string' ? p : p.slug) || [];
-                                return userPermissions.includes(item.permission);
+                                return hasPermission(item.permission);
                             }).map((item) => (
                                 <SidebarMenuItem key={item.href}>
                                     <SidebarMenuButton

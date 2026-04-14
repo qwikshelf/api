@@ -1,16 +1,16 @@
 -- +migrate Up
 -- 1. Patch Roles table
-ALTER TABLE roles ADD COLUMN slug VARCHAR(100) UNIQUE;
+ALTER TABLE roles ADD COLUMN IF NOT EXISTS slug VARCHAR(100) UNIQUE;
 
 -- Backfill slugs for existing roles
 UPDATE roles SET slug = lower(replace(name, ' ', '_'));
 
 -- 2. Patch Users table
-ALTER TABLE users ADD COLUMN full_name VARCHAR(255);
-ALTER TABLE users ADD COLUMN phone VARCHAR(20);
-ALTER TABLE users ADD COLUMN address TEXT;
-ALTER TABLE users ADD COLUMN email VARCHAR(255);
-ALTER TABLE users ADD COLUMN updated_at TIMESTAMP DEFAULT NOW();
+ALTER TABLE users ADD COLUMN IF NOT EXISTS full_name VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS address TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255);
+ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
 
 -- +migrate Down
 ALTER TABLE users DROP COLUMN IF EXISTS updated_at;
