@@ -36,6 +36,7 @@ const SubscriptionsPage = lazy(() => import("@/pages/subscriptions"));
 const CustomerImportPage = lazy(() => import("@/pages/customers/import"));
 const ExpensesPage = lazy(() => import("@/pages/expenses"));
 const ExpenseCategoriesPage = lazy(() => import("@/pages/expenses/categories"));
+const ForbiddenPage = lazy(() => import("@/pages/forbidden"));
 
 function PageLoader() {
     return (
@@ -54,6 +55,7 @@ function App() {
                 <BrowserRouter basename="/">
                     <Routes>
                         <Route path="/login" element={<LoginPage />} />
+                        <Route path="/forbidden" element={<Suspense fallback={<PageLoader />}><ForbiddenPage /></Suspense>} />
                         <Route
                             element={
                                 <ProtectedRoute>
@@ -64,29 +66,29 @@ function App() {
                             <Route path="/" element={<Suspense fallback={<PageLoader />}><DashboardPage /></Suspense>} />
                             <Route path="/pos" element={<Suspense fallback={<PageLoader />}><POSPage /></Suspense>} />
                             <Route path="/customers" element={<Suspense fallback={<PageLoader />}><CustomersPage /></Suspense>} />
-                            <Route path="/customers/import" element={<PermissionGuard requireAll={["customers.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><CustomerImportPage /></Suspense></PermissionGuard>} />
+                            <Route path="/customers/import" element={<PermissionGuard requireAll={["customers.manage"]}><Suspense fallback={<PageLoader />}><CustomerImportPage /></Suspense></PermissionGuard>} />
                             <Route path="/customers/:id" element={<Suspense fallback={<PageLoader />}><CustomerDetailPage /></Suspense>} />
-                            <Route path="/categories" element={<PermissionGuard requireAll={["products.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><CategoriesPage /></Suspense></PermissionGuard>} />
-                            <Route path="/warehouses" element={<PermissionGuard requireAll={["warehouses.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><WarehousesPage /></Suspense></PermissionGuard>} />
-                            <Route path="/roles" element={<PermissionGuard requireAll={["roles.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><RolesPage /></Suspense></PermissionGuard>} />
-                            <Route path="/users" element={<PermissionGuard requireAll={["users.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><UsersPage /></Suspense></PermissionGuard>} />
-                            <Route path="/product-families" element={<PermissionGuard requireAll={["products.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ProductFamiliesPage /></Suspense></PermissionGuard>} />
-                            <Route path="/products" element={<PermissionGuard requireAll={["products.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ProductsPage /></Suspense></PermissionGuard>} />
-                            <Route path="/suppliers" element={<PermissionGuard requireAll={["suppliers.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><SuppliersPage /></Suspense></PermissionGuard>} />
-                            <Route path="/suppliers/:id" element={<PermissionGuard requireAll={["suppliers.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><SupplierDetailPage /></Suspense></PermissionGuard>} />
-                            <Route path="/inventory" element={<PermissionGuard requireAll={["inventory.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><InventoryPage /></Suspense></PermissionGuard>} />
-                            <Route path="/expenses" element={<PermissionGuard requireAll={["expenses.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ExpensesPage /></Suspense></PermissionGuard>} />
-                            <Route path="/expenses/categories" element={<PermissionGuard requireAll={["expense_categories.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ExpenseCategoriesPage /></Suspense></PermissionGuard>} />
-                            <Route path="/procurements" element={<PermissionGuard requireAll={["procurement.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ProcurementsPage /></Suspense></PermissionGuard>} />
-                            <Route path="/procurements/new" element={<PermissionGuard requireAll={["procurement.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><CreateProcurementPage /></Suspense></PermissionGuard>} />
-                            <Route path="/procurements/:id" element={<PermissionGuard requireAll={["procurement.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ProcurementDetailPage /></Suspense></PermissionGuard>} />
-                            <Route path="/sales/history" element={<PermissionGuard requireAll={["sales.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><SalesRecordPage /></Suspense></PermissionGuard>} />
-                            <Route path="/collections" element={<PermissionGuard requireAll={["procurement.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><CollectionPage /></Suspense></PermissionGuard>} />
-                            <Route path="/serviceability/zones" element={<PermissionGuard requireAll={["serviceability.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ServiceabilityZonesPage /></Suspense></PermissionGuard>} />
-                            <Route path="/serviceability/import" element={<PermissionGuard requireAll={["serviceability.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><PincodeImportPage /></Suspense></PermissionGuard>} />
-                            <Route path="/serviceability/map" element={<PermissionGuard requireAll={["serviceability.manage"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><ServiceabilityMapPage /></Suspense></PermissionGuard>} />
-                            <Route path="/deliveries" element={<PermissionGuard requireAll={["subscriptions.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><DeliveriesPage /></Suspense></PermissionGuard>} />
-                            <Route path="/subscriptions" element={<PermissionGuard requireAll={["subscriptions.view"]} fallback={<Navigate to="/" replace />}><Suspense fallback={<PageLoader />}><SubscriptionsPage /></Suspense></PermissionGuard>} />
+                            <Route path="/categories" element={<PermissionGuard requireAll={["products.view"]}><Suspense fallback={<PageLoader />}><CategoriesPage /></Suspense></PermissionGuard>} />
+                            <Route path="/warehouses" element={<PermissionGuard requireAll={["warehouses.view"]}><Suspense fallback={<PageLoader />}><WarehousesPage /></Suspense></PermissionGuard>} />
+                            <Route path="/roles" element={<PermissionGuard requireAll={["roles.view"]}><Suspense fallback={<PageLoader />}><RolesPage /></Suspense></PermissionGuard>} />
+                            <Route path="/users" element={<PermissionGuard requireAll={["users.view"]}><Suspense fallback={<PageLoader />}><UsersPage /></Suspense></PermissionGuard>} />
+                            <Route path="/product-families" element={<PermissionGuard requireAll={["products.view"]}><Suspense fallback={<PageLoader />}><ProductFamiliesPage /></Suspense></PermissionGuard>} />
+                            <Route path="/products" element={<PermissionGuard requireAll={["products.view"]}><Suspense fallback={<PageLoader />}><ProductsPage /></Suspense></PermissionGuard>} />
+                            <Route path="/suppliers" element={<PermissionGuard requireAll={["suppliers.view"]}><Suspense fallback={<PageLoader />}><SuppliersPage /></Suspense></PermissionGuard>} />
+                            <Route path="/suppliers/:id" element={<PermissionGuard requireAll={["suppliers.view"]}><Suspense fallback={<PageLoader />}><SupplierDetailPage /></Suspense></PermissionGuard>} />
+                            <Route path="/inventory" element={<PermissionGuard requireAll={["inventory.view"]}><Suspense fallback={<PageLoader />}><InventoryPage /></Suspense></PermissionGuard>} />
+                            <Route path="/expenses" element={<PermissionGuard requireAll={["expenses.view"]}><Suspense fallback={<PageLoader />}><ExpensesPage /></Suspense></PermissionGuard>} />
+                            <Route path="/expenses/categories" element={<PermissionGuard requireAll={["expense_categories.manage"]}><Suspense fallback={<PageLoader />}><ExpenseCategoriesPage /></Suspense></PermissionGuard>} />
+                            <Route path="/procurements" element={<PermissionGuard requireAll={["procurement.view"]}><Suspense fallback={<PageLoader />}><ProcurementsPage /></Suspense></PermissionGuard>} />
+                            <Route path="/procurements/new" element={<PermissionGuard requireAll={["procurement.view"]}><Suspense fallback={<PageLoader />}><CreateProcurementPage /></Suspense></PermissionGuard>} />
+                            <Route path="/procurements/:id" element={<PermissionGuard requireAll={["procurement.view"]}><Suspense fallback={<PageLoader />}><ProcurementDetailPage /></Suspense></PermissionGuard>} />
+                            <Route path="/sales/history" element={<PermissionGuard requireAll={["sales.view"]}><Suspense fallback={<PageLoader />}><SalesRecordPage /></Suspense></PermissionGuard>} />
+                            <Route path="/collections" element={<PermissionGuard requireAll={["procurement.manage"]}><Suspense fallback={<PageLoader />}><CollectionPage /></Suspense></PermissionGuard>} />
+                            <Route path="/serviceability/zones" element={<PermissionGuard requireAll={["serviceability.manage"]}><Suspense fallback={<PageLoader />}><ServiceabilityZonesPage /></Suspense></PermissionGuard>} />
+                            <Route path="/serviceability/import" element={<PermissionGuard requireAll={["serviceability.manage"]}><Suspense fallback={<PageLoader />}><PincodeImportPage /></Suspense></PermissionGuard>} />
+                            <Route path="/serviceability/map" element={<PermissionGuard requireAll={["serviceability.manage"]}><Suspense fallback={<PageLoader />}><ServiceabilityMapPage /></Suspense></PermissionGuard>} />
+                            <Route path="/deliveries" element={<PermissionGuard requireAll={["subscriptions.view"]}><Suspense fallback={<PageLoader />}><DeliveriesPage /></Suspense></PermissionGuard>} />
+                            <Route path="/subscriptions" element={<PermissionGuard requireAll={["subscriptions.view"]}><Suspense fallback={<PageLoader />}><SubscriptionsPage /></Suspense></PermissionGuard>} />
                         </Route>
                     </Routes>
                 </BrowserRouter>

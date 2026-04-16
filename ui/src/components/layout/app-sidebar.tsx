@@ -42,9 +42,9 @@ import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-    { title: "Dashboard", icon: LayoutDashboard, href: "/" },
-    { title: "POS", icon: CreditCard, href: "/pos" },
-    { title: "Customers", icon: UserSquare, href: "/customers" },
+    { title: "Dashboard", icon: LayoutDashboard, href: "/", permission: "dashboard.view" },
+    { title: "POS", icon: CreditCard, href: "/pos", permission: "sales.manage" },
+    { title: "Customers", icon: UserSquare, href: "/customers", permission: "customers.view" },
     { title: "Daily Deliveries", icon: CalendarDays, href: "/deliveries", permission: "subscriptions.view" },
     { title: "Subscriptions", icon: ListTodo, href: "/subscriptions", permission: "subscriptions.view" },
     { title: "Users", icon: Users, href: "/users", permission: "users.view" },
@@ -57,7 +57,7 @@ const navItems = [
     { title: "Inventory", icon: BoxesIcon, href: "/inventory", permission: "inventory.view" },
     { title: "Expenses", icon: Receipt, href: "/expenses", permission: "expenses.view" },
     { title: "Sales History", icon: History, href: "/sales/history", permission: "sales.view" },
-    { title: "Collections", icon: ClipboardList, href: "/collections", permission: "procurement.manage" }, // Map collection to procurement or related permission
+    { title: "Collections", icon: ClipboardList, href: "/collections", permission: "collections.view" },
     { title: "Procurements", icon: ShoppingCart, href: "/procurements", permission: "procurement.view" },
     { title: "Delivery Zones", icon: MapPin, href: "/serviceability/zones", permission: "serviceability.manage" },
     { title: "Pincode Import", icon: UploadCloud, href: "/serviceability/import", permission: "serviceability.manage" },

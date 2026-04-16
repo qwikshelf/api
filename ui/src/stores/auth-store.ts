@@ -10,6 +10,7 @@ interface AuthState {
     logout: () => void;
     isAuthenticated: () => boolean;
     hasPermission: (permission: string) => boolean;
+    getDefaultRoute: () => string;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -29,6 +30,17 @@ export const useAuthStore = create<AuthState>()(
                 if (user.permissions?.some(p => p.slug === "*")) return true;
                 
                 return !!user.permissions?.some(p => p.slug === permission);
+            },
+            getDefaultRoute: () => {
+                const { hasPermission } = get();
+                if (hasPermission("dashboard.view")) return "/";
+                if (hasPermission("sales.manage")) return "/pos";
+                if (hasPermission("subscriptions.view")) return "/deliveries";
+                if (hasPermission("inventory.view")) return "/inventory";
+                if (hasPermission("customers.view")) return "/customers";
+                if (hasPermission("procurement.view")) return "/procurements";
+                if (hasPermission("expenses.view")) return "/expenses";
+                return "/"; // Fallback to root (App.tsx will handle deeper auth)
             },
         }),
         {
