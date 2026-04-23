@@ -1,28 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-    LayoutDashboard,
-    Users,
-    Shield,
-    Warehouse,
-    Tags,
-    FolderTree,
-    Package,
-    Truck,
-    BoxesIcon,
-    ShoppingCart,
-    LogOut,
-    ChevronLeft,
-    CreditCard,
-    ClipboardList,
-    History,
-    MapPin,
-    UploadCloud,
-    Map as MapIcon,
-    UserSquare,
-    CalendarDays,
-    ListTodo,
-    Receipt,
-} from "lucide-react";
+import { LogOut, ChevronLeft } from "lucide-react";
 import logo from "@/assets/logo.png";
 import {
     Sidebar,
@@ -40,31 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
-
-import * as Pages from "@/lib/lazy-pages";
-
-const navItems = [
-    { title: "Dashboard", icon: LayoutDashboard, href: "/", permission: "dashboard.view", preload: Pages.DashboardPage.preload },
-    { title: "POS", icon: CreditCard, href: "/pos", permission: "sales.manage", preload: Pages.POSPage.preload },
-    { title: "Customers", icon: UserSquare, href: "/customers", permission: "customers.view", preload: Pages.CustomersPage.preload },
-    { title: "Daily Deliveries", icon: CalendarDays, href: "/deliveries", permission: "subscriptions.view", preload: Pages.DeliveriesPage.preload },
-    { title: "Subscriptions", icon: ListTodo, href: "/subscriptions", permission: "subscriptions.view", preload: Pages.SubscriptionsPage.preload },
-    { title: "Users", icon: Users, href: "/users", permission: "users.view", preload: Pages.UsersPage.preload },
-    { title: "Roles", icon: Shield, href: "/roles", permission: "roles.view", preload: Pages.RolesPage.preload },
-    { title: "Warehouses", icon: Warehouse, href: "/warehouses", permission: "warehouses.view", preload: Pages.WarehousesPage.preload },
-    { title: "Categories", icon: Tags, href: "/categories", permission: "products.view", preload: Pages.CategoriesPage.preload },
-    { title: "Product Families", icon: FolderTree, href: "/product-families", permission: "products.view", preload: Pages.ProductFamiliesPage.preload },
-    { title: "Products", icon: Package, href: "/products", permission: "products.view", preload: Pages.ProductsPage.preload },
-    { title: "Suppliers", icon: Truck, href: "/suppliers", permission: "suppliers.view", preload: Pages.SuppliersPage.preload },
-    { title: "Inventory", icon: BoxesIcon, href: "/inventory", permission: "inventory.view", preload: Pages.InventoryPage.preload },
-    { title: "Expenses", icon: Receipt, href: "/expenses", permission: "expenses.view", preload: Pages.ExpensesPage.preload },
-    { title: "Sales History", icon: History, href: "/sales/history", permission: "sales.view", preload: Pages.SalesRecordPage.preload },
-    { title: "Collections", icon: ClipboardList, href: "/collections", permission: "collections.view", preload: Pages.CollectionPage.preload },
-    { title: "Procurements", icon: ShoppingCart, href: "/procurements", permission: "procurement.view", preload: Pages.ProcurementsPage.preload },
-    { title: "Delivery Zones", icon: MapPin, href: "/serviceability/zones", permission: "serviceability.manage", preload: Pages.ServiceabilityZonesPage.preload },
-    { title: "Pincode Import", icon: UploadCloud, href: "/serviceability/import", permission: "serviceability.manage", preload: Pages.PincodeImportPage.preload },
-    { title: "Serviceability Map", icon: MapIcon, href: "/serviceability/map", permission: "serviceability.manage", preload: Pages.ServiceabilityMapPage.preload },
-];
+import { NAV_ITEMS } from "@/config/navigation";
 
 export function AppSidebar() {
     const location = useLocation();
@@ -100,7 +53,7 @@ export function AppSidebar() {
                     <SidebarGroupLabel>Navigation</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {navItems.filter(item => {
+                            {NAV_ITEMS.filter(item => {
                                 if (!item.permission) return true;
                                 return hasPermission(item.permission);
                             }).map((item) => (
@@ -114,7 +67,6 @@ export function AppSidebar() {
                                         }
                                         tooltip={item.title}
                                         onMouseEnter={() => {
-                                            // Preload the page chunk when user hovers over the menu item
                                             if (item.preload) {
                                                 item.preload();
                                             }

@@ -9,6 +9,7 @@ import (
 	"github.com/qwikshelf/api/internal/application/dto"
 	"github.com/qwikshelf/api/internal/application/service"
 	domainErrors "github.com/qwikshelf/api/internal/domain/errors"
+	"github.com/qwikshelf/api/pkg/logger"
 	"github.com/qwikshelf/api/pkg/response"
 )
 
@@ -45,6 +46,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	ipAddress := c.ClientIP()
 
 	result, err := h.authService.Login(c.Request.Context(), req.Username, req.Password, deviceInfo, ipAddress)
+	logger.Info().Interface("result", result).Msg("Login result")
 	if err != nil {
 		switch err {
 		case domainErrors.ErrInvalidCredentials:

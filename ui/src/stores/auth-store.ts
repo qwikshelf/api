@@ -25,10 +25,10 @@ export const useAuthStore = create<AuthState>()(
             hasPermission: (permission: string) => {
                 const user = get().user;
                 if (!user) return false;
-                
+                console.log(user)
                 // Superuser check
                 if (user.permissions?.some(p => p.slug === "*")) return true;
-                
+
                 return !!user.permissions?.some(p => p.slug === permission);
             },
             getDefaultRoute: () => {
