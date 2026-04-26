@@ -141,10 +141,31 @@ func (m *AuthMiddleware) RequirePermission(permission string) gin.HandlerFunc {
 
 		// Check if user has the required permission
 		found := false
+		resource := ""
+		isView := false
+		if strings.Contains(permission, ".") {
+			parts := strings.Split(permission, ".")
+			resource = parts[0]
+			isView = strings.HasSuffix(permission, ".view")
+		}
+
 		for _, p := range permList {
-			if p == permission || p == "*" { // "*" allows everything for superusers
+			// 1. Exact match or Superuser
+			if p == permission || p == "*" {
 				found = true
 				break
+			}
+			// 2. Resource management inheritance
+			if resource != "" {
+				if p == resource+".manage" {
+					found = true
+					break
+				}
+				// 3. View-specific inheritance (create/update imply view)
+				if isView && (p == resource+".create" || p == resource+".update") {
+					found = true
+					break
+				}
 			}
 		}
 

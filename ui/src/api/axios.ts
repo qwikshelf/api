@@ -80,6 +80,15 @@ api.interceptors.response.use(
                 isRefreshing = false;
             }
         }
+        // Handle 403 → Redirect to Forbidden page
+        if (error.response?.status === 403) {
+            // Check if we are already on the forbidden page to avoid loops
+            if (!window.location.pathname.startsWith("/forbidden")) {
+                window.location.href = "/forbidden";
+            }
+            return Promise.reject(error);
+        }
+
         return Promise.reject(error);
     }
 );

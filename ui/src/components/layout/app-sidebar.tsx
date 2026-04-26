@@ -1,28 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import {
-    LayoutDashboard,
-    Users,
-    Shield,
-    Warehouse,
-    Tags,
-    FolderTree,
-    Package,
-    Truck,
-    BoxesIcon,
-    ShoppingCart,
-    LogOut,
-    ChevronLeft,
-    CreditCard,
-    ClipboardList,
-    History,
-    MapPin,
-    UploadCloud,
-    Map as MapIcon,
-    UserSquare,
-    CalendarDays,
-    ListTodo,
-    Receipt,
-} from "lucide-react";
+import { LogOut, ChevronLeft } from "lucide-react";
 import logo from "@/assets/logo.png";
 import {
     Sidebar,
@@ -40,29 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth-store";
 import { cn } from "@/lib/utils";
-
-const navItems = [
-    { title: "Dashboard", icon: LayoutDashboard, href: "/" },
-    { title: "POS", icon: CreditCard, href: "/pos" },
-    { title: "Customers", icon: UserSquare, href: "/customers" },
-    { title: "Daily Deliveries", icon: CalendarDays, href: "/deliveries", permission: "subscriptions.view" },
-    { title: "Subscriptions", icon: ListTodo, href: "/subscriptions", permission: "subscriptions.view" },
-    { title: "Users", icon: Users, href: "/users", permission: "users.view" },
-    { title: "Roles", icon: Shield, href: "/roles", permission: "roles.view" },
-    { title: "Warehouses", icon: Warehouse, href: "/warehouses", permission: "warehouses.view" },
-    { title: "Categories", icon: Tags, href: "/categories", permission: "products.view" },
-    { title: "Product Families", icon: FolderTree, href: "/product-families", permission: "products.view" },
-    { title: "Products", icon: Package, href: "/products", permission: "products.view" },
-    { title: "Suppliers", icon: Truck, href: "/suppliers", permission: "suppliers.view" },
-    { title: "Inventory", icon: BoxesIcon, href: "/inventory", permission: "inventory.view" },
-    { title: "Expenses", icon: Receipt, href: "/expenses", permission: "expenses.view" },
-    { title: "Sales History", icon: History, href: "/sales/history", permission: "sales.view" },
-    { title: "Collections", icon: ClipboardList, href: "/collections", permission: "procurement.manage" }, // Map collection to procurement or related permission
-    { title: "Procurements", icon: ShoppingCart, href: "/procurements", permission: "procurement.view" },
-    { title: "Delivery Zones", icon: MapPin, href: "/serviceability/zones", permission: "serviceability.manage" },
-    { title: "Pincode Import", icon: UploadCloud, href: "/serviceability/import", permission: "serviceability.manage" },
-    { title: "Serviceability Map", icon: MapIcon, href: "/serviceability/map", permission: "serviceability.manage" },
-];
+import { NAV_ITEMS } from "@/config/navigation";
 
 export function AppSidebar() {
     const location = useLocation();
@@ -98,7 +53,7 @@ export function AppSidebar() {
                     <SidebarGroupLabel>Navigation</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <SidebarMenu>
-                            {navItems.filter(item => {
+                            {NAV_ITEMS.filter(item => {
                                 if (!item.permission) return true;
                                 return hasPermission(item.permission);
                             }).map((item) => (
@@ -111,6 +66,11 @@ export function AppSidebar() {
                                                 : location.pathname.startsWith(item.href)
                                         }
                                         tooltip={item.title}
+                                        onMouseEnter={() => {
+                                            if (item.preload) {
+                                                item.preload();
+                                            }
+                                        }}
                                     >
                                         <Link to={item.href}>
                                             <item.icon className="h-4 w-4" />
