@@ -8,6 +8,7 @@ import (
 
 	"github.com/qwikshelf/api/internal/domain/entity"
 	domainErrors "github.com/qwikshelf/api/internal/domain/errors"
+	"github.com/qwikshelf/api/pkg/logger"
 )
 
 // UserRepository implements repository.UserRepository
@@ -165,6 +166,7 @@ func (r *UserRepository) ExistsByUsername(ctx context.Context, username string) 
 
 // GetPermissions retrieves all permissions for a user (role-based + direct)
 func (r *UserRepository) GetPermissions(ctx context.Context, userID int64) ([]entity.Permission, error) {
+	logger.Info().Interface("userID", userID).Msg("Getting permissions for user")
 	query := `
 		SELECT DISTINCT p.id, p.slug, p.description
 		FROM permissions p

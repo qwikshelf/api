@@ -251,17 +251,16 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 				subscriptions.POST("/:id/deliveries", cfg.AuthMiddleware.RequirePermission("subscriptions.manage"), cfg.SubscriptionHandler.RecordDelivery)
 			}
 
-			// Serviceability routes (Admin)
+			// Serviceability routes
 			serviceability := protected.Group("/serviceability")
-			serviceability.Use(cfg.AuthMiddleware.RequirePermission("serviceability.manage"))
 			{
-				serviceability.GET("/zones", cfg.ServiceabilityHandler.ListZones)
-				serviceability.POST("/zones", cfg.ServiceabilityHandler.CreateZone)
-				serviceability.PUT("/zones/:id", cfg.ServiceabilityHandler.UpdateZone)
-				serviceability.POST("/map", cfg.ServiceabilityHandler.MapPincode)
-				serviceability.GET("/geodata", cfg.ServiceabilityHandler.ListGeoData)
-				serviceability.POST("/geodata", cfg.ServiceabilityHandler.SaveGeoData)
-				serviceability.POST("/import", cfg.ServiceabilityHandler.ImportPincodes)
+				serviceability.GET("/zones", cfg.AuthMiddleware.RequirePermission("serviceability.view"), cfg.ServiceabilityHandler.ListZones)
+				serviceability.POST("/zones", cfg.AuthMiddleware.RequirePermission("serviceability.manage"), cfg.ServiceabilityHandler.CreateZone)
+				serviceability.PUT("/zones/:id", cfg.AuthMiddleware.RequirePermission("serviceability.manage"), cfg.ServiceabilityHandler.UpdateZone)
+				serviceability.POST("/map", cfg.AuthMiddleware.RequirePermission("serviceability.manage"), cfg.ServiceabilityHandler.MapPincode)
+				serviceability.GET("/geodata", cfg.AuthMiddleware.RequirePermission("serviceability.manage"), cfg.ServiceabilityHandler.ListGeoData)
+				serviceability.POST("/geodata", cfg.AuthMiddleware.RequirePermission("serviceability.manage"), cfg.ServiceabilityHandler.SaveGeoData)
+				serviceability.POST("/import", cfg.AuthMiddleware.RequirePermission("serviceability.manage"), cfg.ServiceabilityHandler.ImportPincodes)
 			}
 		}
 	}

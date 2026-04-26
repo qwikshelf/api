@@ -11,6 +11,7 @@ import (
 	"github.com/qwikshelf/api/internal/domain/entity"
 	domainErrors "github.com/qwikshelf/api/internal/domain/errors"
 	"github.com/qwikshelf/api/internal/domain/repository"
+	"github.com/qwikshelf/api/pkg/logger"
 )
 
 // PasswordHasher defines the interface for password hashing
@@ -127,7 +128,7 @@ func (s *AuthService) Login(ctx context.Context, username, password, deviceInfo,
 	if err != nil {
 		return nil, err
 	}
-
+	logger.Info().Interface("Permissions", perms).Msg("Permissions for user")
 	return &LoginResult{
 		AccessToken:  accessToken,
 		RefreshToken: rawRefreshToken,
@@ -242,12 +243,12 @@ func (s *AuthService) Logout(ctx context.Context, sessionID string) error {
 	if sessionID == "" {
 		return nil
 	}
-	
+
 	session, err := s.sessionRepo.GetByID(ctx, sessionID)
 	if err != nil {
 		return err
 	}
-	
+
 	session.IsRevoked = true
 	return s.sessionRepo.Update(ctx, session)
 }
@@ -257,12 +258,12 @@ func (s *AuthService) IsSessionValid(ctx context.Context, sessionID string) (boo
 	if sessionID == "" {
 		return false, nil
 	}
-	
+
 	session, err := s.sessionRepo.GetByID(ctx, sessionID)
 	if err != nil {
 		return false, err
 	}
-	
+
 	return session.IsValid(), nil
 }
 

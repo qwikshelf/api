@@ -10,7 +10,8 @@ interface PermissionGuardProps {
 
 export function PermissionGuard({ children, requireAll, requireAny, fallback }: PermissionGuardProps) {
     const { hasPermission, isAuthenticated } = useAuthStore();
-    
+
+    console.log(hasPermission("can_manage_warehouses"));
     // If not authenticated, let ProtectedRoute handle it (usually redirects to login)
     if (!isAuthenticated()) {
         return <>{children}</>;

@@ -172,7 +172,7 @@ export const NAV_ITEMS: NavItem[] = [
         title: "Delivery Zones", 
         icon: MapPin, 
         href: "/serviceability/zones", 
-        permission: "serviceability.manage", 
+        permission: "serviceability.view", 
         preload: Pages.ServiceabilityZonesPage.preload,
         description: "Define geographical delivery boundaries."
     },

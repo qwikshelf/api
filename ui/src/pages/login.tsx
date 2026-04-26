@@ -44,6 +44,7 @@ export default function LoginPage() {
 
         try {
             const res = await authApi.login(username, password);
+            console.log(res);
             const data = res.data.data;
             setAuth(data.access_token, data.refresh_token, data.user);
             navigate("/");

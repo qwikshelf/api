@@ -32,11 +32,21 @@ export const useAuthStore = create<AuthState>()(
                 // 2. Exact Match
                 if (user.permissions?.some(p => p.slug === permission)) return true;
 
-                // 3. Smart Inheritance (e.g., 'users.manage' implies 'users.view')
+                // 3. Smart Inheritance (e.g., 'resource.manage' or 'resource.create' implies 'resource.view')
+                if (permission.includes(".") && permission.endsWith(".view")) {
+                    const [resource] = permission.split(".");
+                    // If you can manage, create, or update, you can definitely view.
+                    return !!user.permissions?.some(p => 
+                        p.slug === `${resource}.manage` || 
+                        p.slug === `${resource}.create` || 
+                        p.slug === `${resource}.update`
+                    );
+                }
+
+                // Default inheritance for .manage (covers any sub-action)
                 if (permission.includes(".")) {
                     const [resource] = permission.split(".");
-                    const managePermission = `${resource}.manage`;
-                    return !!user.permissions?.some(p => p.slug === managePermission);
+                    return !!user.permissions?.some(p => p.slug === `${resource}.manage`);
                 }
 
                 return false;
@@ -49,8 +59,9 @@ export const useAuthStore = create<AuthState>()(
                 if (hasPermission("inventory.view")) return "/inventory";
                 if (hasPermission("customers.view")) return "/customers";
                 if (hasPermission("procurement.view")) return "/procurements";
+                if (hasPermission("collections.view")) return "/collections";
                 if (hasPermission("expenses.view")) return "/expenses";
-                return "/"; // Fallback to root (App.tsx will handle deeper auth)
+                return "/";
             },
         }),
         {

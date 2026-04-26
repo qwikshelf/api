@@ -32,6 +32,7 @@ INSERT INTO permissions (slug, description) VALUES
     ('procurement.manage', 'Create purchase orders and record received stock'),
     ('collections.view', 'View payment and data collection records'),
     ('collections.manage', 'Record new field collections and reconcile payments'),
+    ('serviceability.view', 'View delivery zones and serviceability maps'),
     ('serviceability.manage', 'Manage delivery zones, maps, and serviceable pincodes'),
     
     -- Sales & Subscriptions
