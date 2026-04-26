@@ -141,8 +141,14 @@ func (m *AuthMiddleware) RequirePermission(permission string) gin.HandlerFunc {
 
 		// Check if user has the required permission
 		found := false
+		managePermission := ""
+		if strings.Contains(permission, ".") {
+			parts := strings.Split(permission, ".")
+			managePermission = parts[0] + ".manage"
+		}
+
 		for _, p := range permList {
-			if p == permission || p == "*" { // "*" allows everything for superusers
+			if p == permission || p == "*" || (managePermission != "" && p == managePermission) {
 				found = true
 				break
 			}

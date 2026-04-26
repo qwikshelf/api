@@ -100,7 +100,7 @@ export const NAV_ITEMS: NavItem[] = [
         title: "Categories", 
         icon: Tags, 
         href: "/categories", 
-        permission: "products.view", 
+        permission: "categories.view", 
         preload: Pages.CategoriesPage.preload,
         description: "Organize products into logical categories."
     },
@@ -108,7 +108,7 @@ export const NAV_ITEMS: NavItem[] = [
         title: "Product Families", 
         icon: FolderTree, 
         href: "/product-families", 
-        permission: "products.view", 
+        permission: "product_families.view", 
         preload: Pages.ProductFamiliesPage.preload,
         description: "Manage groups of related product variants."
     },

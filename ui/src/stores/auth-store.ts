@@ -25,11 +25,21 @@ export const useAuthStore = create<AuthState>()(
             hasPermission: (permission: string) => {
                 const user = get().user;
                 if (!user) return false;
-                console.log(user)
-                // Superuser check
+
+                // 1. Superuser Wildcard
                 if (user.permissions?.some(p => p.slug === "*")) return true;
 
-                return !!user.permissions?.some(p => p.slug === permission);
+                // 2. Exact Match
+                if (user.permissions?.some(p => p.slug === permission)) return true;
+
+                // 3. Smart Inheritance (e.g., 'users.manage' implies 'users.view')
+                if (permission.includes(".")) {
+                    const [resource] = permission.split(".");
+                    const managePermission = `${resource}.manage`;
+                    return !!user.permissions?.some(p => p.slug === managePermission);
+                }
+
+                return false;
             },
             getDefaultRoute: () => {
                 const { hasPermission } = get();
