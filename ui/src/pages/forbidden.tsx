@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth-store";
 import { NAV_ITEMS } from "@/config/navigation";
-import { cn } from "@/lib/utils";
+
 
 export default function ForbiddenPage() {
     const navigate = useNavigate();
@@ -13,7 +13,7 @@ export default function ForbiddenPage() {
     const safeRoute = getDefaultRoute();
 
     // Filter allowed modules to show as alternatives
-    const allowedModules = NAV_ITEMS.filter(item => hasPermission(item.permission)).slice(0, 3);
+    const allowedModules = NAV_ITEMS.filter(item => item.permission && hasPermission(item.permission)).slice(0, 3);
 
     useEffect(() => {
         if (countdown <= 0) {
