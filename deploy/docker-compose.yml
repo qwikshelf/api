@@ -99,6 +99,57 @@ services:
     networks:
       - frontend-edge
 
+  # --- Monitoring Stack ---
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: qwikshelf-loki
+    restart: always
+    volumes:
+      - ./monitoring/loki-config.yaml:/etc/loki/local-config.yaml
+      - loki_data:/tmp/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - frontend-edge
+      - backend-secure
+    deploy:
+      resources:
+        limits:
+          memory: 250M
+
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: qwikshelf-promtail
+    restart: always
+    volumes:
+      - ./monitoring/promtail-config.yaml:/etc/promtail/config.yml
+      - ../logs:/var/log/qwikshelf
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - backend-secure
+    deploy:
+      resources:
+        limits:
+          memory: 100M
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: qwikshelf-grafana
+    restart: always
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_SERVER_DOMAIN=logs.qwikshelf.store
+      - GF_SERVER_ROOT_URL=https://logs.qwikshelf.store
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana-provisioning:/etc/grafana/provisioning
+    networks:
+      - frontend-edge
+      - backend-secure
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+
 networks:
   frontend-edge:
     driver: bridge
@@ -108,3 +159,5 @@ networks:
 
 volumes:
   postgres_data:
+  loki_data:
+  grafana_data:
