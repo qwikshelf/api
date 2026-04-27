@@ -91,6 +91,8 @@ services:
     build:
       context: ../ui
       dockerfile: ../deploy/ui.Dockerfile
+      args:
+        - VITE_API_BASE_URL=https://api.qwikshelf.store
     container_name: qwikshelf-ui
     restart: always
     depends_on:

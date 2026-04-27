@@ -1,8 +1,9 @@
 import axios from "axios";
 import { useAuthStore } from "@/stores/auth-store";
 
+const baseURL = import.meta.env.VITE_API_BASE_URL || "";
 const api = axios.create({
-    baseURL: "/api/v1",
+    baseURL: `${baseURL}/api/v1`,
     headers: { "Content-Type": "application/json" },
 });
 
@@ -57,8 +58,8 @@ api.interceptors.response.use(
             }
 
             try {
-                // Call the refresh endpoint
-                const { data } = await axios.post("/api/v1/auth/refresh", {
+                // Call the refresh endpoint using the absolute base URL
+                const { data } = await axios.post(`${baseURL}/api/v1/auth/refresh`, {
                     refresh_token: refreshToken
                 });
 
