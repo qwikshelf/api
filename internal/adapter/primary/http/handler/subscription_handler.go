@@ -345,6 +345,7 @@ func mapDeliveryToResponse(del *entity.SubscriptionDelivery) *dto.SubscriptionDe
 		DeliveryDate:   del.DeliveryDate,
 		Status:         string(del.Status),
 		Notes:          del.Notes,
+		UnitPrice:      del.UnitPrice.InexactFloat64(),
 		RecordedBy:     del.RecordedBy,
 		RecordedAt:     del.RecordedAt,
 	}
@@ -432,4 +433,103 @@ func (h *SubscriptionHandler) GetDailyRoster(c *gin.Context) {
 	}
 
 	response.OK(c, "Daily roster retrieved", resp)
+}
+
+// ==========================================
+// Invoices & Billing
+// ==========================================
+
+func (h *SubscriptionHandler) ListInvoices(c *gin.Context) {
+	var filter dto.InvoiceListFilter
+	if err := c.ShouldBindQuery(&filter); err != nil {
+		response.BadRequest(c, "Invalid query parameters")
+		return
+	}
+
+	invoices, err := h.subscriptionService.ListInvoices(c.Request.Context(), filter)
+	if err != nil {
+		response.InternalErrorDebug(c, "Failed to list invoices", err)
+		return
+	}
+
+	response.OK(c, "Invoices retrieved", invoices)
+}
+
+func (h *SubscriptionHandler) GetInvoice(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid invoice ID")
+		return
+	}
+
+	inv, err := h.subscriptionService.GetInvoice(c.Request.Context(), id)
+	if err != nil {
+		if domainErrors.IsNotFound(err) {
+			response.NotFound(c, "Invoice not found")
+		} else {
+			response.InternalErrorDebug(c, "Failed to get invoice", err)
+		}
+		return
+	}
+
+	response.OK(c, "Invoice retrieved", inv)
+}
+
+func (h *SubscriptionHandler) GenerateMonthlyInvoice(c *gin.Context) {
+	subID, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	monthStr := c.Query("month") // YYYY-MM
+	if monthStr == "" {
+		response.BadRequest(c, "Month query parameter required (YYYY-MM)")
+		return
+	}
+
+	t, err := time.Parse("2006-01", monthStr)
+	if err != nil {
+		response.BadRequest(c, "Invalid month format")
+		return
+	}
+
+	inv, err := h.subscriptionService.CreateMonthlyInvoice(c.Request.Context(), subID, t.Year(), t.Month())
+	if err != nil {
+		response.InternalErrorDebug(c, "Failed to generate invoice", err)
+		return
+	}
+
+	response.Created(c, "Invoice generated", inv)
+}
+
+func (h *SubscriptionHandler) FinalizeInvoice(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err := h.subscriptionService.FinalizeInvoice(c.Request.Context(), id); err != nil {
+		response.InternalErrorDebug(c, "Failed to finalize invoice", err)
+		return
+	}
+	response.OK(c, "Invoice finalized", nil)
+}
+
+func (h *SubscriptionHandler) AddAdjustment(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	var req struct {
+		Type   string          `json:"type" binding:"required,oneof=credit debit"`
+		Amount decimal.Decimal `json:"amount" binding:"required"`
+		Reason string          `json:"reason" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	adj := &entity.InvoiceAdjustment{
+		InvoiceID: id,
+		Type:      req.Type,
+		Amount:    req.Amount,
+		Reason:    req.Reason,
+	}
+
+	if err := h.subscriptionService.AddAdjustment(c.Request.Context(), adj); err != nil {
+		response.InternalErrorDebug(c, "Failed to add adjustment", err)
+		return
+	}
+
+	response.Created(c, "Adjustment added", adj)
 }

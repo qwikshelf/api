@@ -14,7 +14,7 @@ type PincodeRepository interface {
 	// Zones
 	CreateZone(ctx context.Context, zone *entity.DeliveryZone) error
 	GetZone(ctx context.Context, id int64) (*entity.DeliveryZone, error)
-	ListZones(ctx context.Context) ([]entity.DeliveryZone, error)
+	ListZones(ctx context.Context, warehouseID int64) ([]entity.DeliveryZone, error)
 	UpdateZone(ctx context.Context, zone *entity.DeliveryZone) error
 	
 	// Pincode Management

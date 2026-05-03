@@ -28,8 +28,8 @@ func (s *DeliveryService) CreateZone(ctx context.Context, zone *entity.DeliveryZ
 	return s.pincodeRepo.CreateZone(ctx, zone)
 }
 
-func (s *DeliveryService) ListZones(ctx context.Context) ([]entity.DeliveryZone, error) {
-	return s.pincodeRepo.ListZones(ctx)
+func (s *DeliveryService) ListZones(ctx context.Context, warehouseID int64) ([]entity.DeliveryZone, error) {
+	return s.pincodeRepo.ListZones(ctx, warehouseID)
 }
 
 func (s *DeliveryService) UpdateZone(ctx context.Context, zone *entity.DeliveryZone) error {

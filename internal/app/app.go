@@ -86,7 +86,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	collectionService := service.NewCollectionService(collectionRepo, inventoryRepo, productVariantRepo, warehouseRepo, supplierRepo)
 	dashboardService := service.NewDashboardService(db)
 	deliveryService := service.NewDeliveryService(pincodeRepo)
-	subscriptionService := service.NewSubscriptionService(subscriptionRepo)
+	subscriptionService := service.NewSubscriptionService(subscriptionRepo, productVariantRepo)
 	auditService := service.NewAuditService(auditRepo)
 	expenseService := service.NewExpenseService(expenseRepo, expenseCategoryRepo)
 

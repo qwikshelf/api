@@ -73,6 +73,14 @@ export const NAV_ITEMS: NavItem[] = [
         description: "Manage customer subscription plans and recurring orders."
     },
     { 
+        title: "Monthly Invoices", 
+        icon: Receipt, 
+        href: "/subscriptions/invoices", 
+        permission: "subscriptions.view", 
+        preload: Pages.SubscriptionInvoicesPage.preload,
+        description: "Review and manage monthly billing for subscription customers."
+    },
+    { 
         title: "Users", 
         icon: Users, 
         href: "/users", 

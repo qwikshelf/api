@@ -41,6 +41,8 @@ export const SalesRecordPage = lazyWithPreload(() => import(/* webpackChunkName:
 export const CollectionPage = lazyWithPreload(() => import(/* webpackChunkName: "sales" */ "@/pages/collections/CollectionPage"));
 export const DeliveriesPage = lazyWithPreload(() => import(/* webpackChunkName: "delivery" */ "@/pages/deliveries"));
 export const SubscriptionsPage = lazyWithPreload(() => import(/* webpackChunkName: "delivery" */ "@/pages/subscriptions"));
+export const SubscriptionInvoicesPage = lazyWithPreload(() => import(/* webpackChunkName: "delivery" */ "@/pages/subscriptions/invoices"));
+export const InvoiceDetailPage = lazyWithPreload(() => import(/* webpackChunkName: "delivery" */ "@/pages/subscriptions/invoices/detail"));
 
 // Financials Group
 export const ExpensesPage = lazyWithPreload(() => import(/* webpackChunkName: "financials" */ "@/pages/expenses"));

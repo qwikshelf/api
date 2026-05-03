@@ -61,6 +61,8 @@ const routes = [
     { path: "/collections", element: <Pages.CollectionPage />, perms: ["collections.manage"] },
     { path: "/deliveries", element: <Pages.DeliveriesPage />, perms: ["subscriptions.view"] },
     { path: "/subscriptions", element: <Pages.SubscriptionsPage />, perms: ["subscriptions.view"] },
+    { path: "/subscriptions/invoices", element: <Pages.SubscriptionInvoicesPage />, perms: ["subscriptions.view"] },
+    { path: "/subscriptions/invoices/:id", element: <Pages.InvoiceDetailPage />, perms: ["subscriptions.view"] },
 
     // Financials
     { path: "/expenses", element: <Pages.ExpensesPage />, perms: ["expenses.view"] },

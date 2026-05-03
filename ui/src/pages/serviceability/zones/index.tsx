@@ -33,6 +33,8 @@ export default function DeliveryZonesPage() {
     const [editing, setEditing] = useState<DeliveryZone | null>(null);
     const [saving, setSaving] = useState(false);
 
+    const [filterWarehouseId, setFilterWarehouseId] = useState<string>("all");
+
     // Form State
     const [name, setName] = useState("");
     const [warehouseId, setWarehouseId] = useState<string>("");
@@ -43,18 +45,18 @@ export default function DeliveryZonesPage() {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const [zonesRes, whRes] = await Promise.all([
-                serviceabilityApi.listZones(),
-                warehousesApi.list()
-            ]);
-            setData(zonesRes.data.data || []);
+            const whRes = await warehousesApi.list();
             setWarehouses(whRes.data.data || []);
+            
+            const warehouseIdParam = filterWarehouseId === "all" ? undefined : parseInt(filterWarehouseId);
+            const zonesRes = await serviceabilityApi.listZones(warehouseIdParam);
+            setData(zonesRes.data.data || []);
         } catch {
             toast.error("Failed to load delivery zones data");
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [filterWarehouseId]);
 
     useEffect(() => { loadData(); }, [loadData]);
 
@@ -142,7 +144,20 @@ export default function DeliveryZonesPage() {
     return (
         <div className="space-y-6">
             <PageHeader title="Delivery Zones" description="Configure delivery rules and charges for different areas">
-                <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Create Zone</Button>
+                <div className="flex gap-4 items-center">
+                    <Select value={filterWarehouseId} onValueChange={setFilterWarehouseId}>
+                        <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="Filter by Warehouse" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Warehouses</SelectItem>
+                            {warehouses.map((wh) => (
+                                <SelectItem key={wh.id} value={wh.id.toString()}>{wh.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Button onClick={openCreate}><Plus className="mr-2 h-4 w-4" />Create Zone</Button>
+                </div>
             </PageHeader>
 
             <DataTable columns={columns} data={data} loading={loading} />

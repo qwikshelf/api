@@ -7,6 +7,7 @@ type DeliveryZone struct {
 	ID                    int64     `json:"id"`
 	Name                  string    `json:"name"`
 	WarehouseID           *int64    `json:"warehouse_id"`
+	WarehouseName         string    `json:"warehouse_name,omitempty"`
 	MinOrderAmount        float64   `json:"min_order_amount"`
 	DeliveryCharge        float64   `json:"delivery_charge"`
 	EstimatedDeliveryText string    `json:"estimated_delivery_text"`

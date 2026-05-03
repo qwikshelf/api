@@ -78,6 +78,7 @@ type SubscriptionDeliveryResponse struct {
 	DeliveryDate   time.Time `json:"delivery_date"`
 	Status         string    `json:"status"`
 	Notes          *string   `json:"notes,omitempty"`
+	UnitPrice      float64   `json:"unit_price"`
 	RecordedBy     *int64    `json:"recorded_by,omitempty"`
 	RecordedAt     time.Time `json:"recorded_at"`
 }
@@ -86,4 +87,12 @@ type SubscriptionDeliveryResponse struct {
 type DailyRosterItemResponse struct {
 	Subscription SubscriptionResponse          `json:"subscription"`
 	Delivery     *SubscriptionDeliveryResponse `json:"delivery,omitempty"`
+}
+
+// InvoiceListFilter parameters for filtering monthly invoices
+type InvoiceListFilter struct {
+	CustomerID     *int64  `form:"customer_id"`
+	SubscriptionID *int64  `form:"subscription_id"`
+	Status         *string `form:"status"`
+	Month          *string `form:"month"` // "YYYY-MM"
 }

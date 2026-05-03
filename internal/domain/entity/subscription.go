@@ -73,14 +73,55 @@ const (
 
 // SubscriptionDelivery records a daily fulfillment tracking log for a subscription
 type SubscriptionDelivery struct {
-	ID             int64          `json:"id"`
-	SubscriptionID int64          `json:"subscription_id"`
-	Subscription   *Subscription  `json:"subscription,omitempty"`
-	DeliveryDate   time.Time      `json:"delivery_date"`
-	Status         DeliveryStatus `json:"status"`
-	Notes          *string        `json:"notes,omitempty"`
-	RecordedBy     *int64         `json:"recorded_by,omitempty"`
-	RecordedAt     time.Time      `json:"recorded_at"`
+	ID             int64           `json:"id"`
+	SubscriptionID int64           `json:"subscription_id"`
+	Subscription   *Subscription   `json:"subscription,omitempty"`
+	DeliveryDate   time.Time       `json:"delivery_date"`
+	Status         DeliveryStatus  `json:"status"`
+	UnitPrice      decimal.Decimal `json:"unit_price"` // Captured at fulfillment
+	Notes          *string         `json:"notes,omitempty"`
+	RecordedBy     *int64          `json:"recorded_by,omitempty"`
+	RecordedAt     time.Time       `json:"recorded_at"`
+}
+
+// SubscriptionInvoice represents a monthly bill
+type SubscriptionInvoice struct {
+	ID                 int64                `json:"id"`
+	SubscriptionID     int64                `json:"subscription_id"`
+	Subscription       *Subscription        `json:"subscription,omitempty"`
+	BillingPeriodStart time.Time            `json:"billing_period_start"`
+	BillingPeriodEnd   time.Time            `json:"billing_period_end"`
+	BaseAmount         decimal.Decimal      `json:"base_amount"`
+	AdjustmentAmount   decimal.Decimal      `json:"adjustment_amount"`
+	TotalAmount        decimal.Decimal      `json:"total_amount"`
+	Status             string               `json:"status"`
+	DueDate            time.Time            `json:"due_date"`
+	Notes              *string              `json:"notes,omitempty"`
+	Items              []SubscriptionInvoiceItem `json:"items,omitempty"`
+	Adjustments        []InvoiceAdjustment  `json:"adjustments,omitempty"`
+	CreatedAt          time.Time            `json:"created_at"`
+	UpdatedAt          time.Time            `json:"updated_at"`
+}
+
+// SubscriptionInvoiceItem stores the breakdown per product
+type SubscriptionInvoiceItem struct {
+	ID            int64           `json:"id"`
+	InvoiceID     int64           `json:"invoice_id"`
+	VariantID     int64           `json:"variant_id"`
+	Variant       *ProductVariant `json:"variant,omitempty"`
+	TotalQuantity decimal.Decimal `json:"total_quantity"`
+	UnitPrice     decimal.Decimal `json:"unit_price"`
+	Subtotal      decimal.Decimal `json:"subtotal"`
+}
+
+// InvoiceAdjustment handles one-time charges or credits
+type InvoiceAdjustment struct {
+	ID        int64           `json:"id"`
+	InvoiceID int64           `json:"invoice_id"`
+	Type      string          `json:"type"` // credit, debit
+	Amount    decimal.Decimal `json:"amount"`
+	Reason    string          `json:"reason"`
+	CreatedAt time.Time       `json:"created_at"`
 }
 
 // DailyRosterItem holds the aggregation of a subscription and its delivery record for a specific date
