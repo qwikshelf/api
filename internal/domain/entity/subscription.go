@@ -73,15 +73,26 @@ const (
 
 // SubscriptionDelivery records a daily fulfillment tracking log for a subscription
 type SubscriptionDelivery struct {
-	ID             int64           `json:"id"`
-	SubscriptionID int64           `json:"subscription_id"`
-	Subscription   *Subscription   `json:"subscription,omitempty"`
-	DeliveryDate   time.Time       `json:"delivery_date"`
-	Status         DeliveryStatus  `json:"status"`
-	UnitPrice      decimal.Decimal `json:"unit_price"` // Captured at fulfillment
-	Notes          *string         `json:"notes,omitempty"`
-	RecordedBy     *int64          `json:"recorded_by,omitempty"`
-	RecordedAt     time.Time       `json:"recorded_at"`
+	ID             int64                      `json:"id"`
+	SubscriptionID int64                      `json:"subscription_id"`
+	Subscription   *Subscription              `json:"subscription,omitempty"`
+	DeliveryDate   time.Time                  `json:"delivery_date"`
+	Status         DeliveryStatus             `json:"status"`
+	IsCustom       bool                       `json:"is_custom"`
+	Items          []SubscriptionDeliveryItem `json:"items,omitempty"`
+	Notes          *string                    `json:"notes,omitempty"`
+	RecordedBy     *int64                     `json:"recorded_by,omitempty"`
+	RecordedAt     time.Time                  `json:"recorded_at"`
+}
+
+// SubscriptionDeliveryItem represents a specific product and quantity delivered on a specific day
+type SubscriptionDeliveryItem struct {
+	ID         int64           `json:"id"`
+	DeliveryID int64           `json:"delivery_id"`
+	VariantID  int64           `json:"variant_id"`
+	Variant    *ProductVariant `json:"variant,omitempty"`
+	Quantity   decimal.Decimal `json:"quantity"`
+	UnitPrice  decimal.Decimal `json:"unit_price"`
 }
 
 // SubscriptionInvoice represents a monthly bill

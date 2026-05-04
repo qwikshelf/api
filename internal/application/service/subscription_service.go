@@ -119,7 +119,7 @@ func parseDate(dateStr string) (time.Time, error) {
 // ==========================================
 
 // RecordDelivery validates and records a daily delivery status for a subscription
-func (s *SubscriptionService) RecordDelivery(ctx context.Context, subID int64, dateStr, status, notes string, recordedBy *int64) (*entity.SubscriptionDelivery, error) {
+func (s *SubscriptionService) RecordDelivery(ctx context.Context, subID int64, dateStr, status, notes string, recordedBy *int64, items []dto.SubscriptionDeliveryItemReq) (*entity.SubscriptionDelivery, error) {
 	delDate, err := parseDate(dateStr)
 	if err != nil {
 		return nil, fmt.Errorf("invalid date format: %w", domainErrors.ErrInvalidInput)
@@ -151,16 +151,35 @@ func (s *SubscriptionService) RecordDelivery(ctx context.Context, subID int64, d
 		Status:         entity.DeliveryStatus(status),
 		Notes:          notesPtr,
 		RecordedBy:     recordedBy,
+		IsCustom:       len(items) > 0,
 	}
 
-	// Dynamic Pricing Snapshot: Capture the current selling price for the items in this subscription
-	// For now, we use the first item's variant price if it's a simple subscription.
-	// If it's multi-item, we'll need to store price per item in deliveries.
-	// For the initial design, we'll store the price of the first variant.
-	if len(sub.Items) > 0 {
-		variant, err := s.variant.GetByID(ctx, sub.Items[0].VariantID)
-		if err == nil {
-			delivery.UnitPrice = variant.SellingPrice
+	// Handle items
+	if len(items) > 0 {
+		// Manual/Custom items provided
+		for _, it := range items {
+			variant, err := s.variant.GetByID(ctx, it.VariantID)
+			if err != nil {
+				return nil, fmt.Errorf("invalid variant ID %d: %w", it.VariantID, err)
+			}
+			delivery.Items = append(delivery.Items, entity.SubscriptionDeliveryItem{
+				VariantID: it.VariantID,
+				Quantity:  decimal.NewFromFloat(it.Quantity),
+				UnitPrice: variant.SellingPrice,
+			})
+		}
+	} else if delivery.Status == entity.DeliveryStatusDelivered {
+		// Standard delivery: Copy items from subscription and snapshot prices
+		for _, si := range sub.Items {
+			variant, err := s.variant.GetByID(ctx, si.VariantID)
+			if err != nil {
+				continue
+			}
+			delivery.Items = append(delivery.Items, entity.SubscriptionDeliveryItem{
+				VariantID: si.VariantID,
+				Quantity:  si.Quantity,
+				UnitPrice: variant.SellingPrice,
+			})
 		}
 	}
 
@@ -187,8 +206,7 @@ func (s *SubscriptionService) GetDailyRoster(ctx context.Context, dateStr string
 
 // CreateMonthlyInvoice aggregates deliveries for a specific month and creates an invoice
 func (s *SubscriptionService) CreateMonthlyInvoice(ctx context.Context, subID int64, year int, month time.Month) (*entity.SubscriptionInvoice, error) {
-	sub, err := s.repo.GetByID(ctx, subID)
-	if err != nil {
+	if _, err := s.repo.GetByID(ctx, subID); err != nil {
 		return nil, err
 	}
 
@@ -214,24 +232,25 @@ func (s *SubscriptionService) CreateMonthlyInvoice(ctx context.Context, subID in
 		return nil, fmt.Errorf("no delivered items found for this period: %w", domainErrors.ErrNotFound)
 	}
 
-	// Aggregate amounts
+	// Aggregate amounts from actual delivery items
 	var baseAmount decimal.Decimal
 	itemsMap := make(map[int64]*entity.SubscriptionInvoiceItem)
 
 	for _, d := range monthDeliveries {
-		// Calculate for each item in the subscription
-		for _, si := range sub.Items {
-			lineTotal := d.UnitPrice.Mul(si.Quantity)
+		for _, di := range d.Items {
+			lineTotal := di.UnitPrice.Mul(di.Quantity)
 			baseAmount = baseAmount.Add(lineTotal)
 
-			if item, exists := itemsMap[si.VariantID]; exists {
-				item.TotalQuantity = item.TotalQuantity.Add(si.Quantity)
+			if item, exists := itemsMap[di.VariantID]; exists {
+				item.TotalQuantity = item.TotalQuantity.Add(di.Quantity)
 				item.Subtotal = item.Subtotal.Add(lineTotal)
+				// Use the latest price encountered (or we could average, but latest is standard for snapshots)
+				item.UnitPrice = di.UnitPrice 
 			} else {
-				itemsMap[si.VariantID] = &entity.SubscriptionInvoiceItem{
-					VariantID:     si.VariantID,
-					TotalQuantity: si.Quantity,
-					UnitPrice:     d.UnitPrice,
+				itemsMap[di.VariantID] = &entity.SubscriptionInvoiceItem{
+					VariantID:     di.VariantID,
+					TotalQuantity: di.Quantity,
+					UnitPrice:     di.UnitPrice,
 					Subtotal:      lineTotal,
 				}
 			}

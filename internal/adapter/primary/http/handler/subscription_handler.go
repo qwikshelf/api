@@ -339,16 +339,30 @@ func mapDeliveryToResponse(del *entity.SubscriptionDelivery) *dto.SubscriptionDe
 	if del == nil {
 		return nil
 	}
-	return &dto.SubscriptionDeliveryResponse{
+	resp := &dto.SubscriptionDeliveryResponse{
 		ID:             del.ID,
 		SubscriptionID: del.SubscriptionID,
 		DeliveryDate:   del.DeliveryDate,
 		Status:         string(del.Status),
+		IsCustom:       del.IsCustom,
 		Notes:          del.Notes,
-		UnitPrice:      del.UnitPrice.InexactFloat64(),
 		RecordedBy:     del.RecordedBy,
 		RecordedAt:     del.RecordedAt,
 	}
+
+	for _, it := range del.Items {
+		itemResp := dto.SubscriptionDeliveryItemResp{
+			VariantID: it.VariantID,
+			Quantity:  it.Quantity.InexactFloat64(),
+			UnitPrice: it.UnitPrice.InexactFloat64(),
+		}
+		if it.Variant != nil {
+			itemResp.VariantName = it.Variant.Name
+		}
+		resp.Items = append(resp.Items, itemResp)
+	}
+
+	return resp
 }
 
 // RecordDelivery godoc
@@ -384,12 +398,20 @@ func (h *SubscriptionHandler) RecordDelivery(c *gin.Context) {
 		}
 	}
 
-	delivery, err := h.subscriptionService.RecordDelivery(c.Request.Context(), subID, req.Date, req.Status, func() string {
-		if req.Notes == nil {
-			return ""
-		}
-		return *req.Notes
-	}(), recordedBy)
+	delivery, err := h.subscriptionService.RecordDelivery(
+		c.Request.Context(), 
+		subID, 
+		req.Date, 
+		req.Status, 
+		func() string {
+			if req.Notes == nil {
+				return ""
+			}
+			return *req.Notes
+		}(), 
+		recordedBy,
+		req.Items,
+	)
 
 	if err != nil {
 		response.InternalErrorDebug(c, "Failed to record delivery", err)

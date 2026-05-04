@@ -66,21 +66,35 @@ type SubscriptionListFilter struct {
 
 // RecordDeliveryRequest is the payload for recording a specific daily delivery
 type RecordDeliveryRequest struct {
-	Date   string  `json:"date" binding:"required"` // "YYYY-MM-DD"
-	Status string  `json:"status" binding:"required,oneof=delivered failed skipped"`
-	Notes  *string `json:"notes"`
+	Date   string                        `json:"date" binding:"required"` // "YYYY-MM-DD"
+	Status string                        `json:"status" binding:"required,oneof=delivered failed skipped"`
+	Items  []SubscriptionDeliveryItemReq `json:"items"` // Optional: If empty, uses standard subscription items
+	Notes  *string                       `json:"notes"`
+}
+
+type SubscriptionDeliveryItemReq struct {
+	VariantID int64   `json:"variant_id" binding:"required"`
+	Quantity  float64 `json:"quantity" binding:"required,gt=0"`
 }
 
 // SubscriptionDeliveryResponse is the response format for a delivery log
 type SubscriptionDeliveryResponse struct {
-	ID             int64     `json:"id"`
-	SubscriptionID int64     `json:"subscription_id"`
-	DeliveryDate   time.Time `json:"delivery_date"`
-	Status         string    `json:"status"`
-	Notes          *string   `json:"notes,omitempty"`
-	UnitPrice      float64   `json:"unit_price"`
-	RecordedBy     *int64    `json:"recorded_by,omitempty"`
-	RecordedAt     time.Time `json:"recorded_at"`
+	ID             int64                          `json:"id"`
+	SubscriptionID int64                          `json:"subscription_id"`
+	DeliveryDate   time.Time                      `json:"delivery_date"`
+	Status         string                         `json:"status"`
+	IsCustom       bool                           `json:"is_custom"`
+	Items          []SubscriptionDeliveryItemResp `json:"items,omitempty"`
+	Notes          *string                        `json:"notes,omitempty"`
+	RecordedBy     *int64                         `json:"recorded_by,omitempty"`
+	RecordedAt     time.Time                      `json:"recorded_at"`
+}
+
+type SubscriptionDeliveryItemResp struct {
+	VariantID   int64   `json:"variant_id"`
+	VariantName string  `json:"variant_name"`
+	Quantity    float64 `json:"quantity"`
+	UnitPrice   float64 `json:"unit_price"`
 }
 
 // DailyRosterItemResponse pairs a subscription with its delivery status for a given day

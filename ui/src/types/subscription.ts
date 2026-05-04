@@ -54,11 +54,20 @@ export interface UpdateSubscriptionStatusRequest {
     status: SubscriptionStatus;
 }
 
+export interface SubscriptionDeliveryItemResponse {
+    variant_id: number;
+    variant_name: string;
+    quantity: number;
+    unit_price: number;
+}
+
 export interface SubscriptionDeliveryResponse {
     id: number;
     subscription_id: number;
     delivery_date: string;
     status: "delivered" | "failed" | "skipped";
+    is_custom: boolean;
+    items?: SubscriptionDeliveryItemResponse[];
     notes?: string;
     recorded_by?: number;
     recorded_at: string;
@@ -67,6 +76,7 @@ export interface SubscriptionDeliveryResponse {
 export interface RecordDeliveryRequest {
     date: string; // YYYY-MM-DD
     status: "delivered" | "failed" | "skipped";
+    items?: { variant_id: number; quantity: number }[];
     notes?: string;
 }
 
