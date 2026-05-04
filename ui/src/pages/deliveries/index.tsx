@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { Calendar, CheckCircle2, XCircle, AlertCircle, RefreshCw, Loader2, StickyNote, Settings2, Plus, Trash2 } from "lucide-react";
+import { Calendar, CheckCircle2, XCircle, AlertCircle, RefreshCw, Loader2, StickyNote, Settings2, Trash2 } from "lucide-react";
 
 import { subscriptionsApi } from "@/api/subscriptions";
 import { productsApi } from "@/api/products";
-import type { DailyRosterItemResponse, SubscriptionItemResponse } from "@/types/subscription";
-import type { ProductVariant } from "@/types";
+import type { DailyRosterItemResponse } from "@/types/subscription";
+import type { ProductVariantResponse } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ export default function DeliveriesPage() {
     const [adjustModalOpen, setAdjustModalOpen] = useState(false);
     const [adjustingSub, setAdjustingSub] = useState<DailyRosterItemResponse | null>(null);
     const [adjustedItems, setAdjustedItems] = useState<{ variant_id: number; variant_name: string; quantity: number }[]>([]);
-    const [allVariants, setAllVariants] = useState<ProductVariant[]>([]);
+    const [allVariants, setAllVariants] = useState<ProductVariantResponse[]>([]);
 
     const loadRoster = async () => {
         setLoading(true);
@@ -62,8 +62,8 @@ export default function DeliveriesPage() {
     const handleRecord = async (subId: number, status: "delivered" | "failed" | "skipped", items?: { variant_id: number; quantity: number }[]) => {
         setActionLoading(subId);
         try {
-            await subscriptionsApi.recordDelivery(subId, { 
-                date: selectedDate, 
+            await subscriptionsApi.recordDelivery(subId, {
+                date: selectedDate,
                 status,
                 items: items
             });
@@ -88,7 +88,7 @@ export default function DeliveriesPage() {
     };
 
     const updateItemQuantity = (variantId: number, qty: number) => {
-        setAdjustedItems(prev => prev.map(item => 
+        setAdjustedItems(prev => prev.map(item =>
             item.variant_id === variantId ? { ...item, quantity: Math.max(0.1, qty) } : item
         ));
     };
@@ -100,7 +100,7 @@ export default function DeliveriesPage() {
     const addNewItem = (variantId: string) => {
         const variant = allVariants.find(v => v.id.toString() === variantId);
         if (!variant) return;
-        
+
         if (adjustedItems.find(i => i.variant_id === variant.id)) {
             toast.error("Item already added");
             return;
@@ -115,7 +115,7 @@ export default function DeliveriesPage() {
 
     const getStatusBadge = (delivery?: DailyRosterItemResponse["delivery"]) => {
         if (!delivery) return <Badge variant="outline" className="text-amber-600 border-amber-200">Pending Update</Badge>;
-        
+
         const isCustom = (delivery as any).is_custom;
 
         switch (delivery.status) {
@@ -138,7 +138,7 @@ export default function DeliveriesPage() {
                     <h1 className="text-2xl font-bold tracking-tight">Daily Deliveries Roster</h1>
                     <p className="text-muted-foreground text-sm mt-1">Track subscription fulfillment and agent deliveries.</p>
                 </div>
-                
+
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                     <div className="relative flex-1 sm:w-48">
                         <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -178,7 +178,7 @@ export default function DeliveriesPage() {
                             <Card key={sub.id} className={`overflow-hidden transition-all duration-200 ${isPending ? 'border-primary/20 shadow-sm' : 'bg-slate-50 border-slate-200 opacity-80'}`}>
                                 <CardContent className="p-0">
                                     <div className="flex flex-col md:flex-row">
-                                        
+
                                         {/* Info Section */}
                                         <div className="flex-1 p-4 md:border-r">
                                             <div className="flex justify-between items-start mb-2">
@@ -216,14 +216,14 @@ export default function DeliveriesPage() {
                                         <div className="bg-slate-50/50 p-4 shrink-0 flex flex-row md:flex-col justify-end md:justify-center items-center gap-2 md:w-44">
                                             {isPending ? (
                                                 <>
-                                                    <Button size="sm" className="w-full text-xs bg-emerald-600 hover:bg-emerald-700 text-white" 
+                                                    <Button size="sm" className="w-full text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
                                                         disabled={actionLoading === sub.id}
                                                         onClick={() => handleRecord(sub.id, "delivered")}
                                                     >
                                                         <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
                                                         Delivered
                                                     </Button>
-                                                    <Button size="sm" variant="outline" className="w-full text-xs text-primary border-primary/30 hover:bg-primary/5" 
+                                                    <Button size="sm" variant="outline" className="w-full text-xs text-primary border-primary/30 hover:bg-primary/5"
                                                         disabled={actionLoading === sub.id}
                                                         onClick={() => openAdjustModal(item)}
                                                     >
@@ -231,7 +231,7 @@ export default function DeliveriesPage() {
                                                         Adjust Items
                                                     </Button>
                                                     <div className="flex gap-2 w-full mt-1">
-                                                        <Button size="sm" variant="ghost" className="flex-1 text-xs h-7 text-red-600 hover:text-red-700 hover:bg-red-50" 
+                                                        <Button size="sm" variant="ghost" className="flex-1 text-xs h-7 text-red-600 hover:text-red-700 hover:bg-red-50"
                                                             disabled={actionLoading === sub.id}
                                                             onClick={() => handleRecord(sub.id, "failed")}
                                                         >
@@ -267,7 +267,7 @@ export default function DeliveriesPage() {
                     <DialogHeader>
                         <DialogTitle>Delivery Items for {adjustingSub?.subscription.customer_name}</DialogTitle>
                     </DialogHeader>
-                    
+
                     <div className="py-4 space-y-4">
                         <div className="space-y-3">
                             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Items to Deliver</Label>
@@ -277,9 +277,9 @@ export default function DeliveriesPage() {
                                         <p className="text-sm font-medium">{item.variant_name}</p>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <Input 
-                                            type="number" 
-                                            value={item.quantity || 0} 
+                                        <Input
+                                            type="number"
+                                            value={item.quantity || 0}
                                             onChange={(e) => updateItemQuantity(item.variant_id, parseFloat(e.target.value) || 0)}
                                             className="w-20 h-8 text-center"
                                         />
@@ -294,7 +294,7 @@ export default function DeliveriesPage() {
                         <div className="pt-4 border-t space-y-3">
                             <Label className="text-xs uppercase tracking-wider text-muted-foreground">Add Extra Product</Label>
                             <div className="flex gap-2">
-                                <select 
+                                <select
                                     className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                                     onChange={(e) => {
                                         if (e.target.value) {
@@ -314,8 +314,8 @@ export default function DeliveriesPage() {
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setAdjustModalOpen(false)}>Cancel</Button>
-                        <Button 
-                            className="bg-emerald-600 hover:bg-emerald-700 text-white" 
+                        <Button
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
                             disabled={actionLoading !== null || adjustedItems.length === 0}
                             onClick={() => handleRecord(adjustingSub!.subscription.id, "delivered", adjustedItems.map(i => ({ variant_id: i.variant_id, quantity: i.quantity })))}
                         >

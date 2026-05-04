@@ -142,6 +142,8 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 				{
 					categories.GET("", cfg.AuthMiddleware.RequirePermission("expenses.view"), cfg.ExpenseHandler.ListCategories)
 					categories.POST("", cfg.AuthMiddleware.RequirePermission("expense_categories.manage"), cfg.ExpenseHandler.CreateCategory)
+					categories.PUT("/:id", cfg.AuthMiddleware.RequirePermission("expense_categories.manage"), cfg.ExpenseHandler.UpdateCategory)
+					categories.DELETE("/:id", cfg.AuthMiddleware.RequirePermission("expense_categories.manage"), cfg.ExpenseHandler.DeleteCategory)
 				}
 			}
 
