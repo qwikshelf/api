@@ -21,4 +21,11 @@ type SubscriptionRepository interface {
 	RecordDelivery(ctx context.Context, delivery *entity.SubscriptionDelivery) error
 	GetDeliveries(ctx context.Context, subscriptionID int64) ([]*entity.SubscriptionDelivery, error)
 	GetDailyRoster(ctx context.Context, date string) ([]*entity.DailyRosterItem, error)
+
+	// Invoices & Billing
+	CreateInvoice(ctx context.Context, inv *entity.SubscriptionInvoice) error
+	GetInvoiceByID(ctx context.Context, id int64) (*entity.SubscriptionInvoice, error)
+	ListInvoices(ctx context.Context, filter dto.InvoiceListFilter) ([]*entity.SubscriptionInvoice, error)
+	UpdateInvoiceStatus(ctx context.Context, id int64, status string) error
+	AddAdjustment(ctx context.Context, adj *entity.InvoiceAdjustment) error
 }

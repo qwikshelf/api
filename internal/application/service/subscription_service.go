@@ -15,12 +15,16 @@ import (
 
 // SubscriptionService handles business logic for customer subscriptions
 type SubscriptionService struct {
-	repo repository.SubscriptionRepository
+	repo    repository.SubscriptionRepository
+	variant repository.ProductVariantRepository
 }
 
 // NewSubscriptionService creates a new SubscriptionService
-func NewSubscriptionService(repo repository.SubscriptionRepository) *SubscriptionService {
-	return &SubscriptionService{repo: repo}
+func NewSubscriptionService(repo repository.SubscriptionRepository, variant repository.ProductVariantRepository) *SubscriptionService {
+	return &SubscriptionService{
+		repo:    repo,
+		variant: variant,
+	}
 }
 
 // Create validates and persists a new subscription
@@ -115,7 +119,7 @@ func parseDate(dateStr string) (time.Time, error) {
 // ==========================================
 
 // RecordDelivery validates and records a daily delivery status for a subscription
-func (s *SubscriptionService) RecordDelivery(ctx context.Context, subID int64, dateStr, status, notes string, recordedBy *int64) (*entity.SubscriptionDelivery, error) {
+func (s *SubscriptionService) RecordDelivery(ctx context.Context, subID int64, dateStr, status, notes string, recordedBy *int64, items []dto.SubscriptionDeliveryItemReq) (*entity.SubscriptionDelivery, error) {
 	delDate, err := parseDate(dateStr)
 	if err != nil {
 		return nil, fmt.Errorf("invalid date format: %w", domainErrors.ErrInvalidInput)
@@ -147,6 +151,36 @@ func (s *SubscriptionService) RecordDelivery(ctx context.Context, subID int64, d
 		Status:         entity.DeliveryStatus(status),
 		Notes:          notesPtr,
 		RecordedBy:     recordedBy,
+		IsCustom:       len(items) > 0,
+	}
+
+	// Handle items
+	if len(items) > 0 {
+		// Manual/Custom items provided
+		for _, it := range items {
+			variant, err := s.variant.GetByID(ctx, it.VariantID)
+			if err != nil {
+				return nil, fmt.Errorf("invalid variant ID %d: %w", it.VariantID, err)
+			}
+			delivery.Items = append(delivery.Items, entity.SubscriptionDeliveryItem{
+				VariantID: it.VariantID,
+				Quantity:  decimal.NewFromFloat(it.Quantity),
+				UnitPrice: variant.SellingPrice,
+			})
+		}
+	} else if delivery.Status == entity.DeliveryStatusDelivered {
+		// Standard delivery: Copy items from subscription and snapshot prices
+		for _, si := range sub.Items {
+			variant, err := s.variant.GetByID(ctx, si.VariantID)
+			if err != nil {
+				continue
+			}
+			delivery.Items = append(delivery.Items, entity.SubscriptionDeliveryItem{
+				VariantID: si.VariantID,
+				Quantity:  si.Quantity,
+				UnitPrice: variant.SellingPrice,
+			})
+		}
 	}
 
 	if err := s.repo.RecordDelivery(ctx, delivery); err != nil {
@@ -164,4 +198,101 @@ func (s *SubscriptionService) GetDailyRoster(ctx context.Context, dateStr string
 	}
 
 	return s.repo.GetDailyRoster(ctx, dateStr)
+}
+
+// ==========================================
+// Invoices & Billing
+// ==========================================
+
+// CreateMonthlyInvoice aggregates deliveries for a specific month and creates an invoice
+func (s *SubscriptionService) CreateMonthlyInvoice(ctx context.Context, subID int64, year int, month time.Month) (*entity.SubscriptionInvoice, error) {
+	if _, err := s.repo.GetByID(ctx, subID); err != nil {
+		return nil, err
+	}
+
+	start := time.Date(year, month, 1, 0, 0, 0, 0, time.UTC)
+	end := start.AddDate(0, 1, -1)
+
+	deliveries, err := s.repo.GetDeliveries(ctx, subID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter for this month and status=delivered
+	var monthDeliveries []*entity.SubscriptionDelivery
+	for _, d := range deliveries {
+		if (d.DeliveryDate.Equal(start) || d.DeliveryDate.After(start)) &&
+			(d.DeliveryDate.Equal(end) || d.DeliveryDate.Before(end)) &&
+			d.Status == entity.DeliveryStatusDelivered {
+			monthDeliveries = append(monthDeliveries, d)
+		}
+	}
+
+	if len(monthDeliveries) == 0 {
+		return nil, fmt.Errorf("no delivered items found for this period: %w", domainErrors.ErrNotFound)
+	}
+
+	// Aggregate amounts from actual delivery items
+	var baseAmount decimal.Decimal
+	itemsMap := make(map[int64]*entity.SubscriptionInvoiceItem)
+
+	for _, d := range monthDeliveries {
+		for _, di := range d.Items {
+			lineTotal := di.UnitPrice.Mul(di.Quantity)
+			baseAmount = baseAmount.Add(lineTotal)
+
+			if item, exists := itemsMap[di.VariantID]; exists {
+				item.TotalQuantity = item.TotalQuantity.Add(di.Quantity)
+				item.Subtotal = item.Subtotal.Add(lineTotal)
+				// Use the latest price encountered (or we could average, but latest is standard for snapshots)
+				item.UnitPrice = di.UnitPrice 
+			} else {
+				itemsMap[di.VariantID] = &entity.SubscriptionInvoiceItem{
+					VariantID:     di.VariantID,
+					TotalQuantity: di.Quantity,
+					UnitPrice:     di.UnitPrice,
+					Subtotal:      lineTotal,
+				}
+			}
+		}
+	}
+
+	invoice := &entity.SubscriptionInvoice{
+		SubscriptionID:     subID,
+		BillingPeriodStart: start,
+		BillingPeriodEnd:   end,
+		BaseAmount:         baseAmount,
+		TotalAmount:        baseAmount,
+		Status:             "draft",
+		DueDate:            end.AddDate(0, 0, 5), // Default 5th of next month
+	}
+
+	for _, item := range itemsMap {
+		invoice.Items = append(invoice.Items, *item)
+	}
+
+	if err := s.repo.CreateInvoice(ctx, invoice); err != nil {
+		return nil, err
+	}
+
+	return invoice, nil
+}
+
+func (s *SubscriptionService) GetInvoice(ctx context.Context, id int64) (*entity.SubscriptionInvoice, error) {
+	return s.repo.GetInvoiceByID(ctx, id)
+}
+
+func (s *SubscriptionService) ListInvoices(ctx context.Context, filter dto.InvoiceListFilter) ([]*entity.SubscriptionInvoice, error) {
+	return s.repo.ListInvoices(ctx, filter)
+}
+
+func (s *SubscriptionService) AddAdjustment(ctx context.Context, adj *entity.InvoiceAdjustment) error {
+	if adj.Amount.LessThanOrEqual(decimal.Zero) {
+		return fmt.Errorf("adjustment amount must be positive: %w", domainErrors.ErrInvalidInput)
+	}
+	return s.repo.AddAdjustment(ctx, adj)
+}
+
+func (s *SubscriptionService) FinalizeInvoice(ctx context.Context, id int64) error {
+	return s.repo.UpdateInvoiceStatus(ctx, id, "finalized")
 }

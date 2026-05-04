@@ -54,3 +54,12 @@ export const createExpenseCategory = async (category: Partial<ExpenseCategory>) 
     const { data } = await api.post<ExpenseCategory>("/expenses/categories", category);
     return data;
 };
+
+export const updateExpenseCategory = async (id: number, category: Partial<ExpenseCategory>) => {
+    const { data } = await api.put<ExpenseCategory>(`/expenses/categories/${id}`, category);
+    return data;
+};
+
+export const deleteExpenseCategory = async (id: number) => {
+    await api.delete(`/expenses/categories/${id}`);
+};

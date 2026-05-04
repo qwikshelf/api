@@ -109,12 +109,22 @@ func (r *pincodeRepository) GetZone(ctx context.Context, id int64) (*entity.Deli
 	return &zone, err
 }
 
-func (r *pincodeRepository) ListZones(ctx context.Context) ([]entity.DeliveryZone, error) {
+func (r *pincodeRepository) ListZones(ctx context.Context, warehouseID int64) ([]entity.DeliveryZone, error) {
 	query := `
-		SELECT id, name, warehouse_id, min_order_amount, delivery_charge, estimated_delivery_text, is_active, created_at
-		FROM delivery_zones ORDER BY name ASC
+		SELECT dz.id, dz.name, dz.warehouse_id, w.name as warehouse_name, 
+		       dz.min_order_amount, dz.delivery_charge, dz.estimated_delivery_text, dz.is_active, dz.created_at
+		FROM delivery_zones dz
+		LEFT JOIN warehouses w ON dz.warehouse_id = w.id
+		WHERE 1=1
 	`
-	rows, err := r.db.Pool.Query(ctx, query)
+	args := []any{}
+	if warehouseID > 0 {
+		query += " AND dz.warehouse_id = $1"
+		args = append(args, warehouseID)
+	}
+	query += " ORDER BY dz.name ASC"
+
+	rows, err := r.db.Pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +133,11 @@ func (r *pincodeRepository) ListZones(ctx context.Context) ([]entity.DeliveryZon
 	var zones []entity.DeliveryZone
 	for rows.Next() {
 		var z entity.DeliveryZone
-		if err := rows.Scan(&z.ID, &z.Name, &z.WarehouseID, &z.MinOrderAmount, &z.DeliveryCharge, &z.EstimatedDeliveryText, &z.IsActive, &z.CreatedAt); err != nil {
+		if err := rows.Scan(
+			&z.ID, &z.Name, &z.WarehouseID, &z.WarehouseName,
+			&z.MinOrderAmount, &z.DeliveryCharge, &z.EstimatedDeliveryText,
+			&z.IsActive, &z.CreatedAt,
+		); err != nil {
 			return nil, err
 		}
 		zones = append(zones, z)

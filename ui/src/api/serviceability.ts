@@ -3,7 +3,9 @@ import type { ApiResponse, DeliveryZone, ServiceableAreaResponse } from "@/types
 
 export const serviceabilityApi = {
     // Zones
-    listZones: () => axios.get<ApiResponse<DeliveryZone[]>>("/serviceability/zones"),
+    listZones: (warehouseId?: number) => axios.get<ApiResponse<DeliveryZone[]>>("/serviceability/zones", {
+        params: { warehouse_id: warehouseId }
+    }),
     createZone: (data: Partial<DeliveryZone>) => axios.post<ApiResponse<DeliveryZone>>("/serviceability/zones", data),
     updateZone: (id: number, data: Partial<DeliveryZone>) => axios.put<ApiResponse<DeliveryZone>>(`/serviceability/zones/${id}`, data),
 

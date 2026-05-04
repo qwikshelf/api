@@ -272,10 +272,10 @@ func (r *SubscriptionRepository) fetchItems(ctx context.Context, subscriptionID 
 	query := `
 		SELECT 
 			si.id, si.subscription_id, si.variant_id,
-			pv.name, pf.name, pv.unit, si.quantity
+			COALESCE(pv.name, ''), COALESCE(pf.name, ''), COALESCE(pv.unit, ''), si.quantity
 		FROM subscription_items si
 		JOIN product_variants pv ON si.variant_id = pv.id
-		JOIN product_families pf ON pv.family_id = pf.id
+		LEFT JOIN product_families pf ON pv.family_id = pf.id
 		WHERE si.subscription_id = $1
 		ORDER BY si.id ASC
 	`
@@ -347,31 +347,57 @@ func mapSubscriptionRow(row subscriptionRow) (*entity.Subscription, error) {
 
 // RecordDelivery saves or updates a daily fulfillment status for a subscription
 func (r *SubscriptionRepository) RecordDelivery(ctx context.Context, d *entity.SubscriptionDelivery) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
 	query := `
 		INSERT INTO subscription_deliveries (
-			subscription_id, delivery_date, status, notes, recorded_by
-		) VALUES ($1, $2, $3, $4, $5)
+			subscription_id, delivery_date, status, notes, recorded_by, is_custom
+		) VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (subscription_id, delivery_date) 
 		DO UPDATE SET 
 			status = EXCLUDED.status,
 			notes = EXCLUDED.notes,
 			recorded_by = EXCLUDED.recorded_by,
+			is_custom = EXCLUDED.is_custom,
 			recorded_at = NOW()
 		RETURNING id, recorded_at
 	`
-	err := r.pool.QueryRow(ctx, query,
-		d.SubscriptionID, d.DeliveryDate, d.Status, d.Notes, d.RecordedBy,
+	err = tx.QueryRow(ctx, query,
+		d.SubscriptionID, d.DeliveryDate, d.Status, d.Notes, d.RecordedBy, d.IsCustom,
 	).Scan(&d.ID, &d.RecordedAt)
 	if err != nil {
 		return fmt.Errorf("failed to record delivery: %w", err)
 	}
-	return nil
+
+	// Sync items: Delete existing and re-insert
+	if _, err = tx.Exec(ctx, "DELETE FROM subscription_delivery_items WHERE delivery_id = $1", d.ID); err != nil {
+		return err
+	}
+
+	for i := range d.Items {
+		itemQuery := `
+			INSERT INTO subscription_delivery_items (delivery_id, variant_id, quantity, unit_price)
+			VALUES ($1, $2, $3, $4)
+		`
+		_, err = tx.Exec(ctx, itemQuery,
+			d.ID, d.Items[i].VariantID, d.Items[i].Quantity, d.Items[i].UnitPrice,
+		)
+		if err != nil {
+			return fmt.Errorf("failed to insert delivery item: %w", err)
+		}
+	}
+
+	return tx.Commit(ctx)
 }
 
 // GetDeliveries returns the historical fulfillment records for a subscription
 func (r *SubscriptionRepository) GetDeliveries(ctx context.Context, subscriptionID int64) ([]*entity.SubscriptionDelivery, error) {
 	query := `
-		SELECT id, subscription_id, delivery_date, status, notes, recorded_by, recorded_at
+		SELECT id, subscription_id, delivery_date, status, notes, recorded_by, recorded_at, is_custom
 		FROM subscription_deliveries
 		WHERE subscription_id = $1
 		ORDER BY delivery_date DESC
@@ -387,14 +413,47 @@ func (r *SubscriptionRepository) GetDeliveries(ctx context.Context, subscription
 		var d entity.SubscriptionDelivery
 		err := rows.Scan(
 			&d.ID, &d.SubscriptionID, &d.DeliveryDate, &d.Status,
-			&d.Notes, &d.RecordedBy, &d.RecordedAt,
+			&d.Notes, &d.RecordedBy, &d.RecordedAt, &d.IsCustom,
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		// Fetch items for this delivery
+		items, err := r.fetchDeliveryItems(ctx, d.ID)
+		if err == nil {
+			d.Items = items
+		}
+
 		deliveries = append(deliveries, &d)
 	}
 	return deliveries, nil
+}
+
+func (r *SubscriptionRepository) fetchDeliveryItems(ctx context.Context, deliveryID int64) ([]entity.SubscriptionDeliveryItem, error) {
+	query := `
+		SELECT sdi.id, sdi.delivery_id, sdi.variant_id, sdi.quantity, sdi.unit_price, COALESCE(pv.name, '') as variant_name
+		FROM subscription_delivery_items sdi
+		JOIN product_variants pv ON sdi.variant_id = pv.id
+		WHERE sdi.delivery_id = $1
+	`
+	rows, err := r.pool.Query(ctx, query, deliveryID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []entity.SubscriptionDeliveryItem
+	for rows.Next() {
+		var it entity.SubscriptionDeliveryItem
+		var vName string
+		err := rows.Scan(&it.ID, &it.DeliveryID, &it.VariantID, &it.Quantity, &it.UnitPrice, &vName)
+		if err == nil {
+			it.Variant = &entity.ProductVariant{ID: it.VariantID, Name: vName}
+			items = append(items, it)
+		}
+	}
+	return items, nil
 }
 
 // GetDailyRoster returns all active subscriptions eligible for delivery on the given date, alongside their current delivery log
@@ -404,7 +463,7 @@ func (r *SubscriptionRepository) GetDailyRoster(ctx context.Context, date string
 			cs.id, cs.customer_id, c.name, cs.status, cs.frequency,
 			cs.start_date, cs.end_date, cs.delivery_instructions,
 			cs.created_at, cs.updated_at,
-			sd.id, sd.status, sd.notes, sd.recorded_by, sd.recorded_at
+			sd.id, sd.status, sd.notes, sd.recorded_by, sd.recorded_at, sd.is_custom
 		FROM customer_subscriptions cs
 		JOIN customers c ON cs.customer_id = c.id
 		LEFT JOIN subscription_deliveries sd ON cs.id = sd.subscription_id AND sd.delivery_date = $1::date
@@ -421,19 +480,20 @@ func (r *SubscriptionRepository) GetDailyRoster(ctx context.Context, date string
 
 	var roster []*entity.DailyRosterItem
 	for rows.Next() {
-		var sub entity.Subscription
+		sub := new(entity.Subscription)
 		var customerName string
 		var sdID *int64
 		var sdStatus *string
 		var sdNotes *string
 		var sdRecordedBy *int64
 		var sdRecordedAt *time.Time
+		var sdIsCustom *bool
 
 		err := rows.Scan(
 			&sub.ID, &sub.CustomerID, &customerName, &sub.Status, &sub.Frequency,
 			&sub.StartDate, &sub.EndDate, &sub.DeliveryInstructions,
 			&sub.CreatedAt, &sub.UpdatedAt,
-			&sdID, &sdStatus, &sdNotes, &sdRecordedBy, &sdRecordedAt,
+			&sdID, &sdStatus, &sdNotes, &sdRecordedBy, &sdRecordedAt, &sdIsCustom,
 		)
 		if err != nil {
 			return nil, err
@@ -445,7 +505,7 @@ func (r *SubscriptionRepository) GetDailyRoster(ctx context.Context, date string
 		}
 
 		item := &entity.DailyRosterItem{
-			Subscription: &sub,
+			Subscription: sub,
 		}
 
 		// If a delivery record exists for this date, map it
@@ -455,6 +515,7 @@ func (r *SubscriptionRepository) GetDailyRoster(ctx context.Context, date string
 				SubscriptionID: sub.ID,
 				Status:         entity.DeliveryStatus(*sdStatus),
 				Notes:          sdNotes,
+				IsCustom:       sdIsCustom != nil && *sdIsCustom,
 				RecordedBy:     sdRecordedBy,
 				RecordedAt:     *sdRecordedAt,
 			}
@@ -463,14 +524,233 @@ func (r *SubscriptionRepository) GetDailyRoster(ctx context.Context, date string
 		roster = append(roster, item)
 	}
 
-	// Fetch items for each subscription (n+1 problem mitigated if we load items, but this might be thousands. For now, looping to keep interface small, or just omit if UI doesn't need to show them in the daily roster right away. Roster mainly needs name and maybe sub items. We will fetch items per subscription)
-	// We'll hydrate the items
+	// Fetch items for each subscription and its delivery record
 	for _, item := range roster {
+		// 1. Subscription Items (the plan)
 		items, err := r.fetchItems(ctx, item.Subscription.ID)
 		if err == nil {
 			item.Subscription.Items = items
 		}
+
+		// 2. Delivery Items (what actually happened today)
+		if item.Delivery != nil {
+			delItems, err := r.fetchDeliveryItems(ctx, item.Delivery.ID)
+			if err == nil {
+				item.Delivery.Items = delItems
+			}
+		}
 	}
 
 	return roster, nil
+}
+
+// ==========================================
+// Invoices & Billing
+// ==========================================
+
+func (r *SubscriptionRepository) CreateInvoice(ctx context.Context, inv *entity.SubscriptionInvoice) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	query := `
+		INSERT INTO subscription_invoices (
+			subscription_id, billing_period_start, billing_period_end,
+			base_amount, adjustment_amount, total_amount, status, due_date, notes
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id, created_at, updated_at
+	`
+	err = tx.QueryRow(ctx, query,
+		inv.SubscriptionID, inv.BillingPeriodStart, inv.BillingPeriodEnd,
+		inv.BaseAmount, inv.AdjustmentAmount, inv.TotalAmount,
+		inv.Status, inv.DueDate, inv.Notes,
+	).Scan(&inv.ID, &inv.CreatedAt, &inv.UpdatedAt)
+	if err != nil {
+		return err
+	}
+
+	for _, item := range inv.Items {
+		itemQuery := `
+			INSERT INTO subscription_invoice_items (
+				invoice_id, variant_id, total_quantity, unit_price, subtotal
+			) VALUES ($1, $2, $3, $4, $5)
+		`
+		_, err = tx.Exec(ctx, itemQuery,
+			inv.ID, item.VariantID, item.TotalQuantity, item.UnitPrice, item.Subtotal,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
+func (r *SubscriptionRepository) GetInvoiceByID(ctx context.Context, id int64) (*entity.SubscriptionInvoice, error) {
+	query := `
+		SELECT 
+			si.id, si.subscription_id, si.billing_period_start, si.billing_period_end,
+			si.base_amount, si.adjustment_amount, si.total_amount, si.status,
+			si.due_date, si.notes, si.created_at, si.updated_at,
+			c.name as customer_name
+		FROM subscription_invoices si
+		JOIN customer_subscriptions cs ON si.subscription_id = cs.id
+		JOIN customers c ON cs.customer_id = c.id
+		WHERE si.id = $1
+	`
+	var inv entity.SubscriptionInvoice
+	var customerName string
+	err := r.pool.QueryRow(ctx, query, id).Scan(
+		&inv.ID, &inv.SubscriptionID, &inv.BillingPeriodStart, &inv.BillingPeriodEnd,
+		&inv.BaseAmount, &inv.AdjustmentAmount, &inv.TotalAmount, &inv.Status,
+		&inv.DueDate, &inv.Notes, &inv.CreatedAt, &inv.UpdatedAt,
+		&customerName,
+	)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return nil, domainErrors.ErrNotFound
+		}
+		return nil, err
+	}
+
+	// Fetch Items
+	itemRows, err := r.pool.Query(ctx, `
+		SELECT id, variant_id, total_quantity, unit_price, subtotal
+		FROM subscription_invoice_items WHERE invoice_id = $1
+	`, id)
+	if err == nil {
+		defer itemRows.Close()
+		for itemRows.Next() {
+			var it entity.SubscriptionInvoiceItem
+			if err := itemRows.Scan(&it.ID, &it.VariantID, &it.TotalQuantity, &it.UnitPrice, &it.Subtotal); err == nil {
+				inv.Items = append(inv.Items, it)
+			}
+		}
+	}
+
+	// Fetch Adjustments
+	adjRows, err := r.pool.Query(ctx, `
+		SELECT id, type, amount, reason, created_at
+		FROM invoice_adjustments WHERE invoice_id = $1
+	`, id)
+	if err == nil {
+		defer adjRows.Close()
+		for adjRows.Next() {
+			var ad entity.InvoiceAdjustment
+			if err := adjRows.Scan(&ad.ID, &ad.Type, &ad.Amount, &ad.Reason, &ad.CreatedAt); err == nil {
+				inv.Adjustments = append(inv.Adjustments, ad)
+			}
+		}
+	}
+
+	return &inv, nil
+}
+
+func (r *SubscriptionRepository) ListInvoices(ctx context.Context, filter dto.InvoiceListFilter) ([]*entity.SubscriptionInvoice, error) {
+	query := `
+		SELECT 
+			si.id, si.subscription_id, si.billing_period_start, si.billing_period_end,
+			si.base_amount, si.adjustment_amount, si.total_amount, si.status,
+			si.due_date, si.notes, si.created_at, si.updated_at
+		FROM subscription_invoices si
+		JOIN customer_subscriptions cs ON si.subscription_id = cs.id
+		WHERE 1=1
+	`
+	args := []any{}
+	argCount := 1
+
+	if filter.CustomerID != nil {
+		query += fmt.Sprintf(" AND cs.customer_id = $%d", argCount)
+		args = append(args, *filter.CustomerID)
+		argCount++
+	}
+
+	if filter.SubscriptionID != nil {
+		query += fmt.Sprintf(" AND si.subscription_id = $%d", argCount)
+		args = append(args, *filter.SubscriptionID)
+		argCount++
+	}
+
+	if filter.Status != nil && *filter.Status != "" {
+		query += fmt.Sprintf(" AND si.status = $%d", argCount)
+		args = append(args, *filter.Status)
+		argCount++
+	}
+
+	if filter.Month != nil && *filter.Month != "" {
+		// filter.Month is "YYYY-MM"
+		query += fmt.Sprintf(" AND TO_CHAR(si.billing_period_start, 'YYYY-MM') = $%d", argCount)
+		args = append(args, *filter.Month)
+		argCount++
+	}
+
+	query += " ORDER BY si.billing_period_start DESC"
+
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var invoices []*entity.SubscriptionInvoice
+	for rows.Next() {
+		var inv entity.SubscriptionInvoice
+		err := rows.Scan(
+			&inv.ID, &inv.SubscriptionID, &inv.BillingPeriodStart, &inv.BillingPeriodEnd,
+			&inv.BaseAmount, &inv.AdjustmentAmount, &inv.TotalAmount, &inv.Status,
+			&inv.DueDate, &inv.Notes, &inv.CreatedAt, &inv.UpdatedAt,
+		)
+		if err == nil {
+			invoices = append(invoices, &inv)
+		}
+	}
+	return invoices, nil
+}
+
+func (r *SubscriptionRepository) UpdateInvoiceStatus(ctx context.Context, id int64, status string) error {
+	_, err := r.pool.Exec(ctx, "UPDATE subscription_invoices SET status = $1, updated_at = NOW() WHERE id = $2", status, id)
+	return err
+}
+
+func (r *SubscriptionRepository) AddAdjustment(ctx context.Context, adj *entity.InvoiceAdjustment) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	// Insert Adjustment
+	query := `
+		INSERT INTO invoice_adjustments (invoice_id, type, amount, reason)
+		VALUES ($1, $2, $3, $4) RETURNING id, created_at
+	`
+	err = tx.QueryRow(ctx, query, adj.InvoiceID, adj.Type, adj.Amount, adj.Reason).Scan(&adj.ID, &adj.CreatedAt)
+	if err != nil {
+		return err
+	}
+
+	// Update Invoice Totals
+	updateQuery := `
+		UPDATE subscription_invoices 
+		SET adjustment_amount = (
+			SELECT COALESCE(SUM(CASE WHEN type = 'credit' THEN -amount ELSE amount END), 0)
+			FROM invoice_adjustments WHERE invoice_id = $1
+		),
+		updated_at = NOW()
+		WHERE id = $1
+	`
+	_, err = tx.Exec(ctx, updateQuery, adj.InvoiceID)
+	if err != nil {
+		return err
+	}
+
+	// Final sum update
+	_, err = tx.Exec(ctx, "UPDATE subscription_invoices SET total_amount = base_amount + adjustment_amount WHERE id = $1", adj.InvoiceID)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }

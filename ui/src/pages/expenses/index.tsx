@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Plus, Trash2, Filter, Receipt, Calendar, Building2, User } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Plus, Trash2, Filter, Receipt, Calendar, Building2, User, Settings2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import {
@@ -152,6 +153,12 @@ export default function ExpensesPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
+                    <Button variant="outline" className="gap-2" asChild>
+                        <Link to="/expenses/categories">
+                            <Settings2 className="h-4 w-4" />
+                            Manage Categories
+                        </Link>
+                    </Button>
                     <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                         <DialogTrigger asChild>
                             <Button className="gap-2 shadow-sm">

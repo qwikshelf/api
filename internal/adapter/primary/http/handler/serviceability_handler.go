@@ -35,7 +35,9 @@ func (h *ServiceabilityHandler) CreateZone(c *gin.Context) {
 }
 
 func (h *ServiceabilityHandler) ListZones(c *gin.Context) {
-	zones, err := h.deliveryService.ListZones(c.Request.Context())
+	warehouseID, _ := strconv.ParseInt(c.Query("warehouse_id"), 10, 64)
+	
+	zones, err := h.deliveryService.ListZones(c.Request.Context(), warehouseID)
 	if err != nil {
 		response.InternalErrorDebug(c, "Failed to list zones", err)
 		return

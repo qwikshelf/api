@@ -142,6 +142,8 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 				{
 					categories.GET("", cfg.AuthMiddleware.RequirePermission("expenses.view"), cfg.ExpenseHandler.ListCategories)
 					categories.POST("", cfg.AuthMiddleware.RequirePermission("expense_categories.manage"), cfg.ExpenseHandler.CreateCategory)
+					categories.PUT("/:id", cfg.AuthMiddleware.RequirePermission("expense_categories.manage"), cfg.ExpenseHandler.UpdateCategory)
+					categories.DELETE("/:id", cfg.AuthMiddleware.RequirePermission("expense_categories.manage"), cfg.ExpenseHandler.DeleteCategory)
 				}
 			}
 
@@ -241,14 +243,24 @@ func SetupRoutes(r *gin.Engine, cfg *Config) {
 
 			subscriptions := protected.Group("/subscriptions")
 			{
+				// Static paths first to avoid parameter conflicts
+				subscriptions.GET("/roster", cfg.AuthMiddleware.RequirePermission("subscriptions.view"), cfg.SubscriptionHandler.GetDailyRoster)
+				subscriptions.GET("/invoices", cfg.AuthMiddleware.RequirePermission("subscriptions.view"), cfg.SubscriptionHandler.ListInvoices)
+				subscriptions.GET("/invoices/:id", cfg.AuthMiddleware.RequirePermission("subscriptions.view"), cfg.SubscriptionHandler.GetInvoice)
+				subscriptions.PATCH("/invoices/:id/finalize", cfg.AuthMiddleware.RequirePermission("subscriptions.manage"), cfg.SubscriptionHandler.FinalizeInvoice)
+				subscriptions.POST("/invoices/:id/adjustments", cfg.AuthMiddleware.RequirePermission("subscriptions.manage"), cfg.SubscriptionHandler.AddAdjustment)
+
+				// Base routes
 				subscriptions.GET("", cfg.AuthMiddleware.RequirePermission("subscriptions.view"), cfg.SubscriptionHandler.List)
 				subscriptions.POST("", cfg.AuthMiddleware.RequirePermission("subscriptions.manage"), cfg.SubscriptionHandler.Create)
-				subscriptions.GET("/roster", cfg.AuthMiddleware.RequirePermission("subscriptions.view"), cfg.SubscriptionHandler.GetDailyRoster)
+				
+				// Parameter routes last
 				subscriptions.GET("/:id", cfg.AuthMiddleware.RequirePermission("subscriptions.view"), cfg.SubscriptionHandler.Get)
 				subscriptions.PUT("/:id", cfg.AuthMiddleware.RequirePermission("subscriptions.manage"), cfg.SubscriptionHandler.Update)
 				subscriptions.PATCH("/:id/status", cfg.AuthMiddleware.RequirePermission("subscriptions.manage"), cfg.SubscriptionHandler.UpdateStatus)
 				subscriptions.DELETE("/:id", cfg.AuthMiddleware.RequirePermission("subscriptions.manage"), cfg.SubscriptionHandler.Delete)
 				subscriptions.POST("/:id/deliveries", cfg.AuthMiddleware.RequirePermission("subscriptions.manage"), cfg.SubscriptionHandler.RecordDelivery)
+				subscriptions.POST("/:id/invoices/generate", cfg.AuthMiddleware.RequirePermission("subscriptions.manage"), cfg.SubscriptionHandler.GenerateMonthlyInvoice)
 			}
 
 			// Serviceability routes

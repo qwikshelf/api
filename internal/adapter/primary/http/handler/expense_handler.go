@@ -57,6 +57,40 @@ func (h *ExpenseHandler) ListCategories(c *gin.Context) {
 	c.JSON(http.StatusOK, categories)
 }
 
+func (h *ExpenseHandler) UpdateCategory(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	var req struct {
+		Name        string `json:"name" binding:"required"`
+		Description string `json:"description"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	category := &entity.ExpenseCategory{
+		ID:          id,
+		Name:        req.Name,
+		Description: req.Description,
+	}
+
+	if err := h.service.UpdateCategory(c.Request.Context(), category); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, category)
+}
+
+func (h *ExpenseHandler) DeleteCategory(c *gin.Context) {
+	id, _ := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err := h.service.DeleteCategory(c.Request.Context(), id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusNoContent, nil)
+}
+
 // --- Expenses ---
 
 func (h *ExpenseHandler) CreateExpense(c *gin.Context) {
